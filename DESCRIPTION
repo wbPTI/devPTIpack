@@ -1,6 +1,6 @@
 Package: devPTIpack
 Title: Development environment for Precise Index Targeting analysis
-Version: 0.0.0.9800
+Version: 0.0.0.9805
 Authors@R: 
   person('Takaaki', 'Masaki', email = 'tmasaki@worldbank.org', role = c('aut'))
   person('Arden', 'Finn', email = 'afinn1@worldbank.org', role = c('aut'))
