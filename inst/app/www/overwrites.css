@@ -1,0 +1,155 @@
+
+/* Logo CSS*/
+#img-logo-navbar{
+  position: fixed;
+  right: 10px;
+  top: 5px;
+} 
+ 
+.pull-right {
+    float: right !important;
+}
+
+
+/* Selected tab highlight CSS*/
+#main_sidebar {
+  font-size: 16px;
+}
+
+li.active{
+  font-weight: bold;
+  color: #171717;
+  background-color: #c7dae991;
+}
+
+
+/*Side panel on the mapping pages CSS*/
+#nbins_panel{
+  z-index: 950; 
+  min-width: 350px; 
+  background-color: rgba(255,255,255,0.8);
+  box-shadow: 0 0 15px rgba(0,0,0,0.2); 
+  border-radius: 5px;
+  padding: 10px 10px 10px 10px;
+  zoom: 0.85; 
+  transition: opacity 500ms 1s;
+} 
+
+.logo {padding: 0 5px !important;}
+
+.navbar{min-height: 25px;    margin-bottom: 5px;}
+
+#controls {
+    background-color: rgba(255,255,255,0.8);
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    border-radius: 5px;
+    padding: 10px 10px 10px 10px;
+    cursor: move;
+    //opacity: 0.55;
+    zoom: 0.85;
+    transition: opacity 500ms 1s;
+}
+
+
+#shiny-bound-input {
+  autocomplete: off;
+}
+
+.leaflet-bottom {
+    zoom: 0.80 !important;
+}
+
+.leaflet-top {
+    zoom: 0.80 !important;
+    z-index: 700 !important;
+}
+
+.awesome-marker-shadow {
+    //opacity: 0 !important;
+    visibility: hidden;
+}
+
+.overwrite {
+    margin-top: 0px !important; 
+    margin-left: 0px !important;
+    margin-right: 0px !important;
+}
+
+.tippy-tooltip {
+    font-size: 1.35rem  !important;
+    background-color: #fff !important;
+    background-clip: padding-box !important;
+    border: 1px solid rgba(0,8,16,.15) !important;
+    color: #26323d !important;
+    box-shadow: 0 3px 14px -0.5px rgba(0,8,16,.08) !important;
+}
+
+.leaflet-tooltip {
+    max-width: 300px;
+    min-width: 200px;
+    width: 250px;
+    /* overflow-wrap: break-word; */
+    white-space: pre-wrap;
+}
+
+.skin-blue .sidebar-menu>li.active>a, .skin-blue .sidebar-menu>li.menu-open>a, .skin-blue .sidebar-menu>li:hover>a {
+    color: #fff;
+    background: #367fa9 !important;
+}
+
+div.outer {
+  position: fixed;
+  //top: 0;
+  //height: calc(100%);
+  //height: auto !important; /*min-height hack*/
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+
+
+
+.center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 90%;
+  height: auto;
+}
+
+.popoverimg {
+  display:block; 
+  margin-left:auto; 
+  margin-right:auto;
+  max-width: 95%;
+  box-shadow: 
+      0 4px 8px 0 rgba(0, 0, 0, 0.2), 
+      0 6px 20px 0 rgba(0, 0, 0, 0.19);
+ /*  max-height: 250px; */
+}
+
+
+.smallimg {
+  max-height: 400px;
+  max-width: 250px;
+  width: auto;
+}
+
+
+div#driver-popover-item {
+    min-width: 200px;
+    max-width: 950px !important;
+}
+
+#driver-highlighted-element-stage {
+  box-shadow: 0 0px 0px 2000px rgba(0,0,0,0.35) !important;
+  background-color: rgba(255, 255, 255, 0) !important;
+  border-radius: 5px !important;
+}
+
+#driver-page-overlay {
+  opacity: 0 !important;
+}

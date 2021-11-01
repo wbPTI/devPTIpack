@@ -1,0 +1,11 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.Rprof
+^Dockerfile$
+^\.dockerignore$
+^data-raw$
+^app-data$
+^app-metadata$
+^app-shapes$
+^dev$
+^rsconnect$
