@@ -8,3 +8,7 @@
 The goal of devPTIpack is to be a platform that contains all the development tools for PTI apps development as well as to be a package that is used to deploy regular PTI applications.
 
 
+```{r eval=FALSE}
+devtools::install_github("EBukin/devPTIpack")
+```
+
