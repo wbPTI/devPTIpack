@@ -51,7 +51,40 @@ plot_admin_level_ggmap <-
 
 
 
+#' @describeIn plot_admin_level_ggmap Another plotter the key one for metadata
+#' 
+#' @export
+#' @noRd
+plot_pti_plotslist <- 
+  function(plot_data, bounds, plot_index = seq_along(plot_data), n_groups = 7, vars_plot = NULL) {
+    
+    if (is.null(vars_plot)) {
+      # browser()
+      vars_plot <-
+        plot_data[[1]] %>%
+        names() %>%
+        `[`(!str_detect(., "^area$|admin\\d"))
+    }
+    
+    vars_plot %>%
+      walk( ~ {
+        var <- .x
+        out <-
+          plot_data[plot_index] %>%
+          imap( ~ {
+            # browser()
+            dplyr::select(.x, contains("admin"), any_of(var)) %>%
+              plot_admin_level_ggmap(geometries = bounds, n_groups = n_groups)# + 
+            # labs(tag = .y)
+          }) %>%
+          ggarrange(plotlist = ., ncol = length(plot_index))
+        print(out)
+      })
+  }
+
 #' @describeIn plot_admin_level_ggmap assists plotting the ggmaps
+#' 
+#' @export
 #' @noRd
 gg_admin_list <- function(dta,
                           multiply = 1,

@@ -5,9 +5,9 @@
 render_metadata <- 
   function(data_path, geometries_path, output_file) {
     rmarkdown::render(
-      here(".", "inst", "pti-metadata-pdf.Rmd"), 
+      (system.file("pti-metadata-pdf.Rmd", package = "devPTIpack")),
+        # here(".", "inst", "pti-metadata-pdf.Rmd"), 
       output_file = output_file,
-      params = list(mtdt_path = data_path, bond_path = geometries_path) ,
-      knit_root_dir = here(".")
+      params = list(mtdt_path = data_path, bond_path = geometries_path) 
     )
   }

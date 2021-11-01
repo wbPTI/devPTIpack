@@ -1,6 +1,5 @@
 ---
-title: "Zambia - PTI - Metadata for underlining datasets"
-author: "Eduard Bukin"
+title: "Metadata for underlining datasets"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   pdf_document:
@@ -20,9 +19,6 @@ params:
 ---
 
 ```{r setup, include=FALSE}
-mtdt_path <- here::here("app-data", "metadata-2021-06-28.xlsx")
-bond_path <- here::here("app-shapes", "shapes.rds")
-
 knitr::opts_chunk$set(fig.width = 12, 
                       fig.height = 5,
                       # fig.asp = 3/4,
@@ -43,11 +39,13 @@ conflictRules("dplyr", mask.ok = c("filter", "lag", "select"))
 pacman::p_load(sf, #raster,
                rmapshaper, here, fs, tidyverse, dplyr, readxl,
                ggpubr,gridExtra, patchwork, writexl, scales, leaflet, mapview)
+library(devPTIpack)
 
-pkgload::load_all(path = here::here("."), export_all = FALSE, helpers = FALSE, 
-                  attach_testthat = FALSE)
-source(here("R", "supporting-goe-prep.R"))
-# source(here("R", "fct_legend_map_satelites_copy.R"))
+mtdt_path <- here::here("app-data") %>% list.files(".xlsx$", full.names = T) %>% `[`(length(.)) %>% `[[`(1)
+bond_path <- here::here("app-data") %>% list.files(full.names = T) %>% 
+  `[`(str_detect(., regex("rds", ignore_case = T))) %>% 
+  `[`(length(.)) %>% `[[`(1)
+
 
 
 mtdt <- 
@@ -64,7 +62,7 @@ metadata_current <-
 data_current <- 
   mtdt %>%
   `[`(str_detect(names(.), "admin\\d"))
-names(data_current) <- names(data_current) %>% str_extract("^admin\\d{1,2}")
+# names(data_current) <- names(data_current) %>% str_extract("^admin\\d{1,2}")
 
 bounds <-bond_path %>% read_rds()
 
@@ -81,9 +79,9 @@ one_section <-
     if (nchar(meta_line$var_description) > 10)
       cat("**Description:** ", meta_line$var_description, "\n\n\n")
     
+    spatial_level_adm <- meta_line$spatial_level %>% str_extract(., "admin\\d")
     var_to_plot_raw <- plot_data[[meta_line$spatial_level]] %>%
-      select(contains(meta_line$spatial_level),
-             one_of(meta_line$var_code))
+      select(contains(spatial_level_adm), one_of(meta_line$var_code))
     
     vals_to_plot <- var_to_plot_raw %>%
       select(one_of(meta_line$var_code)) %>% pull()
@@ -175,9 +173,11 @@ one_section <-
 # var_to_plot <-
 # slice(metadata_current, 60) %>%
 # meta_line <-
-  # filter(metadata_current, var_code == "rri") %>%
-  # one_section(data_current)
-# 
+#   metadata_current %>%
+#   # slice(4) %>%
+#   filter( var_code == "var_nval15_small_skewd_adm12") %>%
+#   one_section(data_current)
+# # 
 # plot_data <- data_current
 
 
