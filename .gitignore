@@ -1,0 +1,12 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+*_cache
+*_files
+
+data-raw/
+app-data/
+app-shapes/
+app-metadata/
