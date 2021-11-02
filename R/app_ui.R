@@ -119,7 +119,7 @@ app_server_sample_pti_vis_ui <- function(request) {
 #' App UI function - for the PTI display only
 #' @import shiny
 #' @importFrom golem get_golem_options
-#' @noRd
+#' @export
 app_new_pti_ui <- function(request) {
   
   spinner <- 
@@ -181,7 +181,7 @@ app_new_pti_ui <- function(request) {
 golem_add_external_resources <- function() {
   add_resource_path('www', app_sys('app/www'))
   
-  tags$head(favicon(ext = 'png'),
+  tags$head(#favicon(ext = 'png'),
             bundle_resources(path = app_sys('app/www'),
                              app_title = as.character(golem::get_golem_options("pti.name"))))
 }

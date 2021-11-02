@@ -4,7 +4,7 @@
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
-#' @noRd 
+#' @export
 #'
 #' @importFrom shiny NS tagList 
 mod_weights_ui <- function(id, id_pti = "weight_page_leaf", full_ui = FALSE){

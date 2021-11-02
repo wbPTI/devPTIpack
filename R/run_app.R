@@ -185,3 +185,51 @@ run_pti <- function(
     golem_opts = rlang::dots_list(...)
   )
 }
+
+
+
+
+#' @describeIn run_new_pti run onepage pti
+#' @export
+run_onepage_pti <- function(shape_path = NULL,
+                            data_path = NULL,
+                            metadata_path = NULL,
+                            shape_dta = NULL,
+                            data_dta = NULL,
+                            demo_weights = FALSE,
+                            ...) {
+  options("golem.app.prod" = FALSE)
+  options(shiny.fullstacktrace = TRUE)
+  options(shiny.reactlog = FALSE)
+  with_golem_options(
+    app = shinyApp(
+      ui = mod_pti_onepage_ui(id = "onpagepti_1"),
+      
+      server = function(input, output, session) {
+        mod_pti_onepage_server(
+          "onpagepti_1",
+          shape_path,
+          data_path,
+          metadata_path,
+          shape_dta,
+          data_dta,
+          demo_weights = demo_weights
+        )
+        
+      }
+      
+    ),
+    
+    golem_opts = rlang::dots_list(...)
+  )
+}
+
+#' @describeIn run_new_pti run onepage pti with sample data
+#' @export
+run_onepage_pti_sample <- function(demo_weights = TRUE) {
+  run_onepage_pti(
+    shape_dta = devPTIpack::ukr_shp,
+    data_dta = devPTIpack::ukr_mtdt_full,
+    demo_weights = demo_weights
+    )
+}

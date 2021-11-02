@@ -2,7 +2,7 @@
 #'
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
-#'
+#' @export
 #' @importFrom shiny NS tagList 
 mod_plot_pti2_srv <- function(id, shp_dta, map_dta, wt_dta, active_tab, target_tabs, 
                               metadata_path = NULL,  ...) {
