@@ -1,3 +1,7 @@
+.leaflet-touch .leaflet-control-layers {
+  max-height: 150px !important;
+  overflow-y: scroll !important;
+}
 
 /* Logo CSS*/
 #img-logo-navbar{
