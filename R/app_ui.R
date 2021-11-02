@@ -178,6 +178,7 @@ app_new_pti_ui <- function(request) {
 #' @importFrom golem add_resource_path activate_js favicon bundle_resources
 #' @importFrom bsplus use_bs_tooltip
 #' @noRd
+#' @export
 golem_add_external_resources <- function() {
   add_resource_path('www', app_sys('app/www'))
   

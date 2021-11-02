@@ -21,18 +21,21 @@ mod_weights_ui <- function(id, id_pti = "weight_page_leaf", full_ui = FALSE){
       width = 9,
       style = "padding-right: 0px; padding-left: 15px; margin-bottom: 10px;",
       fluidRow(
-        mod_map_pti_leaf_ui(id_pti, height = "65vh") %>%
+        mod_map_pti_leaf_ui(id_pti, height = '53vh') %>%
           div(id = 'step_8_map_inspection1') %>%
-          div(id = 'step_8_map_inspection2')
+          div(id = 'step_8_map_inspection2') %>% 
+          div(class = 'pti-map-field')
       )
     ) ,
     fluidRow(#
       mod_weights_rand_ui(id),
       div(id = "step_5_modify_weights2", style = "left: 10px; right: 10px;"),
       div(id = "step_5_modify_weights3", style = "width: 100%"),
-      column(12, htmlOutput(
-        ns("weights_fields")
-      ))),
+      ns("weights_fields") %>% 
+        htmlOutput() %>% 
+        div(class = "weights-field") %>% 
+        column(width = 12)
+      ),
     div(
       id = "step_5_modify_weights",
       style = "position: absolute; top: calc(65vh + 60px); left: 0; right: 0; bottom: 0; z-index: -99999"
@@ -727,6 +730,7 @@ mod_wt_delete_srv <- function(id, edited_ws, current_ws_name) {
       ignoreInit = FALSE)
       
       observe({
+        req(current_ws_name())
           if (current_ws_name() %in% names(edited_ws()$weights_clean)) {
             # shinyjs::show(id = "weights.delete", anim = TRUE)
             shinyjs::enable(id = "weights.delete")

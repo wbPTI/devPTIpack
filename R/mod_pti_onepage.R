@@ -16,6 +16,7 @@ mod_pti_onepage_ui <-
 #' pti_onepage Server Functions
 #'
 #' @noRd 
+#' @export
 mod_pti_onepage_server <-
   function(id,
            shape_path = NULL,

@@ -3,6 +3,17 @@
   overflow-y: scroll !important;
 }
 
+.pti-map-field {
+  height: 53vh;
+}
+
+.weights-field {
+  overflow-y: scroll;
+  overflow-x: hidden;
+  height: 45vh;
+  visibility: inherit;
+}
+
 /* Logo CSS*/
 #img-logo-navbar{
   position: fixed;
