@@ -66,24 +66,28 @@ mod_dta_explorer2_server <-
 #'
 #' @import shiny 
 #' @importFrom leaflet leafletOutput
-mod_dta_explorer2_ui <- function(id){
+mod_dta_explorer2_ui <- function(id, multi_choice, ...){
   ns <- NS(id)
   tagList(
-    leafletOutput(ns("leaf_id"), height = "calc(100vh - 60px)", width = "100%"),
-    mod_dta_explorer2_side_ui(id)
+    leafletOutput(ns("leaf_id"), width = "100%", ...),
+    mod_dta_explorer2_side_ui(id, multi_choice)
   ) %>%
     tags$div(style = "position:relative;") %>% 
     tags$div(id = "explorer_1") %>% 
     tags$div(id = "explorer_2") %>% 
     tags$div(id = "explorer_3") %>% 
-    fluidRow()
+    fluidRow() %>% 
+    tagList(
+      golem_add_external_resources(),
+      shinyjs::useShinyjs()
+      )
 }
 
 
 #' @describeIn mod_dta_explorer2_server panel with the N bins selector
 #'
 #' @import shiny 
-mod_dta_explorer2_side_ui <- function(id, ...){
+mod_dta_explorer2_side_ui <- function(id, multi_choice, ...){
   ns <- NS(id)
   
   absolutePanel(
@@ -95,7 +99,7 @@ mod_dta_explorer2_side_ui <- function(id, ...){
     height = "auto",
     top = 10, right = 10,
     
-    mod_select_var_ui(id),
+    mod_select_var_ui(id, multi_choice),
     mod_get_admin_levels_ui(id),
     mod_get_nbins_ui(id, "Number of bins"),
     mod_map_dwnld_ui(id)
@@ -107,10 +111,11 @@ mod_dta_explorer2_side_ui <- function(id, ...){
 #' 
 #' @import shiny 
 #' @importFrom shinyWidgets pickerInput pickerOptions
-mod_select_var_ui <- function(id) {
+mod_select_var_ui <- function(id, multi_choice = NULL) {
   ns <- NS(id)
   
   explorer_multiple_var <- golem::get_golem_options("explorer_multiple_var")
+  if (is.null(explorer_multiple_var)) explorer_multiple_var <- multi_choice
   if (is.null(explorer_multiple_var)) explorer_multiple_var <- FALSE
   
   tagList(
@@ -121,7 +126,8 @@ mod_select_var_ui <- function(id) {
       multiple = explorer_multiple_var,
       width = "100%",
       options = shinyWidgets::pickerOptions(dropdownAlignRight  = TRUE,
-                                            liveSearch = TRUE)
+                                            liveSearch = TRUE,
+                                            maxOptions = 3)
     ) 
   )
   

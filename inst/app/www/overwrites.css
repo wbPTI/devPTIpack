@@ -1,5 +1,5 @@
 .leaflet-touch .leaflet-control-layers {
-  max-height: 150px !important;
+  max-height: 250px !important;
   overflow-y: scroll !important;
 }
 
@@ -8,9 +8,9 @@
 }
 
 .weights-field {
-  overflow-y: scroll;
+  overflow-y: auto;
   overflow-x: hidden;
-  height: 45vh;
+  height: calc(45vh - 60px);
   visibility: inherit;
 }
 

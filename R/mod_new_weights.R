@@ -17,22 +17,22 @@ mod_new_weights_ui <- function(id){
   }
   
   tagList(
-    
-    controls_col,
-    
-    column(
-      width = 9,
-      style = "padding-right: 0px; padding-left: 15px; margin-bottom: 10px;",
-      mod_map_pti_leaf_ui(id, height = "55vh") %>%
-        div(id = 'step_8_map_inspection1') %>%
-        div(id = 'step_8_map_inspection2') %>%  
-        fluidRow()
-    ) ,
+    fluidRow(
+      controls_col,
+      column(
+        width = 9,
+        style = "padding-right: 0px; padding-left: 15px; margin-bottom: 10px;",
+        mod_map_pti_leaf_ui(id, height = "55vh") %>%
+          div(id = 'step_8_map_inspection1') %>%
+          div(id = 'step_8_map_inspection2') 
+      ) 
+    ),
+    mod_weights_html_ui(id),
     fluidRow(#
       mod_weights_rand_ui(id),
       div(id = "step_5_modify_weights2", style = "left: 10px; right: 10px;"),
       div(id = "step_5_modify_weights3", style = "width: 100%"),
-      column(12, mod_weights_html_ui(id))
+      # column(12, mod_weights_html_ui(id))
       ),
     div(
       id = "step_5_modify_weights",

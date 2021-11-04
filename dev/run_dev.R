@@ -20,7 +20,7 @@ run_new_pti(
   
   explorer_choose_adm = FALSE,
   explorer_default_adm = "all",
-  explorer_multiple_var = FALSE,
+  explorer_multiple_var = TRUE,
   
   full_ui = FALSE,
   pti_landing_page = NULL
