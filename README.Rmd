@@ -13,9 +13,19 @@ The goal of `devPTIpack` is to be a platform that contains all the development t
 
 ## Installation:
 
+We can either install the most recent version of the app
+
 ```r
 devtools::install_github("EBukin/devPTIpack")
 ```
+or a specific tag:
+
+```r
+devtools::install_github("EBukin/devPTIpack@v0.9")
+```
+
+We add `@v0.9` to refer to a specific tag. Ideally, we want most of the apps to exist on a stable package version, which is tagged. 
+
 
 ## Creating new PTI project:
 
