@@ -150,7 +150,7 @@ app_new_pti_ui <- function(request) {
         tabPanel("Info"),
         tabPanel("PTI", mod_weights_ui("new_pti_core", full_ui = full_ui)),
         tabPanel("PTI comparison", mod_map_pti_leaf_page_ui("compare_leaf_map")),
-        tabPanel("Data explorer", mod_dta_explorer2_ui(id = "explorer_page_leaf"))
+        tabPanel("Data explorer", mod_dta_explorer2_ui(id = "explorer_page_leaf", height = "calc(100vh - 60px)"))
         # ,
         # tabPanel("How it works?")
       )

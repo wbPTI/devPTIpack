@@ -14,7 +14,7 @@ run_new_pti(
   # data_path = NULL,
   data_dta = ukr_mtdt_full,
   metadata_path = NULL,
-  show_waiter = FALSE,
+  show_waiter = TRUE,
   
   default_adm_level = "admin2",
   show_adm_levels = c("admin1", "admin2", "admin3", "admin4"),
