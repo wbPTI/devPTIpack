@@ -50,7 +50,7 @@ mod_plot_poly_leaf_server <- function(id, preplot_dta, shp_dta, ...){
             clean_pti_polygons(previous_plot()) %>% 
             clean_pti_poly_controls(previous_plot()) %>% 
             plot_pti_polygons(preplot_dta()) %>%  
-            add_pti_poly_controls(preplot_dta(), selected_layer())
+            add_pti_poly_controls(preplot_dta(), selected_layer()) 
           
           previous_plot(preplot_dta())
         }
@@ -115,8 +115,9 @@ mod_plot_leaf_export <-
           if (isTruthy(selected_layer())) {
             old_layer(selected_layer())
             leaf_out() %>%
-              plot_pti_legend(preplot_dta(), selected_layer()) %>%
-              leaf_out()
+              plot_pti_legend(preplot_dta(), selected_layer()) %>% 
+              leaflet::removeLayersControl() %>%
+              leaf_out() 
           }
           
         }, ignoreNULL = FALSE, ignoreInit = FALSE)
