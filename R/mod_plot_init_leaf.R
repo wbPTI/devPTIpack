@@ -57,11 +57,15 @@ plot_leaf_line_map2 <-
     
     leaf_map %>%
       leaflet::fitBounds(shp_bounds[[1]], shp_bounds[[2]], shp_bounds[[3]], shp_bounds[[4]]) %>%
-      leaflet::addProviderTiles(provider = leaflet::providers$CartoDB.Voyager) %>%
+      leaflet::addMapPane("basetile", zIndex = 400) %>%
       leaflet::addMapPane("liene1", zIndex = 401) %>%
       leaflet::addMapPane("polygons", zIndex = 410) %>%
       leaflet::addMapPane("bubles", zIndex = 430)  %>%
       leaflet::addMapPane("points", zIndex = 440) %>%
+      leaflet::addProviderTiles(
+        provider = leaflet::providers$CartoDB.Voyager,
+        options = pathOptions(pane = "basetile")
+      ) %>%
       list() %>%
       append(show_shps) %>%
       reduce2(seq_along(show_shps), function(x, y, i) {

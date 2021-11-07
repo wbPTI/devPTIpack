@@ -267,10 +267,31 @@ mod_map_dwnld_srv <- function(id, plotting_map, metadata_path = NULL) {
             paste("pti-map-", Sys.Date(), ".png", sep="")
           },
           content = function(file) {
-            mapview::mapshot(x = plotting_map(),
-                             file = file, vwidth = 1400,
-                             vheight = 1150, zoom = 2,
-                             delay = 3)
+            
+            withProgress({
+              
+              # out_map <- 
+              #   leaflet::leaflet() %>%
+              #   leaflet::addProviderTiles(
+              #     provider = leaflet::providers$CartoDB.Voyager#,
+              #     # options = pathOptions(pane = "basetile")
+              #   )
+              # 
+              # browser()
+              incProgress(2/10, detail = "Generating map")
+              out_map <- plotting_map()
+              
+              incProgress(2/10, detail = "Exporting map")
+              mapview::mapshot(x = out_map,
+                               file = file, vwidth = 1400,
+                               vheight = 1150, zoom = 2,
+                               delay = 15)
+              
+            },
+            min = 0,
+            value = 0.1,
+            message = "Preparing a snapshot of the map")
+           
           }
         )
       
