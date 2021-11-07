@@ -1,6 +1,6 @@
 Package: devPTIpack
 Title: Development environment for Precise Index Targeting analysis
-Version: 0.0.0.9906
+Version: 0.0.0.9907
 Authors@R: 
   person('Takaaki', 'Masaki', email = 'tmasaki@worldbank.org', role = c('aut'))
   person('Arden', 'Finn', email = 'afinn1@worldbank.org', role = c('aut'))
@@ -45,7 +45,9 @@ Imports:
     fs (>= 1.5),
     yesno (>= 0.1),
     rstudioapi (>= 0.13),
-    webshot2 (>= 0.0.0.9000)
+    webshot2 (>= 0.0.0.9000),
+    chromote (>= 0.0.0.9001),
+    curl (>= 4.3.2)
 Suggests: 
     DT (>= 0.18),
     rgdal (>= 1.5-1.6),

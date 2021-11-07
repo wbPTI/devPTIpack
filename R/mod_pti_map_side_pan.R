@@ -229,8 +229,8 @@ mod_map_dwnld_ui <- function(id) {
     style = "font-size: 12px;",
     tags$i(
       "Download map as ",
-      downloadLink(ns("map_png"), ".png"),
-      " or ",
+      # downloadLink(ns("map_png"), ".png"),
+      # " or ",
       downloadLink(ns("map_html"), ".html")
     ),
     style = "text-align: right; margin: 0 0 0px !important;"
@@ -255,6 +255,8 @@ mod_map_dwnld_ui <- function(id) {
 #'
 #' @importFrom mapview mapshot
 #' @importFrom webshot2 webshot
+#' @importFrom curl curl_version
+#' @import chromote
 #' 
 mod_map_dwnld_srv <- function(id, plotting_map, metadata_path = NULL) {
   moduleServer(#
@@ -269,15 +271,29 @@ mod_map_dwnld_srv <- function(id, plotting_map, metadata_path = NULL) {
           },
           content = function(file) {
             
+            
+            message(curl::curl_version()) # check curl is installed
+            if (identical(Sys.getenv("R_CONFIG_ACTIVE"), "shinyapps")) {
+              chromote::set_default_chromote_object(
+                chromote::Chromote$new(chromote::Chrome$new(
+                  args = c("--disable-gpu", 
+                           "--no-sandbox", 
+                           "--disable-dev-shm-usage", # required bc the target easily crashes
+                           c("--force-color-profile", "srgb"))
+                ))
+              )
+            }
+            
+            
             withProgress({
-              incProgress(1/10, detail = "Gathering all the data")
+              incProgress(1/10, detail = "Gathering all data")
               map_example <- tempfile(fileext = ".html")
               out_map <- plotting_map()
               mapview::mapshot(x = out_map,
                                url = map_example, vwidth = 1400,
                                vheight = 1150, zoom = 2)
               
-              incProgress(4/10, detail = "Exporting map into a png file")
+              incProgress(4/10, detail = "Exporting the map into a 'png' file")
               
               webshot2::webshot(
                 url = map_example,
@@ -296,7 +312,7 @@ mod_map_dwnld_srv <- function(id, plotting_map, metadata_path = NULL) {
             },
             min = 0,
             value = 0.1,
-            message = "Rendering the map ad a png image.")
+            message = "Rendering the map as an image.")
            
           }
         )
@@ -307,9 +323,18 @@ mod_map_dwnld_srv <- function(id, plotting_map, metadata_path = NULL) {
             paste("pti-map-", Sys.Date(), ".html", sep="")
           },
           content = function(file) {
-            mapview::mapshot(x = plotting_map(),
-                             url = file, vwidth = 1400,
-                             vheight = 1150, zoom = 2)
+            
+            withProgress({
+              incProgress(1/10, detail = "Gathering all the data and generating an 'html'.")
+              
+              mapview::mapshot(x = plotting_map(),
+                               url = file, vwidth = 1400,
+                               vheight = 1150, zoom = 2)
+            },
+            min = 0,
+            value = 0.1,
+            message = "Rendering the map as a single webpage.")
+            
           }
         )
       

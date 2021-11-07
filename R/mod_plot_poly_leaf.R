@@ -87,40 +87,60 @@ mod_plot_leaf_export <-
         }, ignoreNULL = FALSE, ignoreInit = FALSE)
       
       observeEvent(#
-        list(preplot_dta()), {
+        list(preplot_dta(), selected_layer()), {
           req(preplot_dta())
-          leaf_out() %>%
+          req(selected_layer())
+          leaflet() %>%
+            plot_leaf_line_map2(shp_dta(), get_golem_options("show_adm_levels")) %>%
             plot_pti_polygons(preplot_dta()) %>%
             clearControls() %>%
-            add_pti_poly_controls(preplot_dta(), NULL) %>%
+            add_pti_poly_controls(preplot_dta(), selected_layer()) %>%
+            plot_pti_legend(preplot_dta(), selected_layer()) %>%
+            leaflet::removeLayersControl() %>%
             leaf_out()
         }, ignoreNULL = FALSE, ignoreInit = FALSE)
       
       
-      # Extending legend module
-      old_layer <- reactiveVal(NULL)
-      observeEvent(#
-        selected_layer(), {
-          # req(selected_layer())
-          
-          # Removing any old legend
-          if (isTruthy(old_layer())) {
-            leaf_out() %>%
-              remove_pti_legend(map_dta(), old_layer())  %>%
-              leaf_out()
-            old_layer(NULL)
-          }
-          
-          # Adding new legend to the map
-          if (isTruthy(selected_layer())) {
-            old_layer(selected_layer())
-            leaf_out() %>%
-              plot_pti_legend(preplot_dta(), selected_layer()) %>% 
-              leaflet::removeLayersControl() %>%
-              leaf_out() 
-          }
-          
-        }, ignoreNULL = FALSE, ignoreInit = FALSE)
+      # # Extending legend module
+      # old_layer <- reactiveVal(NULL)
+      # observeEvent(#
+      #   selected_layer(), {
+      #     # req(selected_layer())
+      #     
+      #     # Removing any old legend
+      #     if (isTruthy(old_layer())) {
+      #       leaf_out() %>%
+      #         remove_pti_legend(map_dta(), old_layer())  %>%
+      #         leaf_out()
+      #       old_layer(NULL)
+      #     }
+      #     
+      #     # Adding new legend to the map
+      #     if (isTruthy(selected_layer())) {
+      #       old_layer(selected_layer())
+      #       leaf_out() %>%
+      #         plot_pti_legend(preplot_dta(), selected_layer()) %>% 
+      #         leaflet::removeLayersControl() %>%
+      #         leaf_out() 
+      #     }
+      #     
+      #   }, ignoreNULL = FALSE, ignoreInit = FALSE)
+      # 
+      # observe({
+      #   leaf_out()
+      #   browser()
+      # })
+      # 
+      # observe({
+      #   selected_layer()
+      #   browser()
+      #   
+      #   %>%
+      #     clean_pti_polygons(previous_plot()) %>% 
+      #     clean_pti_poly_controls(previous_plot()) %>% 
+      #     plot_pti_polygons(preplot_dta()) %>%  
+      #     add_pti_poly_controls(preplot_dta(), selected_layer()) 
+      # })
       
       leaf_out
     })
