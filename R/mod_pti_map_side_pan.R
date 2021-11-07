@@ -270,7 +270,7 @@ mod_map_dwnld_srv <- function(id, plotting_map, metadata_path = NULL) {
             mapview::mapshot(x = plotting_map(),
                              file = file, vwidth = 1400,
                              vheight = 1150, zoom = 2,
-                             delay = 1)
+                             delay = 3)
           }
         )
       
