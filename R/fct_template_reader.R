@@ -60,6 +60,30 @@ fct_template_reader <- function(...) {
     tmplt$weights_clean <- NULL 
   }
   
+  
+  if (!is.null(tmplt$metadata ) & 
+      nrow(tmplt$metadata) > 0) {
+    
+    tmplt$metadata <- 
+      tmplt$metadata %>% 
+      mutate(
+        across(
+          any_of(c("fltr_exclude_pti", "fltr_exclude_explorer", "fltr_overlay_pti",
+                   "fltr_overlay_explorer", "legend_revert_colours")), 
+                 ~ as.logical(.),
+        ),
+        
+        across(
+          any_of(c("fltr_exclude_pti", "fltr_exclude_explorer", "fltr_overlay_pti",
+                   "fltr_overlay_explorer", "legend_revert_colours")), 
+                 ~ ifelse(is.na(.), FALSE, .)
+        )
+      )
+    
+  } 
+  
+  
+  
   tmplt
 }
 

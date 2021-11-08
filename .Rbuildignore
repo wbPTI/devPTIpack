@@ -10,3 +10,6 @@
 ^dev$
 ^rsconnect$
 ^app\.R$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

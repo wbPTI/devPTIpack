@@ -12,27 +12,31 @@ pkgload::load_all(export_all = FALSE, helpers = FALSE, attach_testthat = FALSE)
 library(tidyverse)
 library(profvis)
 
-shp_dta <- devPTIpack::ukr_shp
-imp_dta <- devPTIpack::ukr_mtdt_full
+# shp_dta <- devPTIpack::ukr_shp
+# imp_dta <- devPTIpack::ukr_mtdt_full
+
+shp_dta <- read_rds("../other_countries/Mozambique.rds") %>% 
+  map(~{.x %>% select(-any_of("admin3Pcod"))})
+imp_dta <- fct_template_reader("../other_countries/Mozambique--metadata-2021-06-28.xlsx")
 
 imp_dta$indicators_list <- devPTIpack::get_indicators_list(imp_dta)
 imp_dta$weights_clean <- 
-  # devPTIpack::get_rand_weights(imp_dta$indicators_list)
-list(
-  wt_admi1_1 = 
-    tribble(
-      ~var_code, ~weight,
-      "var_nval15_small_skewd_adm12",   0,
-      "var_nval3_skewd_adm1",          0,
-      "var_nval4_small_skewd_adm4",    0,
-      "var_nval6_na_adm12",             1,
-      "var_nval60_na_adm4",            0,
-      "var_nvalinf_norm_adm24",         0,
-      "var_nvalinf_skewd_adm2",        0,
-      "var_nvalinf_unif_adm124",         0,
-      "var_nvalinf_huge_unif_adm24",    0,
-    )
-)
+  devPTIpack::get_rand_weights(imp_dta$indicators_list)
+# list(
+#   wt_admi1_1 = 
+#     tribble(
+#       ~var_code, ~weight,
+#       "var_nval15_small_skewd_adm12",   0,
+#       "var_nval3_skewd_adm1",          0,
+#       "var_nval4_small_skewd_adm4",    0,
+#       "var_nval6_na_adm12",             1,
+#       "var_nval60_na_adm4",            0,
+#       "var_nvalinf_norm_adm24",         0,
+#       "var_nvalinf_skewd_adm2",        0,
+#       "var_nvalinf_unif_adm124",         0,
+#       "var_nvalinf_huge_unif_adm24",    0,
+#     )
+# )
 
 
 ##
