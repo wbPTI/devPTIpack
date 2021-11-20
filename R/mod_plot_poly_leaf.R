@@ -81,70 +81,99 @@ mod_plot_leaf_export <-
       observeEvent(#
         shp_dta(), {
           req(shp_dta())
-          leaflet() %>%
-            plot_leaf_line_map2(shp_dta(), get_golem_options("show_adm_levels")) %>%
-            leaf_out()
+          make_gg_line_map(shp_dta()) %>% leaf_out()
         }, ignoreNULL = FALSE, ignoreInit = FALSE)
       
       observeEvent(#
         list(preplot_dta(), selected_layer()), {
           req(preplot_dta())
           req(selected_layer())
-          leaflet() %>%
-            plot_leaf_line_map2(shp_dta(), get_golem_options("show_adm_levels")) %>%
-            plot_pti_polygons(preplot_dta()) %>%
-            clearControls() %>%
-            add_pti_poly_controls(preplot_dta(), selected_layer()) %>%
-            plot_pti_legend(preplot_dta(), selected_layer()) %>%
-            leaflet::removeLayersControl() %>%
-            leaf_out()
+          # browser()
+          try({
+            
+            make_ggmap(preplot_dta(), selected_layer(), 
+                       show_interval = str_detect(ns(""), "explor")) %>% 
+              leaf_out()
+          }, silent = T)
+
         }, ignoreNULL = FALSE, ignoreInit = FALSE)
-      
-      
-      # # Extending legend module
-      # old_layer <- reactiveVal(NULL)
-      # observeEvent(#
-      #   selected_layer(), {
-      #     # req(selected_layer())
-      #     
-      #     # Removing any old legend
-      #     if (isTruthy(old_layer())) {
-      #       leaf_out() %>%
-      #         remove_pti_legend(map_dta(), old_layer())  %>%
-      #         leaf_out()
-      #       old_layer(NULL)
-      #     }
-      #     
-      #     # Adding new legend to the map
-      #     if (isTruthy(selected_layer())) {
-      #       old_layer(selected_layer())
-      #       leaf_out() %>%
-      #         plot_pti_legend(preplot_dta(), selected_layer()) %>% 
-      #         leaflet::removeLayersControl() %>%
-      #         leaf_out() 
-      #     }
-      #     
-      #   }, ignoreNULL = FALSE, ignoreInit = FALSE)
-      # 
-      # observe({
-      #   leaf_out()
-      #   browser()
-      # })
-      # 
-      # observe({
-      #   selected_layer()
-      #   browser()
-      #   
-      #   %>%
-      #     clean_pti_polygons(previous_plot()) %>% 
-      #     clean_pti_poly_controls(previous_plot()) %>% 
-      #     plot_pti_polygons(preplot_dta()) %>%  
-      #     add_pti_poly_controls(preplot_dta(), selected_layer()) 
-      # })
       
       leaf_out
     })
   }
+
+
+
+
+#' @describeIn mod_plot_poly_leaf_server Plot the map of country using GG and knowing the layer to plot.  
+#' import ggplot sf
+#' 
+make_ggmap <- function(preplot_dta, selected_layer, show_interval = FALSE) {
+  
+  map_to_plot <-
+    preplot_dta %>%
+    purrr::keep(function(.x) {
+      str_c(.x$pti_codes, " (", .x$admin_level, ")") %in% selected_layer[[1]]
+    }) %>%
+    `[[`(1)
+  
+  layer_id <-
+    str_c(map_to_plot$pti_codes, " (", map_to_plot$admin_level, ")")
+  
+  if (show_interval) {
+    # browser()
+    plt_dta <- 
+      map_to_plot$pti_dta %>%
+      mutate(
+        pti_score_category = map_to_plot$leg$recode_function_intervals(pti_score),
+        pti_score_category = factor(pti_score_category, 
+                                    levels = map_to_plot$leg$recode_function_intervals(map_to_plot$leg$our_values))
+      )
+    
+    col_list <- map_to_plot$leg$pal(map_to_plot$leg$our_values)
+  } else {
+    plt_dta <- 
+      map_to_plot$pti_dta %>%
+      mutate(
+        pti_score_category = map_to_plot$leg$recode_function(pti_score),
+        pti_score_category = factor(pti_score_category, 
+                                    levels = map_to_plot$leg$our_labels_category)
+      ) 
+    col_list <- set_names(
+      map_to_plot$leg$pal(map_to_plot$leg$our_values),
+      map_to_plot$leg$our_labels_category
+    )
+  }
+  
+  plt_dta %>%
+    ggplot2::ggplot() +
+    ggplot2::aes(fill = pti_score_category) +
+    ggplot2::geom_sf() +
+    ggplot2::scale_fill_manual(values = col_list) +
+    ggplot2::labs(fill = layer_id) +
+    ggplot2::theme_bw()
+  
+}
+
+
+#' @describeIn mod_plot_poly_leaf_server Plot the map of country using GG and knowing the layer to plot.  
+#' import ggplot2 sf
+#' 
+make_gg_line_map <- function(shp_dta) {
+  shp_dta %>%
+    `[`(-length(.)) %>% 
+    list(.x = ., .y = names(.), .z = rev(seq_along(.)) / max(seq_along(.))) %>% 
+    pmap_dfr(function(...) {..1 %>% mutate(line = ..2, width = ..3)}) %>% 
+    ggplot2::ggplot() +
+    ggplot2::aes(group = line, linetype = line, colour = line, size = width) +
+    ggplot2::geom_sf(fill = NA) +
+    ggplot2::scale_colour_brewer(palette = "Dark2") + 
+    ggplot2::scale_size_continuous(range = c(0.15, 1.25)) +
+    ggplot2::theme_bw()  + 
+    ggplot2::theme(legend.position="none")
+  
+}
+
     
 ## To be copied in the UI
 # mod_plot_poly_leaf_server_ui("plot_poly_leaf_server_ui_1")

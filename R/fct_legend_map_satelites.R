@@ -47,7 +47,7 @@ legend_map_satelite <-
     
     # If not categorical ====================================================
     if (!is_categorical) {
-      
+      # browser()
       ## Step 1. Numeric. Define breaks number and values ===================
       if(n_groups < 1) n_groups <- 1
       n_breaks <- min(length(x_uni), n_groups)
@@ -59,7 +59,8 @@ legend_map_satelite <-
       
       ## Step 1.3 quantiles with increased breaks number ====================
       # If this does not work, we will do another round creating breaks based on the unique values only.
-      if (length(our_breaks) <= n_breaks & length(our_breaks) != 1) {
+      if (length(our_breaks) <= n_breaks & length(our_breaks) != 1 & 
+          length(our_breaks) < length(unique(leg_vals)) ) {
         try({
           n_breaks <- n_breaks + 1
           our_breaks <-
@@ -70,7 +71,8 @@ legend_map_satelite <-
       }
       
       ## Step 1.3 If does not work, quantiles on unique values =============
-      if (length(our_breaks) <= n_breaks & length(our_breaks) != 1) {
+      if (length(our_breaks) <= n_breaks & length(our_breaks) != 1  & 
+          length(our_breaks) < length(unique(leg_vals))) {
         try({
           n_breaks <- n_breaks + 1
           our_breaks <-
@@ -92,6 +94,7 @@ legend_map_satelite <-
         ) {
           
           our_labels <- unique(leg_vals) %>% magrittr::extract(!is.na(.)) %>% sort() 
+          our_breaks <- our_labels %>% c(., max(., na.rm = T) + 10) -1 
           our_values <- our_labels
           pal <- colorFactor(pal_to_use, levels = our_values, 
                              reverse = revert_colours)
