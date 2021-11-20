@@ -149,6 +149,7 @@ make_ggmap <- function(preplot_dta, selected_layer, show_interval = FALSE) {
     ggplot2::ggplot() +
     ggplot2::aes(fill = pti_score_category) +
     ggplot2::geom_sf() +
+    ggplot2::coord_sf(crs = sf::st_crs(plt_dta), datum = sf::st_crs(plt_dta)) +
     ggplot2::scale_fill_manual(values = col_list) +
     ggplot2::labs(fill = layer_id) +
     ggplot2::theme_bw()
@@ -160,13 +161,16 @@ make_ggmap <- function(preplot_dta, selected_layer, show_interval = FALSE) {
 #' import ggplot2 sf
 #' 
 make_gg_line_map <- function(shp_dta) {
-  shp_dta %>%
+  dta <- 
+    shp_dta %>%
     `[`(-length(.)) %>% 
     list(.x = ., .y = names(.), .z = rev(seq_along(.)) / max(seq_along(.))) %>% 
-    pmap_dfr(function(...) {..1 %>% mutate(line = ..2, width = ..3)}) %>% 
+    pmap_dfr(function(...) {..1 %>% mutate(line = ..2, width = ..3)}) 
+  dta %>% 
     ggplot2::ggplot() +
     ggplot2::aes(group = line, linetype = line, colour = line, size = width) +
     ggplot2::geom_sf(fill = NA) +
+    ggplot2::coord_sf(crs = sf::st_crs(dta), datum = sf::st_crs(dta)) +
     ggplot2::scale_colour_brewer(palette = "Dark2") + 
     ggplot2::scale_size_continuous(range = c(0.15, 1.25)) +
     ggplot2::theme_bw()  + 
