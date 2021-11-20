@@ -17,7 +17,7 @@ get_indicators_list <- function(dta, fltr_var = "fltr_exclude_pti") {
     meta_dta %>%
     distinct_at(vars(contains("pillar"))) %>%
     arrange(pillar_group, pillar_name, pillar_description) %>%
-    group_by(pillar_group) %>%
+    group_by(pillar_name) %>%
     filter(row_number() == 1) %>%
     ungroup() %>%
     arrange(pillar_group)
