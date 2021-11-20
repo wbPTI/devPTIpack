@@ -48,7 +48,7 @@ Imports:
     webshot2 (>= 0.0.0.9000),
     chromote (>= 0.0.0.9001),
     curl (>= 4.3.2),
-    ggplot2 (>=3.3.5)
+    ggplot2 (>= 3.3.5)
 Suggests: 
     DT (>= 0.18),
     rgdal (>= 1.5-1.6),
