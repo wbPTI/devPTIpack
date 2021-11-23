@@ -15,9 +15,9 @@ library(profvis)
 # shp_dta <- devPTIpack::ukr_shp
 # imp_dta <- devPTIpack::ukr_mtdt_full
 
-shp_dta <- read_rds("../other_countries/Mozambique.rds") %>% 
+shp_dta <- read_rds("../other_countries/Tanzania.rds") %>% 
   map(~{.x %>% select(-any_of("admin3Pcod"))})
-imp_dta <- fct_template_reader("../other_countries/Mozambique--metadata-2021-06-28.xlsx")
+imp_dta <- fct_template_reader("../other_countries/Tanzania--metadata-2021-09-15-.xlsx")
 
 imp_dta$indicators_list <- devPTIpack::get_indicators_list(imp_dta)
 imp_dta$weights_clean <- 

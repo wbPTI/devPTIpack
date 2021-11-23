@@ -168,8 +168,86 @@ preplot_dta %>%
   get_current_levels() 
 
 
+# Making a ggplot function to plot a map ----------------------------------
+
+preplot_dta %>% 
+  map(~{ str_c(.x$pti_codes, " (", .x$admin_level, ")") })
+
+# Filter selected layer
+selected_layer <-  "wt_admi4_1 (Rayon)"
+
+dta_plot <- 
+  shp_dta %>%
+  `[`(-length(.)) %>% 
+  list(.x = ., .y = names(.), .z = rev(seq_along(.)) / max(seq_along(.))) %>% 
+  pmap_dfr(function(...) {..1 %>% mutate(line = ..2, width = ..3)}) 
 
 
+dta_plot %>% 
+  ggplot() +
+  aes(group = line, linetype = line, colour = line, size = width) +
+  geom_sf(fill = NA) + 
+  coord_sf(crs = sf::st_crs(dta_plot), datum = sf::st_crs(dta_plot)) +
+  scale_colour_brewer(palette = "Dark2") + 
+  scale_size_continuous(range = c(0.15, 1.25)) +
+  theme_bw()  + 
+  theme(legend.position="none")
+
+#' Plot the map of country using GG and knowing the layer to plot.  
+make_gg_line_map <- function(shp_dta) {
+  shp_dta %>%
+    `[`(-length(.)) %>% 
+    list(.x = ., .y = names(.), .z = rev(seq_along(.)) / max(seq_along(.))) %>% 
+    pmap_dfr(function(...) {..1 %>% mutate(line = ..2, width = ..3)}) %>% 
+    ggplot() +
+    aes(group = line, linetype = line, colour = line, size = width) +
+    geom_sf(fill = NA) +
+    scale_colour_brewer(palette = "Dark2") + 
+    scale_size_continuous(range = c(0.15, 1.25)) +
+    theme_bw()  + 
+    theme(legend.position="none")
+  
+}
+
+
+
+#' Plot the map of country using GG and knowing the layer to plot.  
+make_ggmap <- function(preplot_dta, selected_layer) {
+  map_to_plot <-
+    preplot_dta %>%
+    purrr::keep(function(.x) {
+      str_c(.x$pti_codes, " (", .x$admin_level, ")") %in% selected_layer
+    }) %>%
+    `[[`(1)
+  
+  layer_id <-
+    str_c(map_to_plot$pti_codes, " (", map_to_plot$admin_level, ")")
+  
+  map_to_plot$leg$our_labels_category
+  
+  map_to_plot$pti_dta %>%
+    mutate(
+      pti_score_category = map_to_plot$leg$recode_function(pti_score),
+      pti_score_category = factor(pti_score_category, levels = map_to_plot$leg$our_labels_category)
+    ) %>%
+    ggplot() +
+    aes(fill = pti_score_category) +
+    geom_sf() +
+    scale_fill_manual(values = set_names(
+      map_to_plot$leg$pal(map_to_plot$leg$our_values),
+      map_to_plot$leg$our_labels_category
+    )) +
+    labs(fill = layer_id) +
+    theme_bw()
+  
+}
+# +
+#   annotation_scale(location = "bl", width_hint = 0.5) +
+#   annotation_north_arrow(location = "bl", which_north = "true", 
+#                          pad_x = unit(0.15, "cm"), pad_y = unit(0.45, "cm"),
+#                          style = north_arrow_fancy_orienteering) 
+# 
+# library(ggspatial)
 # Visualizing the data on leaflet map. ------------------------------------
 
 library(leaflet)
