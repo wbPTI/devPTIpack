@@ -146,6 +146,8 @@ mod_get_admin_levels_srv <- function(id, preplot_dta,
               fluidRow(align="center") %>% 
               chb_iu()
             
+            dta_levels() %>% out_dta()
+            
           } else {
             if (isTruthy(default_adm_level) &&
                 (any(default_adm_level %in% names(dta_levels())) |
@@ -187,27 +189,27 @@ mod_get_admin_levels_srv <- function(id, preplot_dta,
         ignoreNULL = FALSE, 
         ignoreInit = FALSE)
       
-      output[["admin_levels"]] <- renderUI({req(chb_iu())})
-      
-      adm_lvl_debounce <- reactive(input$adm_lvls_chb) %>% debounce(700)
-      
-      observeEvent(adm_lvl_debounce(), {
-        req(chb_iu())
-        req(adm_lvl_debounce())
-        
-        if (any(stringr::str_detect(adm_lvl_debounce(), 
-                                    stringr::regex("all", ignore_case = TRUE)))) {
-          
-          dta_levels() %>% out_dta()
-          
-        } else {
-          
-          adm_lvl_debounce() %>% out_dta()
-          
-        }
-      }, 
-      ignoreNULL = FALSE, 
-      ignoreInit = FALSE)
+      # output[["admin_levels"]] <- renderUI({req(chb_iu())})
+      # 
+      # adm_lvl_debounce <- reactive(input$adm_lvls_chb) %>% debounce(700)
+      # 
+      # observeEvent(adm_lvl_debounce(), {
+      #   req(chb_iu())
+      #   req(adm_lvl_debounce())
+      #   
+      #   if (any(stringr::str_detect(adm_lvl_debounce(), 
+      #                               stringr::regex("all", ignore_case = TRUE)))) {
+      #     
+      #     dta_levels() %>% out_dta()
+      #     
+      #   } else {
+      #     
+      #     adm_lvl_debounce() %>% out_dta()
+      #     
+      #   }
+      # }, 
+      # ignoreNULL = FALSE, 
+      # ignoreInit = FALSE)
       
       reactive({out_dta()})
       

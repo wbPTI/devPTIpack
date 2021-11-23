@@ -17,7 +17,7 @@ mod_plot_pti2_srv <- function(id, shp_dta, map_dta, wt_dta, active_tab, target_t
   pre_map_dta_2 <- mod_drop_inval_adm(id, pre_map_dta_1, wt_dta)
 
   # N bins and selected admin levels modules
-  # sel_adm_levels <- mod_get_admin_levels_srv(id, pre_map_dta_2)
+  sel_adm_levels <- mod_get_admin_levels_srv(id, pre_map_dta_2)
   n_bins <- mod_get_nbins_srv(id)
   
   # Filtering not relevant admin levels
@@ -28,7 +28,7 @@ mod_plot_pti2_srv <- function(id, shp_dta, map_dta, wt_dta, active_tab, target_t
     req(first_open())
     
     pre_map_dta_2() %>%
-      # filter_admin_levels(sel_adm_levels()) %>%
+      filter_admin_levels(sel_adm_levels()) %>%
       add_legend_paras(nbins = n_bins()) %>%
       complete_pti_labels() %>% 
       rev()
