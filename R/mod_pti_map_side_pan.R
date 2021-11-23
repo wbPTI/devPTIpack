@@ -270,16 +270,47 @@ mod_map_dwnld_srv <- function(id, plotting_map, metadata_path = NULL) {
             paste("pti-map-", Sys.Date(), ".png", sep="")
           },
           content = function(file) {
+            # file.copy(plotting_map(), file)
             
-            ggplot2::ggsave(
-              file,
-              plot = plotting_map(),
-              device = "png", 
-              scale = 1,
+            # 
+            withProgress({
+              incProgress(4/10, detail = "Gathering all data and generating the plot")
+            plot_dta <- plotting_map()
+            
+            png(
+              filename = file,
               width = 29,
-              height = 21, 
-              units = "cm"
+              height = 21,
+              units = "cm",
+              res = 300
             )
+            
+            if (plot_dta$poly) {
+              print(
+                do.call(make_spplot, args = plot_dta)
+              )
+            } else  {
+              print(
+                do.call(make_sp_line_map, args = plot_dta)
+              )
+            }
+        
+            dev.off()
+            
+            },
+            min = 0,
+            value = 0.1,
+            message = "Rendering the map as an image.")
+            
+            # ggplot2::ggsave(
+            #   file,
+            #   plot = plotting_map(),
+            #   device = "png", 
+            #   scale = 1,
+            #   width = 29,
+            #   height = 21, 
+            #   units = "cm"
+            # )
             
             # message(curl::curl_version()) # check curl is installed
             # if (identical(Sys.getenv("R_CONFIG_ACTIVE"), "shinyapps")) {
@@ -333,15 +364,34 @@ mod_map_dwnld_srv <- function(id, plotting_map, metadata_path = NULL) {
           },
           content = function(file) {
             
-            ggplot2::ggsave(
-              file,
-              plot = plotting_map(),
-              device = "pdf", 
-              scale = 1,
-              width = 29,
-              height = 21, 
-              units = "cm"
-            )
+            
+            withProgress({
+              incProgress(4/10, detail = "Gathering all data and generating the plot")
+              plot_dta <- plotting_map()
+              
+              pdf(
+                file = file,
+                width = 11,
+                height = 8.25
+              )
+              
+              if (plot_dta$poly) {
+                print(
+                  do.call(make_spplot, args = plot_dta)
+                )
+              } else {
+                print(
+                  do.call(make_sp_line_map, args = plot_dta)
+                )
+              }
+              
+              dev.off()
+              
+            },
+            min = 0,
+            value = 0.1,
+            message = "Rendering the map as an image.")
+            
             
           }
         )

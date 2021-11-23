@@ -3,9 +3,7 @@
 #' @description A shiny Module.
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
-#'
-#' @noRd 
-#'
+#' @export
 #' @importFrom shiny NS tagList 
 mod_plot_poly_leaf_server_ui <- function(id){
   ns <- NS(id)
@@ -81,7 +79,15 @@ mod_plot_leaf_export <-
       observeEvent(#
         shp_dta(), {
           req(shp_dta())
-          make_gg_line_map(shp_dta()) %>% leaf_out()
+          # make_gg_line_map(shp_dta()) %>% leaf_out()
+          
+          list(
+            poly = FALSE,
+            shp_dta = shp_dta()
+          ) %>% 
+            leaf_out()
+          
+          
         }, ignoreNULL = FALSE, ignoreInit = FALSE)
       
       observeEvent(#
@@ -89,12 +95,30 @@ mod_plot_leaf_export <-
           req(preplot_dta())
           req(selected_layer())
           # browser()
-          try({
-            
-            make_ggmap(preplot_dta(), selected_layer(), 
-                       show_interval = str_detect(ns(""), "explor")) %>% 
-              leaf_out()
-          }, silent = T)
+          
+          list(
+            poly = TRUE,
+            preplot_dta = preplot_dta(), 
+            selected_layer = selected_layer(),
+            show_interval = str_detect(ns(""), "explor")
+           ) %>% 
+            leaf_out()
+          
+          # withProgress({
+          #   try({
+          #     map_file <- tempfile(fileext = ".png")
+          #     
+          #  
+          #     
+          #     map_file %>% leaf_out()
+          #     
+          #   }, silent = T)
+          #   
+          # },
+          # min = 0,
+          # value = 0.1,
+          # message = "Rendering the map as an image.")
+         
 
         }, ignoreNULL = FALSE, ignoreInit = FALSE)
       
@@ -106,8 +130,9 @@ mod_plot_leaf_export <-
 
 
 #' @describeIn mod_plot_poly_leaf_server Plot the map of country using GG and knowing the layer to plot.  
-#' import ggplot sf
 #' 
+#' @import ggplot2 sf
+#' @export
 make_ggmap <- function(preplot_dta, selected_layer, show_interval = FALSE) {
   
   map_to_plot <-
@@ -157,9 +182,59 @@ make_ggmap <- function(preplot_dta, selected_layer, show_interval = FALSE) {
 }
 
 
-#' @describeIn mod_plot_poly_leaf_server Plot the map of country using GG and knowing the layer to plot.  
-#' import ggplot2 sf
+
+
+#' @describeIn mod_plot_poly_leaf_server Plot the map using SP pacakge
 #' 
+#' @import ggplot2 sf sp
+#' @export
+make_spplot <- function(preplot_dta, selected_layer, show_interval = FALSE, ...) {
+  
+  map_to_plot <-
+    preplot_dta %>%
+    purrr::keep(function(.x) {
+      str_c(.x$pti_codes, " (", .x$admin_level, ")") %in% selected_layer[[1]]
+    }) %>%
+    `[[`(1)
+  
+  layer_id <-
+    str_c(map_to_plot$pti_codes, " (", map_to_plot$admin_level, ")")
+  
+  if (show_interval) {
+    # browser()
+    plt_dta <- 
+      map_to_plot$pti_dta %>%
+      mutate(
+        pti_score_category = map_to_plot$leg$recode_function_intervals(pti_score),
+        pti_score_category = factor(pti_score_category, 
+                                    levels = map_to_plot$leg$recode_function_intervals(map_to_plot$leg$our_values))
+      )
+    
+    col_list <- map_to_plot$leg$pal(map_to_plot$leg$our_values)
+  } else {
+    plt_dta <- 
+      map_to_plot$pti_dta %>%
+      mutate(
+        pti_score_category = map_to_plot$leg$recode_function(pti_score),
+        pti_score_category = factor(pti_score_category, 
+                                    levels = map_to_plot$leg$our_labels_category)
+      ) 
+    col_list <- set_names(
+      map_to_plot$leg$pal(map_to_plot$leg$our_values),
+      map_to_plot$leg$our_labels_category
+    )
+  }
+  
+  plt_dta %>%
+    select(pti_score_category) %>%
+    sf::as_Spatial() %>%
+    sp::spplot(col.regions = map_to_plot$leg$pal(map_to_plot$leg$our_values))
+}
+
+
+#' @describeIn mod_plot_poly_leaf_server Plot the map of country using GG and knowing the layer to plot.  
+#' @import ggplot2 sf
+#' @export
 make_gg_line_map <- function(shp_dta) {
   dta <- 
     shp_dta %>%
@@ -175,6 +250,35 @@ make_gg_line_map <- function(shp_dta) {
     ggplot2::scale_size_continuous(range = c(0.15, 1.25)) +
     ggplot2::theme_bw()  + 
     ggplot2::theme(legend.position="none")
+  
+}
+
+#' @describeIn mod_plot_poly_leaf_server Plot the line of the map using SP pacakge
+#' 
+#' @import ggplot2 sf sp
+#' @export
+make_sp_line_map <- function(shp_dta, ...) {
+  cols <- c("#e41a1c",
+            "#377eb8",
+            "#4daf4a",
+            "#984ea3",
+            "#ff7f00",
+            "#ffff33",
+            "#a65628")
+  out_plt <- 
+    shp_dta %>%
+    `[`(-length(.)) %>% 
+    `[[`(length(.)) %>% 
+    sf::st_geometry() %>%
+    sf::st_as_sf() %>%
+    mutate(ID = row_number()) %>%
+    # plot()
+    # sf::st_cast("MULTILINESTRING") %>%
+    sf::as_Spatial() %>%
+    sp::spplot(fill = NULL, col = cols[[2]], border = cols[[2]])
+  
+  out_plt$legend <- NULL
+  out_plt
   
 }
 
