@@ -181,7 +181,7 @@ app_new_pti_ui <- function(request) {
 golem_add_external_resources <- function() {
   add_resource_path('www', app_sys('app/www'))
   
-  tags$head(#favicon(ext = 'png'),
+  tags$head(favicon(ext = 'png'),
             bundle_resources(path = app_sys('app/www'),
                              app_title = as.character(golem::get_golem_options("pti.name"))))
 }

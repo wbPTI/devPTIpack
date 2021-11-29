@@ -76,7 +76,8 @@ one_section <-
            plot_data) {
     cat("\n\n\n### ", meta_line$var_name, "\n\n\n")
     
-    if (nchar(meta_line$var_description) > 10)
+    if (!identical(meta_line$var_description, character(0)) &&
+        nchar(meta_line$var_description) > 10)
       cat("**Description:** ", meta_line$var_description, "\n\n\n")
     
     spatial_level_adm <- meta_line$spatial_level %>% str_extract(., "admin\\d")

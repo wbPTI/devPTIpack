@@ -34,7 +34,7 @@ legend_map_satelite <-
       magrittr::extract2(val_pal_id)
     
     x_uni <- unique(leg_vals)
-    x_uni_nona <- x_uni[!is.na(x_uni)]
+    x_uni_nona <- x_uni[!is.na(x_uni) & !is.nan(x_uni)]
     
     # Weather or not revert colors in pals
     revert_colours <- TRUE
@@ -94,7 +94,7 @@ legend_map_satelite <-
         ) {
           
           our_labels <- unique(leg_vals) %>% magrittr::extract(!is.na(.)) %>% sort() 
-          our_breaks <- our_labels %>% c(., max(., na.rm = T) + 10) -1 
+          our_breaks <- our_labels %>% c(., max(., na.rm = T) * 1.10) * 0.99
           our_values <- our_labels
           pal <- colorFactor(pal_to_use, levels = our_values, 
                              reverse = revert_colours)
