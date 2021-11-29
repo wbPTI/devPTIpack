@@ -255,10 +255,8 @@ mod_map_dwnld_ui <- function(id) {
 #'
 #' @importFrom shiny debounce reactive moduleServer isTruthy downloadHandler
 #'
-#' @importFrom mapview mapshot
-#' @importFrom webshot2 webshot
 #' @importFrom curl curl_version
-#' @import chromote ggplot2
+#' @import ggplot2
 #' 
 mod_map_dwnld_srv <- function(id, plotting_map, metadata_path = NULL) {
   moduleServer(#
@@ -408,9 +406,9 @@ mod_map_dwnld_srv <- function(id, plotting_map, metadata_path = NULL) {
             withProgress({
               incProgress(1/10, detail = "Gathering all the data and generating an 'html'.")
               
-              mapview::mapshot(x = plotting_map(),
-                               url = file, vwidth = 1400,
-                               vheight = 1150, zoom = 2)
+              # mapview::mapshot(x = plotting_map(),
+              #                  url = file, vwidth = 1400,
+              #                  vheight = 1150, zoom = 2)
             },
             min = 0,
             value = 0.1,
