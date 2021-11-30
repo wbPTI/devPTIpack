@@ -3,6 +3,8 @@
 # Or use the blue button on top of this file
 
 library(shiny)
+
+# remotes::install_github("EBukin/devPTIpack", force = TRUE)
 library(devPTIpack)
 
 # pkgload::load_all(export_all = FALSE, helpers = FALSE, attach_testthat = FALSE)
