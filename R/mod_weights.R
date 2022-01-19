@@ -7,6 +7,7 @@
 #' @export
 #'
 #' @importFrom shiny NS tagList 
+#' 
 mod_weights_ui <- function(id, id_pti = "weight_page_leaf", full_ui = FALSE){
   ns <- NS(id)
   if (full_ui) {
@@ -16,7 +17,7 @@ mod_weights_ui <- function(id, id_pti = "weight_page_leaf", full_ui = FALSE){
   }
   
   tagList(
-    controls_col,
+    column(width = 3, controls_col),
     column(
       width = 9,
       style = "padding-right: 0px; padding-left: 15px; margin-bottom: 10px;",
@@ -50,11 +51,12 @@ mod_weights_ui <- function(id, id_pti = "weight_page_leaf", full_ui = FALSE){
 
 #' Weights input UI full
 #' 
+#' @export
 full_wt_inp_ui <- function(ns) {
   
   # controls_col <-
-  column(
-    width = 3,
+  tagList(
+    # width = 3,
     textInput(
       ns("existing.weights.name"),
       label = "Name your PTI",
@@ -126,10 +128,11 @@ full_wt_inp_ui <- function(ns) {
 
 #' Weights input UI full
 #' 
+#' @export
 short_wt_inp_ui <- function(ns) {
   
-    column(
-      width = 3,
+    tagList(
+      # width = 3,
       textInput(
         ns("existing.weights.name"),
         label = "Name your PTI",
