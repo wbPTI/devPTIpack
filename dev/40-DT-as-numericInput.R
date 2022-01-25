@@ -65,19 +65,20 @@ targets_dta <- make_vis_targets_for_dt(nested_dta)
 
 
 # Tailoring the WT page layout ===========================================
-options(golem.app.prod = FALSE)
+options(golem.app.prod = TRUE)
 devtools::load_all()
 ui <- fluidPage(
+  shinyjs::useShinyjs(),
   fluidRow(
-    column(5, 
+    column(5,
            mod_wt_inp_ui("input_tbl_1", dt_style = "max-height: calc(70vh);"),
            style = "padding-right: 0px; padding-left: 5px;"),
-    column(7, 
+    column(7,
            leaflet::leaflet() %>%
              leaflet::addTiles() %>%
              setView(-93.65, 42.0285, zoom = 12) ,
            absolutePanel(
-               mod_wt_inp_ui("input_tbl_2", dt_style = "max-height: 300px;") %>% 
+               mod_wt_inp_ui("input_tbl_2", dt_style = "max-height: 300px;") %>%
                  div(style = "zoom:0.8;"),
                top = 10, right = 75, width = 350, height = 550,
                style = "!important; z-index: 1000;")
@@ -92,6 +93,62 @@ server <- function(input, output, session) {
 
 # devtools::load_all()
 shinyApp(ui, server)
+
+
+# # Trying ScrollResize Plugin =================================================
+# 
+# 
+# nested_dta %>% 
+#   datatable( 
+#     # width = width,
+#     # height = height,
+#     escape = FALSE, 
+#     selection = 'none',
+#     fillContainer = F,
+#     rownames = NULL,
+#     colnames = NULL,
+#     plugins = c('scrollResize'),
+#     options = list(
+#       dom = 'ft',
+#       bPaginate = FALSE,
+#       columnDefs = targets_dta$columnDefs,
+#       ordering = FALSE,
+#       autoWidth = F,
+#       
+#       # scrollResize potions
+#       paging = FALSE,
+#       scrollResize = TRUE, 
+#       scrollY =  100,
+#       scrollCollapse = TRUE,
+#       
+#       headerCallback = JS(
+#         "function(thead, data, start, end, display){
+#           $('th', thead).css('display', 'none');
+#           }"
+#       )
+#       #   paging = TRUE,
+#       #   
+#       #   columnDefs = targets_dta$columnDefs,
+#       #   # deferRender = TRUE,
+#       #   scrollY = scrollY,
+#       #   # scrollX = FALSE,
+#       #   scroller = TRUE,
+#       #   # scrollCollapse = TRUE
+#     ),
+#     callback = JS("table.rows().every(function(i, tab, row) {
+#         var $this = $(this.node());
+#         $this.attr('id', this.data()[0]);
+#         $this.addClass('shiny-input-container');
+#       });
+#       Shiny.unbindAll(table.table().node());
+#       Shiny.bindAll(table.table().node());")
+#   ) %>% 
+#   formatStyle(
+#     'type',
+#     target = 'row',
+#     backgroundColor = styleEqual("pillar", c('lightgray')),
+#     fontWeight = styleEqual("pillar", c('bold')),
+#   ) 
 
 
 # 

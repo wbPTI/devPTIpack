@@ -9,40 +9,37 @@
 #' @importFrom shiny NS tagList div
 #' @importFrom DT dataTableOutput
 #' @importFrom glue glue
-mod_DT_inputs_ui <- function(id, height = NULL){
+mod_DT_inputs_ui <- function(id, height = NULL, style = NULL, ...){
   ns <- NS(id)
-  if(is.null(height)) height <- "auto"
+  if(is.null(height)) height <- "550px"
   
-  DT::dataTableOutput(ns('wghts_dt')) %>%
-    shiny::div(
-    #   style = 
-    # glue::glue("position: relative; overflow-y: auto; overflow-x: hidden;", 
-    #            "width: 100%; max-height: calc(75vh); height: {height};")
-    ) %>%
+  DT::dataTableOutput(ns('wghts_dt'), height = height)  %>%
     shiny::tagList(shiny::tags$style(
       shiny::HTML(
         ".dtcenter .form-group {margin-bottom: 0px !important};
         .dtcenter {text-align: -webkit-center;};
         .dtcustom {padding: 2px 3px !important;};
-        }}"
+        .td {padding: 2px'};
+        "
       )
     )) %>%
     shiny::tagList(
       .,
       if (is.null(options("golem.app.prod")) || !isTRUE(options("golem.app.prod")[[1]]))
         shiny::verbatimTextOutput(ns('wghts_dt_values'))
-      )
+      ) %>% 
+    div(style = style, ...)
 }
 
 #' dtNumInputs Server Functions
 #'
 #' @noRd 
-mod_DT_inputs_server <- function(id, input_dta, update_dta = reactive(NULL)){
+mod_DT_inputs_server <- function(id, ind_list, update_dta = reactive(NULL)){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    # Step 1. Convert input data into the table-ready style ========================
-    ind_list <- reactive({req(input_dta()) %>% get_indicators_list()})
+    # # Step 1. Convert input data into the table-ready style ========================
+    # ind_list <- reactive({req(input_dta()) %>% get_indicators_list()})
     
     # Step 2. Generate inputs UI and render it. ========================
     ind_DT <- reactive({ind_list() %>% make_input_DT(ns = ns)})
@@ -67,7 +64,7 @@ mod_DT_inputs_server <- function(id, input_dta, update_dta = reactive(NULL)){
       # browser()
       update_dta() %>% 
         pwalk(~ {
-          updateNumericInput(session = session, inputId = ..1, weight = ..2)
+          updateNumericInput(session = session, inputId = ..1, value = ..2)
           })
     }, ignoreNULL = TRUE, ignoreInit = TRUE)
     
@@ -253,6 +250,8 @@ make_vis_targets_for_dt <- function(nested_dta) {
 #' preparing renderable datatable
 #' @noRd
 #' some help with css here: http://live.datatables.net/qocanadu/44/edit
+#' We used scrollResize from https://datatables.net/blog/2017-12-31
+#' css 
 make_input_DT <- function(ind_list, ns = function(x) x, width = "100%", height = "100%", scrollY="450px") {
   
   nested_dta <- prep_input_data(ind_list, ns = ns)
@@ -268,12 +267,20 @@ make_input_DT <- function(ind_list, ns = function(x) x, width = "100%", height =
       rownames = NULL,
       colnames = NULL,
       # extensions = c('Scroller'),
+      plugins = c('scrollResize'),
       options = list(
         dom = 'ft',
         bPaginate = FALSE,
         columnDefs = targets_dta$columnDefs,
         ordering = FALSE,
         autoWidth = F,
+        
+        # scrollResize potions
+        paging = FALSE,
+        scrollResize = TRUE, 
+        scrollY =  100,
+        scrollCollapse = TRUE,
+        
         headerCallback = JS(
           "function(thead, data, start, end, display){
           $('th', thead).css('display', 'none');
