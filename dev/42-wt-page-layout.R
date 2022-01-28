@@ -28,8 +28,8 @@ ui <- fluidPage(
   fluidRow(
     column(4, 
            mod_wt_inp_ui("input_tbl_1", 
-                         full_ui = FALSE, 
-                         height = "350px",
+                         full_ui = TRUE, 
+                         height = "50vh",
                          dt_style = "zoom:0.9;")
            ),
     column(7, 
@@ -51,7 +51,7 @@ server <- function(input, output, session) {
   # mod_wt_inp_server("input_tbl_2", input_dta = reactive(imp_dta))
 }
 
-# devtools::load_all()
+devtools::load_all()
 shinyApp(ui, server)
 
 # % of population in 2km of the road

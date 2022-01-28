@@ -54,7 +54,7 @@ mod_wt_inp_test_ui <- function(id){
 #' wt_inp Server Functions
 #'
 #' @noRd 
-mod_wt_inp_server <- function(id, input_dta, export_dta){
+mod_wt_inp_server <- function(id, input_dta, export_dta = reactive(NULL)){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -71,47 +71,33 @@ mod_wt_inp_server <- function(id, input_dta, export_dta){
       weights_clean = reactive(NULL)
     )
     
-    # Step 4. Save/Delet/Reset current weights to the list ====================
+    # Step 4. Save current weights to the list ====================
     save_ws <- mod_wt_save_newsrv(NULL, edited_ws, curr_wt, curr_wt_name)
     observeEvent(save_ws(), {edited_ws$weights_clean <- save_ws})
     
     # Step 5. Delet/Reset current weights to the list =========================
     reset_ws <- mod_wt_delete_newsrv(NULL, edited_ws, curr_wt_name)
-    observeEvent(reset_ws(), {edited_ws$weights_clean <- reset_ws}, ignoreNULL = FALSE)
+    observeEvent(reset_ws$invalidator, {
+      edited_ws$weights_clean <- reset_ws$value
+    }, ignoreInit = TRUE)
     
+    # Step 6. Selected WS must be reflected in the WS name field
     selected_ws <- mod_wt_select_newsrv(NULL, edited_ws, curr_wt_name)
     
-    # Prepare data for update ================================================
-    upd_wt <- reactive({
-      (curr_wt_name())
-      isolate({
-        if (!isTruthy(edited_ws$weights_clean())) {
-          upd_to <- 
-            edited_ws$indicators_list() %>% 
-            select(var_code) %>% 
-            mutate(weight = 0L)
-        } else {
-          req(curr_wt_name() %in% names(edited_ws$weights_clean()))
-          upd_to <- edited_ws$weights_clean()[[curr_wt_name()]]
-        }
-        req(!identical(upd_to, curr_wt()))
-        upd_to
-      })
-    })
-    
+    # Step 7. Update PTI on selecting another ================================
+    upd_wt <- mod_wt_upd_newsrv(NULL, edited_ws, curr_wt, selected_ws)
     
     # TO DO!
-    # == Write some logic for UPDATE WT
-    # == Check reset button with simplified UI.
     # == Upload PTI - Fix
     # == Doanload Weigths and Data modules.
     
     # Step 6. Upload weights from a file =====================================
-    # uploaded_ws <- mod_wt_uplod_srv(ws_name, input_dta, ind_list)
+    uploaded_ws <- mod_wt_uplod_newsrv(NULL, input_dta, ind_list)
     # observeEvent(uploaded_ws(), {uploaded_ws() %>% edited_ws()}, ignoreInit = TRUE)
   
-    # # # Download weights server =============================================
-    # mod_download_wt_srv(id, edited_ws, reactuve(NULL))
+    # Step 8. Download weights server =========================================
+    export_dta_full <- mod_wt_prepdwnld_newsrv(NULL, input_dta, edited_ws, export_dta)
+    mod_wt_dwnld_newsrv(NULL, edited_ws, export_dta_full)
     
     output$wt_tests_out <- renderPrint({
       list(
@@ -159,7 +145,8 @@ mod_wt_name_newsrv <- function(id, selected_ws) {
         }
       })
       
-      reactive(input$existing.weights.name) %>% shiny::throttle(millis = 500)
+      reactive(input$existing.weights.name) %>% 
+        shiny::throttle(millis = 500)
     })
   
 }
@@ -270,7 +257,10 @@ mod_wt_delete_newsrv <- function(id, edited_ws, curr_wt_name) {
     id,
     function(input, output, session) {
       ns <- session$ns
-      return_ws <- reactiveVal()
+      return_ws <- reactiveValues(
+        invalidator = 0,
+        value = reactive(NULL)
+      )
       
       # hide/show
       observe({
@@ -300,17 +290,19 @@ mod_wt_delete_newsrv <- function(id, edited_ws, curr_wt_name) {
         {
           out_wt <- edited_ws$weights_clean()
           out_wt[[curr_wt_name()]] <- NULL
-          if (length(out_wt) == 0)
-            return_ws(NULL)
-          else {
-            out_wt %>% return_ws()
+          return_ws$invalidator <- return_ws$invalidator + 1
+          if (length(out_wt) == 0) {
+            return_ws$value <- reactive(NULL)
+          } else {
+            return_ws$value <- reactive(out_wt)
           }
         })
       
       observeEvent(#
         input$weights.reset,
         {
-          NULL %>% return_ws()
+          return_ws$invalidator <- return_ws$invalidator + 1
+          return_ws$value <- reactive(NULL)
         })
       
       return_ws
@@ -348,7 +340,6 @@ mod_wt_select_newsrv <- function(id, edited_ws, curr_wt_name) {
       observeEvent(
         edited_ws$weights_clean(),
         {
-          # browser()
           if (!isTruthy(edited_ws$weights_clean())) {
             shinyjs::hide(id = "existing.weights", anim = TRUE)
             curr_sel(NULL)
@@ -384,46 +375,184 @@ mod_wt_select_newsrv <- function(id, edited_ws, curr_wt_name) {
           }
         }, ignoreNULL = FALSE)
       
-      # # Update curr_sel if the data changes
-      # observeEvent(
-      #   curr_choices(),
-      #   {
-      #     if (isTruthy(edited_ws$weights_clean())) {
-      #       
-      #       if (
-      #         isTruthy(input$existing.weights) &&
-      #         curr_choices() %in% names(edited_ws$weights_clean())
-      #         ) {
-      #         curr_sel(input$existing.weights)
-      #       } else if (
-      #         isTruthy(input$existing.weights) &&
-      #         !input$existing.weights %in% names(edited_ws$weights_clean())
-      #       ) {
-      #         browser()
-      #         past_sel() %>% 
-      #           unlist() %>% 
-      #           `[`(. %in% names(edited_ws$weights_clean())) %>% 
-      #           `[[`(1) %>% 
-      #           curr_sel()
-      #       } else {
-      #         curr_sel(NULL)
-      #         curr_choices(NULL)
-      #       }
-      #       
-      #     } else {
-      #       curr_sel(NULL)
-      #       curr_choices(NULL)
-      #     }
-      #     
-      #   })
-      
-      # observe({
-      #   updateSelectInput(session, "existing.weights", choices = curr_choices(), selected = curr_sel())
-      # })
-      
       curr_sel
     })
   
 }
 
+
+
+#' Update weights in the input to the selected WS
+#' @noRd
+mod_wt_upd_newsrv <- function(id, edited_ws, curr_wt, selected_wt_name) {
+  moduleServer(#
+    id,
+    function(input, output, session) {
+      ns <- session$ns
+      
+      upd_to_reactive <- reactiveVal()
+      
+      observe({
+        selected_wt_name()
+        isolate({
+          if (!isTruthy(edited_ws$weights_clean())) {
+            upd_to <-
+              edited_ws$indicators_list() %>%
+              select(var_code) %>%
+              mutate(weight = 0L)
+          } else {
+            req(selected_wt_name() %in% names(edited_ws$weights_clean()))
+            upd_to <-
+              edited_ws$weights_clean()[[selected_wt_name()]]
+          }
+          req(!identical(upd_to, curr_wt()))
+          upd_to %>% upd_to_reactive()
+        })
+      })
+      
+      upd_to_reactive
+      
+    })
+  
+}
+
+
+
+#' Download all weights as an excel file
+#' @noRd
+mod_wt_dwnld_newsrv <- function(id, 
+                                edited_ws = reactiveValues(weights_clean = list(1)), 
+                                export_dta) {
+  moduleServer(#
+    id,
+    function(input, output, session) {
+      ns <- session$ns
+      
+      # Hide/show the downaload button
+      observeEvent(
+        edited_ws, {
+          
+          if (length(edited_ws$weights_clean()) == 0 || 
+              !isTruthy(edited_ws$weights_clean()) 
+              # | !isTruthy(edited_ws())
+              ) {
+            shinyjs::hide("weights.download", anim = TRUE)
+          }
+          
+          if (length(edited_ws$weights_clean()) > 0 && 
+              isTruthy(edited_ws$weights_clean())) {
+            shinyjs::show("weights.download", anim = TRUE)
+          }
+          
+        }, ignoreNULL = FALSE, ignoreInit = FALSE)
+      
+      # Write export data
+      output$weights.download <- downloadHandler(
+        filename = function() {
+          # browser()
+          paste(edited_ws$general$country,
+                '--pti-data-and-weights--',
+                Sys.Date(),
+                '.xlsx',
+                sep = '')
+        },
+        content = function(con) {
+          
+          writexl::write_xlsx(export_dta(), con)
+          
+        }
+      )
+    })
+}
+
+#' Prepares weights for download from withing the module
+#' 
+mod_wt_prepdwnld_newsrv <-  function(id,
+                                     input_dta = reactive(NULL),
+                                     edited_ws = reactiveValues(NULL),
+                                     export_ws = reactive(NULL)) {
+  moduleServer(#
+    id,
+    function(input, output, session) {
+      ns <- session$ns
+      
+      export_dta <- reactiveVal(
+        export_dta = list(),
+        file_name = list()
+        )
+      
+      # Observe input data change
+      observe({
+        req(input_dta())
+        
+        # Change data to use here
+        key_vars <- "general|admin\\d|point"
+        # key_vars <- "general"
+        isolate({
+          exist_names <- input_dta() %>% names() %>% `[`(str_detect(., key_vars))
+          export_dta$export_dta <- input_dta() %>% `[`(exist_names)
+          export_dta$file_name <- 
+            export_dta$export_dta$general$country %>% 
+            paste(., '--pti-data-and-weights--', Sys.Date(), '.xlsx', sep = '')
+        })
+      })
+      
+      # observeEvent(edited_ws$weights_clean(),
+      #              {
+      #                browser()
+      #                
+      #                
+      #              }, ignoreInit = TRUE)
+      
+      export_dta
+    })
+}
+
+
+#' Upload WS to the server
+#' @noRd
+#' 
+mod_wt_uplod_newsrv <- function(id, imported_data, pti_indicators) {
+  moduleServer(#
+    id,
+    function(input, output, session) {
+      ns <- session$ns
+      
+      return_wt <- reactiveVal()
+      # observeEvent(imported_data(), imported_data() %>% return_wt())
+      observeEvent(#
+        input$weights_upload,
+        {
+          #############################
+          #### To do: Warn about invalid file to upload when weights ID do not match
+          # Warn about no weights to upload
+          # browser()
+          
+          
+          # Checking upload. Step 1. Checking data
+          uploaded_weights <- fct_template_reader(input$weights_upload$datapath)
+          
+          
+          
+          # uploaded_weights <- fct_template_reader(input$weights_upload$datapath)
+          # out <- imported_data()
+          # out$timestamp <- Sys.time()
+          # out$weights_table <-
+          #   uploaded_weights$weights_table %>%
+          #   filter(var_code %in% pti_indicators()$var_code)
+          # out$weights_clean <-
+          #   uploaded_weights$weights_clean %>%
+          #   imap(~{
+          #     .x %>%
+          #       filter(var_code %in% pti_indicators()$var_code)
+          #   })
+          # return_wt(out)
+          
+          
+        },
+        ignoreInit = TRUE,
+        ignoreNULL = FALSE)
+      reactive({return_wt})
+    })
+}
 

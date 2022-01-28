@@ -60,13 +60,24 @@ mod_DT_inputs_server <- function(id, ind_list, update_dta = reactive(NULL)){
       throttle(500)
     
     # Step 6. Updated values based on some pre-loaded para ===================
-    observeEvent(update_dta(), {
-      # browser()
+    observe({
+      req(update_dta())
       update_dta() %>% 
         pwalk(~ {
+          # browser()
           updateNumericInput(session = session, inputId = ..1, value = ..2)
-          })
-    }, ignoreNULL = TRUE, ignoreInit = TRUE)
+        })
+    })
+    
+    
+    # observeEvent(update_dta(), {
+    #   # browser()
+    #   update_dta() %>% 
+    #     pwalk(~ {
+    #       browser()
+    #       updateNumericInput(session = session, inputId = ..1, value = ..2)
+    #       })
+    # }, ignoreNULL = TRUE, ignoreInit = TRUE)
     
     # Return diagnostic data.
     output$wghts_dt_values = renderPrint({
