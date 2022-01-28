@@ -44,17 +44,21 @@ plot_leaf_line_map2 <-
            show_adm_levels = NULL, 
            ...) {
     if (is.null(show_adm_levels)) {
-      show_shps <- shps_dta
+      show_shps <- 
+        shps_dta %>% 
+        `[`(-length(.))
     } else {
       show_shps <-
         shps_dta %>%
-        `[`(get_adm_levels(.) %in% show_adm_levels)
+        `[`(get_adm_levels(.) %in% show_adm_levels) %>% 
+        `[`(-length(.))
     }
     
     shp_bounds <- sf::st_bbox(show_shps[[1]])
     line_dash <- c("1", "10 10", "5 5", "1 1", "0.5 0.5", "1") %>% rep(5)
     line_size <- c(4, 2, rep(1, 100))
     
+    # cat(Sys.time(), " start lines \n")
     leaf_map %>%
       leaflet::fitBounds(shp_bounds[[1]], shp_bounds[[2]], shp_bounds[[3]], shp_bounds[[4]]) %>%
       leaflet::addMapPane("basetile", zIndex = 400) %>%
@@ -79,4 +83,5 @@ plot_leaf_line_map2 <-
             options = leaflet::pathOptions(pane = "liene1")
           )
       })
+    # cat(Sys.time(), " end lines \n")
   }

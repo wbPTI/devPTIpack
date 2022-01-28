@@ -150,15 +150,15 @@ plot_pti_polygons <- function(leaf_map, poly_dta) {
     append(poly_dta) %>% 
     purrr::reduce(function(x, y) {
       id_var <- stringr::str_c(names(y$admin_level), "Pcod")
-      
+      # browser()
       x %>%
         leaflet::addPolygons(
           data = y$pti_dta,
           fillColor = ~ y$leg$pal(y$pti_dta$pti_score),
-          label = ~ map(y$pti_dta$pti_label, ~ shiny::HTML(.)),
+          label = y$pti_dta$pti_label, # map(y$pti_dta$pti_label, ~ shiny::HTML(.)),
           options = pathOptions(pane = "polygons"),
           group = str_c(y$pti_codes, " (", y$admin_level, ")"),
-          layerId = str_c(y$pti_dta[[id_var]], " ", y$pti_codes, " (", y$admin_level, ")"),
+          # layerId = str_c(y$pti_dta[[id_var]], " ", y$pti_codes, " (", y$admin_level, ")"),
           color = "white",
           weight = 1,
           opacity = 1,
@@ -192,9 +192,10 @@ clean_pti_polygons <- function(leaf_map, poly_dta) {
       purrr::reduce(function(x, y) {
         id_var <- stringr::str_c(names(y$admin_level), "Pcod")
         x %>%
-          leaflet::removeShape(
-            layerId =stringr::str_c(y$pti_dta[[id_var]], " ", 
-                                    y$pti_codes, " (", y$admin_level, ")"))
+          leaflet::clearGroup(group = str_c(y$pti_codes, " (", y$admin_level, ")"))
+          # leaflet::removeShape(
+          #   layerId =stringr::str_c(y$pti_dta[[id_var]], " ", 
+          #                           y$pti_codes, " (", y$admin_level, ")"))
       })
   }
   

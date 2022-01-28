@@ -257,16 +257,19 @@ structure_pti_data <- function(dta, shp_dta) {
         magrittr::extract(str_detect(names(.), .y)) %>%
         magrittr::extract2(1) %>%
         left_join(pti_data, by = names(.x) %>% magrittr::extract(str_detect(., "admin\\d"))) %>%
-        mutate_at(vars(contains("pti_label")),
-                  # list(~ purrr::map(., ~ if(is.null(.x)) htmltools::HTML("No data") else htmltools::HTML(.x))))
-                  list( ~ purrr::map(., ~ if (is.null(.x))
-                    ("No data")
-                    else
-                      (.x)
-                  ))) %>%
+        # mutate_at(vars(contains("pti_label")),
+        #           # list(~ purrr::map(., ~ if(is.null(.x)) htmltools::HTML("No data") else htmltools::HTML(.x))))
+        #           
+        #           list( ~ifelse(is.null(.), "No data", .))
+        #           ) %>%
+        #           # list( ~ purrr::map(., ~ if (is.null(.x))
+        #           #   ("No data")
+        #           #   else
+        #           #     (.x)
+        #           # ))) %>%
         mutate(spatial_name = ifelse(is.na(spatial_name),!!name_var, spatial_name)) %>%
         mutate_at(vars(contains("pti_label")),
-                  list(~ ifelse(
+                  list(~ purrr::map(., ~ifelse(
                     is.na(.),
                     glue::glue(
                       "<strong>{spatial_name}</strong>",
@@ -275,7 +278,7 @@ structure_pti_data <- function(dta, shp_dta) {
                       # "<br/>Administrative level: {admin0Pcod}"
                     ),
                     .
-                  )))
+                  ) %>% htmltools::HTML(.))))
       
       admin_level <- shp_dta %>% names() %>% `[`(str_detect(., .y))
       admin_level <-
