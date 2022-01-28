@@ -49,6 +49,155 @@ mod_wt_inp_test_ui <- function(id){
 }
 
 
+#' Weights input UI full
+#' 
+#' @export
+full_wt_inp_ui <- function(ns) {
+  
+  # controls_col <-
+  tagList(
+    # width = 3,
+    textInput(
+      ns("existing.weights.name"),
+      label = "Name your PTI",
+      placeholder = "Specify name for a weighting scheme",
+      value = NULL,
+      width = "100%"
+    ) %>%
+      div(id = "step_1_name"),
+    
+    tagList(
+      selectInput(
+        ns("existing.weights"),
+        label = "Select existing PTI to modify",
+        choices = NULL,
+        selected = NULL,
+        width = "100%"
+      ) %>%
+        shinyjs::hidden() %>%
+        div(id = "step_2_select_existing")
+      ,
+      uiOutput(ns("save_btn")) %>%
+        div(id = "step_3_save")
+      ,
+      {
+        actionButton(
+          ns("weights.delete"),
+          "Delete PTI",
+          icon = icon("remove"),
+          class = "btn-danger",
+          width = "100%"
+        )
+      } %>%
+        # shinyjs::disabled() %>%
+        shinyjs::hidden() %>%
+        div(id = "step_4_delete")
+    ) %>%
+      div(id = "step_234_controls1") %>%
+      div(id = "step_234_controls2") %>%
+      div(id = "step_234_controls3")
+    ,
+    tagList(
+      downloadButton(
+        ns("weights.download"),
+        "Download PTIs",
+        icon = icon("download"),
+        class = "btn-primary",
+        style = "width: 100%"
+      ) %>%
+        shinyjs::hidden(),
+      
+      downloadButton(
+        ns("dwnld_data"),
+        "Download PTI data",
+        icon = icon("download"),
+        class = "btn-primary",
+        style = "width: 100%"
+      ), 
+      
+      fileInput(
+        ns("weights_upload"),
+        #ns("data_upload"),
+        "Upload PTI",
+        multiple = FALSE,
+        accept = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        width = "100%",
+        buttonLabel = "Browse...",
+        placeholder = "No file selected"
+      )
+    ) %>%
+      div(id = "step_5_downalod_upload1") %>%
+      div(id = "step_5_downalod_upload2")
+  )
+  
+}
+
+
+
+#' Weights input UI full
+#' 
+#' @export
+short_wt_inp_ui <- function(ns) {
+  
+  tagList(
+    # width = 3,
+    textInput(
+      ns("existing.weights.name"),
+      label = "Name your PTI",
+      placeholder = "Specify name for a weighting scheme",
+      value = NULL,
+      width = "100%"
+    ) %>%
+      div(id = "step_1_name"),
+    
+    tagList(
+      uiOutput(ns("save_btn")) %>%
+        div(id = "step_3_save")
+      ,
+      {
+        actionButton(
+          ns("weights.reset"),
+          "Reset PTI",
+          icon = icon("remove"),
+          class = "btn-danger",
+          width = "100%"
+        )
+      } %>%
+        # shinyjs::disabled() %>%
+        shinyjs::hidden() %>%
+        div(id = "step_4_delete")
+    ) %>%
+      div(id = "step_234_controls1") %>%
+      div(id = "step_234_controls2") %>%
+      div(id = "step_234_controls3"),
+    
+    tagList(
+      downloadButton(
+        ns("weights.download"),
+        "Download PTIs",
+        icon = icon("download"),
+        class = "btn-primary",
+        style = "width: 100%"
+      ) %>%
+        shinyjs::hidden(),
+      
+      downloadButton(
+        ns("dwnld_data"),
+        "Download PTI data",
+        icon = icon("download"),
+        class = "btn-primary",
+        style = "width: 100%"
+      )
+      
+    ) %>%
+      div(id = "step_5_downalod_upload1") %>%
+      div(id = "step_5_downalod_upload2")
+  )
+  
+}
+
+
+
 
 
 #' wt_inp Server Functions
@@ -96,8 +245,8 @@ mod_wt_inp_server <- function(id, input_dta, export_dta = reactive(NULL)){
     # observeEvent(uploaded_ws(), {uploaded_ws() %>% edited_ws()}, ignoreInit = TRUE)
   
     # Step 8. Download weights server =========================================
-    export_dta_full <- mod_wt_prepdwnld_newsrv(NULL, input_dta, edited_ws, export_dta)
-    mod_wt_dwnld_newsrv(NULL, edited_ws, export_dta_full)
+    # export_dta_full <- mod_wt_prepdwnld_newsrv(NULL, input_dta, edited_ws, export_dta)
+    mod_wt_dwnld_newsrv(NULL, edited_ws, input_dta = input_dta, export_dta = export_dta)
     
     output$wt_tests_out <- renderPrint({
       list(
@@ -422,89 +571,34 @@ mod_wt_upd_newsrv <- function(id, edited_ws, curr_wt, selected_wt_name) {
 #' @noRd
 mod_wt_dwnld_newsrv <- function(id, 
                                 edited_ws = reactiveValues(weights_clean = list(1)), 
-                                export_dta) {
+                                input_dta = reactive(NULL), 
+                                export_dta = reactive(NULL),
+                                ...) {
   moduleServer(#
     id,
     function(input, output, session) {
       ns <- session$ns
-      
-      # Hide/show the downaload button
-      observeEvent(
-        edited_ws, {
-          
-          if (length(edited_ws$weights_clean()) == 0 || 
-              !isTruthy(edited_ws$weights_clean()) 
-              # | !isTruthy(edited_ws())
-              ) {
-            shinyjs::hide("weights.download", anim = TRUE)
+      dta_dwnld <-
+        reactive({
+          out_list <- list()
+          if (isTruthy(input_dta())) out_list <- out_list %>% prepend(input_dta() %>%  fct_inp_for_exp())
+          if (isTruthy(edited_ws$weights_clean())) {
+            exp_wt <- 
+              edited_ws$weights_clean() %>% 
+              fct_internal_wt_to_exp(edited_ws$indicators_list()) %>% 
+              list(weights_table = .)
+            out_list <- 
+              out_list %>%
+              append(exp_wt)
           }
-          
-          if (length(edited_ws$weights_clean()) > 0 && 
-              isTruthy(edited_ws$weights_clean())) {
-            shinyjs::show("weights.download", anim = TRUE)
-          }
-          
-        }, ignoreNULL = FALSE, ignoreInit = FALSE)
-      
-      # Write export data
-      output$weights.download <- downloadHandler(
-        filename = function() {
-          # browser()
-          paste(edited_ws$general$country,
-                '--pti-data-and-weights--',
-                Sys.Date(),
-                '.xlsx',
-                sep = '')
-        },
-        content = function(con) {
-          
-          writexl::write_xlsx(export_dta(), con)
-          
-        }
-      )
-    })
-}
-
-#' Prepares weights for download from withing the module
-#' 
-mod_wt_prepdwnld_newsrv <-  function(id,
-                                     input_dta = reactive(NULL),
-                                     edited_ws = reactiveValues(NULL),
-                                     export_ws = reactive(NULL)) {
-  moduleServer(#
-    id,
-    function(input, output, session) {
-      ns <- session$ns
-      
-      export_dta <- reactiveVal(
-        export_dta = list(),
-        file_name = list()
-        )
-      
-      # Observe input data change
-      observe({
-        req(input_dta())
-        
-        # Change data to use here
-        key_vars <- "general|admin\\d|point"
-        # key_vars <- "general"
-        isolate({
-          exist_names <- input_dta() %>% names() %>% `[`(str_detect(., key_vars))
-          export_dta$export_dta <- input_dta() %>% `[`(exist_names)
-          export_dta$file_name <- 
-            export_dta$export_dta$general$country %>% 
-            paste(., '--pti-data-and-weights--', Sys.Date(), '.xlsx', sep = '')
+          if (isTruthy(export_dta())) out_list <- out_list %>% append(export_dta())
+          out_list
         })
-      })
-      
-      # observeEvent(edited_ws$weights_clean(),
-      #              {
-      #                browser()
-      #                
-      #                
-      #              }, ignoreInit = TRUE)
-      
-      export_dta
+      # Write export data
+      output$dwnld_data <- downloadHandler(
+        filename = function() {dta_dwnld()$general[1,1][[1]] %>% str_c(., "-pti-data.xlsx")},
+        content = function(con) {writexl::write_xlsx(dta_dwnld(), con)}
+      )
     })
 }
 
@@ -530,7 +624,7 @@ mod_wt_uplod_newsrv <- function(id, imported_data, pti_indicators) {
           
           
           # Checking upload. Step 1. Checking data
-          uploaded_weights <- fct_template_reader(input$weights_upload$datapath)
+          # uploaded_weights <- fct_template_reader(input$weights_upload$datapath)
           
           
           
@@ -555,4 +649,6 @@ mod_wt_uplod_newsrv <- function(id, imported_data, pti_indicators) {
       reactive({return_wt})
     })
 }
+
+
 

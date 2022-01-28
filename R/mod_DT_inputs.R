@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList div
-#' @importFrom DT dataTableOutput
+#' @import DT
 #' @importFrom glue glue
 mod_DT_inputs_ui <- function(id, height = NULL, style = NULL, ...){
   ns <- NS(id)
@@ -125,6 +125,7 @@ add_two_action_btn <- function(id, ns) {
 #' convert ind_list to the data frame with the UI suitable for render as a data table.
 #' 
 #' @noRd
+#' @importFrom glue glue
 prep_input_data <- function(ind_list, ns) {
   ind_list %>% 
     mutate(

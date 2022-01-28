@@ -41,6 +41,7 @@ validate_metadata <- function(shp_path, mtdt_path) {
         na_agg <-
           calc_pti_at_once %>%
           agg_pti_scores(existing_shapes)
+        
         nrow_pti <- 
           na_agg %>%
           map_dfr(~ .x %>% count(pti_name)) %>%
