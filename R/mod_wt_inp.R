@@ -258,8 +258,25 @@ mod_wt_inp_server <- function(id, input_dta, export_dta = reactive(NULL)){
         str(max.level = 3)
     })
     
-    # reactive(list(save_ws = save_ws, 
-    #               current_ws_values = current_ws_values))
+    # Stop any waiter if needed
+    observe({
+      req(!all(is.na(curr_wt()$weight)))
+      waiter::waiter_hide()
+    })
+    
+    # save_ws_out <-
+    reactive({
+      input_dta() %>%
+        append(
+          list(
+            weights_clean = edited_ws$weights_clean(),
+            indicators_list = edited_ws$indicators_list()
+          )
+        )
+    })
+    
+    
+    # edited_ws
  
   })
 }
