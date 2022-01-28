@@ -131,7 +131,8 @@ prep_input_data <- function(ind_list, ns) {
     mutate(
       var_adm_levels = map_chr(admin_levels_years, ~ {str_c(.x$admin_level_name, collapse = ", ")}),
       var_years = map_chr(admin_levels_years, ~ {
-        if (length(.x$years) > 0 && !identical(logical(0), unlist(.x$years))) {
+        if (length(.x$years) > 0 && !(identical(logical(0), unlist(.x$years)) | 
+                                      identical(numeric(0), unlist(.x$years)))) {
           str_c(.x$years, collapse = ", ")
         } else {
           NA_character_
