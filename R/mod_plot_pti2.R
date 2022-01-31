@@ -44,7 +44,7 @@ mod_plot_pti2_srv <- function(id, shp_dta, map_dta, wt_dta, active_tab, target_t
   mod_map_dwnld_srv(id, out_leaf, metadata_path = metadata_path)
   
   # Data download 
-  reactive({list(pre_map_dta = pre_map_dta_3, init_leaf = init_leaf)})
+  reactive({list(pre_map_dta = pre_map_dta_3)})#, init_leaf = init_leaf)})
   
 }
 

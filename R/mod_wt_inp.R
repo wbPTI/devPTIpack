@@ -203,7 +203,7 @@ short_wt_inp_ui <- function(ns) {
 #' wt_inp Server Functions
 #'
 #' @noRd 
-mod_wt_inp_server <- function(id, input_dta, export_dta = reactive(NULL)){
+mod_wt_inp_server <- function(id, input_dta, plotted_dta = reactive(NULL)){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -245,8 +245,8 @@ mod_wt_inp_server <- function(id, input_dta, export_dta = reactive(NULL)){
     # observeEvent(uploaded_ws(), {uploaded_ws() %>% edited_ws()}, ignoreInit = TRUE)
   
     # Step 8. Download weights server =========================================
-    # export_dta_full <- mod_wt_prepdwnld_newsrv(NULL, input_dta, edited_ws, export_dta)
-    mod_wt_dwnld_newsrv(NULL, edited_ws, input_dta = input_dta, export_dta = export_dta)
+    mod_wt_dwnld_newsrv(NULL, edited_ws, input_dta = input_dta, 
+                        plotted_dta = plotted_dta)
     
     output$wt_tests_out <- renderPrint({
       list(
@@ -589,28 +589,73 @@ mod_wt_upd_newsrv <- function(id, edited_ws, curr_wt, selected_wt_name) {
 mod_wt_dwnld_newsrv <- function(id, 
                                 edited_ws = reactiveValues(weights_clean = list(1)), 
                                 input_dta = reactive(NULL), 
-                                export_dta = reactive(NULL),
+                                plotted_dta = reactive(NULL),
                                 ...) {
   moduleServer(#
     id,
     function(input, output, session) {
       ns <- session$ns
+      
+      out_list <- reactiveValues()
+      
+      observeEvent(#
+        input_dta(), {
+          req(input_dta())
+          if (isTruthy(input_dta())) {
+            input_dta() %>%
+              fct_inp_for_exp() %>%
+              iwalk( ~ {
+                out_list[[.y]] <- .x
+              })
+          }
+        })
+      
+      observeEvent(#
+        edited_ws$weights_clean(),
+        {
+          if (isTruthy(edited_ws$weights_clean())) {
+            out_list[["weights_table"]] <-
+              edited_ws$weights_clean() %>%
+              fct_internal_wt_to_exp(edited_ws$indicators_list())
+          } else {
+            out_list[["weights_table"]] <- NULL
+          }
+        },
+        ignoreInit = TRUE,
+        ignoreNULL = FALSE)
+      
+      prev_ploted_names <- reactiveVal(NULL)
+
+      observeEvent(#
+        plotted_dta(),
+        {
+          if (isTruthy(plotted_dta())) {
+            plotted_dta() %>%
+              get_pti_scores_export() %>%
+              iwalk(~{
+                prev_ploted_names() %>% 
+                  append(.y) %>% unlist() %>% unique() %>% 
+                  prev_ploted_names()
+                out_list[[.y]] <- .x
+              })
+          } else {
+            prev_ploted_names() %>% 
+              walk(~{
+                if (.x %in% names(out_list)) {
+                  out_list[[.x]] <- NULL
+                }
+              })
+            prev_ploted_names(NULL)
+          }
+        },
+        ignoreInit = TRUE,
+        ignoreNULL = FALSE)
+      
       dta_dwnld <-
         reactive({
-          out_list <- list()
-          if (isTruthy(input_dta())) out_list <- out_list %>% prepend(input_dta() %>%  fct_inp_for_exp())
-          if (isTruthy(edited_ws$weights_clean())) {
-            exp_wt <- 
-              edited_ws$weights_clean() %>% 
-              fct_internal_wt_to_exp(edited_ws$indicators_list()) %>% 
-              list(weights_table = .)
-            out_list <- 
-              out_list %>%
-              append(exp_wt)
-          }
-          if (isTruthy(export_dta())) out_list <- out_list %>% append(export_dta())
-          out_list
+          out_list %>% reactiveValuesToList() %>% keep(isTruthy)
         })
+      
       # Write export data
       output$dwnld_data <- downloadHandler(
         filename = function() {dta_dwnld()$general[1,1][[1]] %>% str_c(., "-pti-data.xlsx")},

@@ -17,8 +17,8 @@ fct_inp_for_exp <- function(dta) {
     }) %>%
     distinct()
   
-  new_names <-
-    setNames(object = new_names$var_name, new_names$var_code)
+  new_names <- setNames(object = new_names$var_name, 
+                        new_names$var_code)
   
   dta %>%
     `[`(str_detect(names(.), "general|admin\\d_|point_")) %>%

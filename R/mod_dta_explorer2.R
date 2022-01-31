@@ -11,7 +11,7 @@ mod_dta_explorer2_server <-
     first_open <- mod_first_open_count_server(id, active_tab, target_tabs)
     
     # Extracting PTI 
-    indicators_list <- mod_indicarots_srv(id, input_dta, "fltr_exclude_explorer")
+    indicators_list <- reactive({get_indicators_list(input_dta(), "fltr_exclude_explorer")})
     
     # Clean explorer data
     pre_map_dta_1 <- reactive({
@@ -39,6 +39,7 @@ mod_dta_explorer2_server <-
       req(sel_adm_levels())
       req(n_bins())
       req(first_open())
+      # browser()
       pre_map_dta_2() %>%
         filter_admin_levels(sel_adm_levels()) %>%
         add_legend_paras(nbins = n_bins()) %>%

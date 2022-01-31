@@ -100,13 +100,13 @@ mod_weights_server <- function(id, imported_data, export_recoded_data){
   mod_download_wt_srv(id, edited_ws, export_recoded_data)
   
     
-  observe({
-    # req(imported_data())
-    # req(deleted_ws())
-    # selected_ws_name()
-    # req(current_ws_values())
-    # browser()
-  })
+  # observe({
+  #   req(save_ws())
+  #   # req(deleted_ws())
+  #   # selected_ws_name()
+  #   req(current_ws_values())
+  #   browser()
+  # })
   
   reactive(list(save_ws = save_ws, 
                 current_ws_values = current_ws_values))

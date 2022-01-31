@@ -131,7 +131,7 @@ mod_get_admin_levels_srv <- function(id, preplot_dta,
                 (any(show_adm_levels %in% names(dta_levels())) |
                  any(show_adm_levels %in% dta_levels()))
                 ) {
-              
+              # browser()
               dta_levels() %>% 
                 `[`(names(.) %in% show_adm_levels |
                       (.) %in% show_adm_levels) %>%  

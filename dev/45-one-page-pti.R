@@ -8,15 +8,15 @@ library(shiny)
 
 
 # shp_dta <- "../other_countries/south_sudan/South_Sudan.rds" %>% read_rds() #devPTIpack::ukr_shps
-imp_dta <- ukr_mtdt_full
+imp_dta <- #ukr_mtdt_full
   # # "../other_countries/south_sudan/South_Sudan--metadata-2021-11-29_v2.1.xlsx" %>%
   # # "../other_countries/somalia/mtdt-2021-11-08-00-53-06.xlsx" %>%
-  # "../other_countries/tzn/Tanzania--metadata-2022-01-28.xlsx" %>%
-  # devPTIpack::fct_template_reader()
+  "../other_countries/tzn/Tanzania--metadata-2022-01-28.xlsx" %>%
+  devPTIpack::fct_template_reader()
 
 
-shp_dta <- ukr_shp
-  # "../other_countries/tzn/Tanzania.rds" %>% read_rds()
+shp_dta <- #ukr_shp
+  "../other_countries/tzn/Tanzania.rds" %>% read_rds()
 
 # Generic WT page layout
 
@@ -48,7 +48,9 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   
   # Weights
-  wt_dta <- mod_wt_inp_server("input_tbl_1", input_dta = reactive(imp_dta))
+  wt_dta <- mod_wt_inp_server("input_tbl_1", 
+                              input_dta = reactive(imp_dta), 
+                              plotted_dta = reactive(plotted_dta()$pre_map_dta()))
   
   observe({
     req(wt_dta()$weights_clean)
@@ -88,3 +90,7 @@ server <- function(input, output, session) {
 
 devtools::load_all()
 shinyApp(ui, server)
+
+
+
+# Convertin one page PTI into a module
