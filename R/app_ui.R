@@ -1,7 +1,7 @@
 
 
 #' App UI function - KEY!
-#' @import shiny
+#' @importFrom shiny navbarPage div tabPanel
 #' @importFrom golem get_golem_options
 #' @noRd
 app_ui <- function(request) {
@@ -58,7 +58,7 @@ app_ui <- function(request) {
 
 
 #' App UI function - for the PTI display only
-#' @import shiny
+#' @importFrom shiny navbarPage div tabPanel
 #' @importFrom golem get_golem_options
 #' @noRd
 app_server_sample_pti_vis_ui <- function(request) {
@@ -117,7 +117,7 @@ app_server_sample_pti_vis_ui <- function(request) {
 
 
 #' App UI function - for the PTI display only
-#' @import shiny
+#' @importFrom shiny navbarPage div tabPanel
 #' @importFrom golem get_golem_options
 #' @export
 app_new_pti_ui <- function(request) {
@@ -174,7 +174,7 @@ app_new_pti_ui <- function(request) {
 #' This function is internally used to add external
 #' resources inside the Shiny application.
 #'
-#' @import shiny
+#' @importFrom shiny tags
 #' @importFrom golem add_resource_path activate_js favicon bundle_resources
 #' @importFrom bsplus use_bs_tooltip
 #' @noRd

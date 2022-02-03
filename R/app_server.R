@@ -2,7 +2,8 @@
 #'
 #' @param input,output,session Internal parameters for {shiny}.
 #'     DO NOT REMOVE.
-#' @import shiny dplyr purrr stringr readr
+#' @import dplyr purrr stringr readr
+#' @importFrom shiny reactive reactiveValues observeEvent callModule observe req isTruthy
 #' @importFrom glue glue
 #' @noRd
 app_server <- function(input, output, session, shape_path = NULL, data_path = NULL, metadata_path = NULL) {
@@ -106,7 +107,8 @@ app_server <- function(input, output, session, shape_path = NULL, data_path = NU
 #'
 #' @param input,output,session Internal parameters for {shiny}.
 #'     DO NOT REMOVE.
-#' @import shiny dplyr purrr stringr readr
+#' @import dplyr purrr stringr readr
+#' @importFrom shiny reactive reactiveValues observeEvent callModule observe req isTruthy
 #' @importFrom glue glue
 #' @noRd
 app_server_input_simple <- function(input, output, session, shape_path = NULL, data_path = NULL, 
@@ -190,7 +192,8 @@ app_server_input_simple <- function(input, output, session, shape_path = NULL, d
 #' 
 #' @param input,output,session Internal parameters for {shiny}.
 #'     DO NOT REMOVE.
-#' @import shiny dplyr purrr stringr readr
+#' @import dplyr purrr stringr readr
+#' @importFrom shiny reactive reactiveValues observeEvent callModule observe req isTruthy
 #' @importFrom glue glue
 #' @noRd
 app_server_sample_pti_vis <- function(input, output, session, shape_path = NULL, data_path = NULL, 
@@ -245,7 +248,8 @@ app_server_sample_pti_vis <- function(input, output, session, shape_path = NULL,
 #' 
 #' @param input,output,session Internal parameters for {shiny}.
 #'     DO NOT REMOVE.
-#' @import shiny dplyr purrr stringr readr
+#' @import dplyr purrr stringr readr
+#' @importFrom shiny reactive reactiveValues observeEvent callModule observe req isTruthy
 #' @importFrom glue glue
 #' @noRd
 app_new_pti_server <- function(input, output, session, shape_path = NULL, data_path = NULL, 

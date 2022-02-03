@@ -3,7 +3,7 @@
 #' @param leaf_map either a `leaflet()` or a leaflet proxy object. 
 #' 
 #' @export
-#' @import shiny
+#' @importFrom shiny moduleServer observeEvent reactiveVal
 #' @importFrom leaflet leaflet renderLeaflet
 mod_plot_init_leaf_server <- function(id, shp_dta, ...){
   moduleServer( id, function(input, output, session){

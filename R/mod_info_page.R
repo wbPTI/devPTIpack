@@ -19,7 +19,7 @@ mod_info_page_ui <- function(id){
 #' info_page Server Function
 #'
 #' @noRd
-#' @import shiny
+#' @importFrom shiny updateNavbarPage showModal modalDialog actionButton modalButton removeModal reactive debounce
 #' @importFrom htmltools HTML
 mod_info_page_server <-
   function(input, output, session, first_tab) {

@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList div
-#' @import DT
+#' @importFrom DT dataTableOutput
 #' @importFrom glue glue
 mod_DT_inputs_ui <- function(id, height = NULL, style = NULL, ...){
   ns <- NS(id)
@@ -33,6 +33,7 @@ mod_DT_inputs_ui <- function(id, height = NULL, style = NULL, ...){
 
 #' dtNumInputs Server Functions
 #'
+#' @importFrom DT renderDataTable
 #' @noRd 
 mod_DT_inputs_server <- function(id, ind_list, update_dta = reactive(NULL)){
   moduleServer( id, function(input, output, session){
@@ -260,11 +261,18 @@ make_vis_targets_for_dt <- function(nested_dta) {
 }
 
 
-#' preparing renderable datatable
+#' Preparing DT-ready table based on indicators list
+#' 
+#' @param ind_list list of tibbles based on stadradised PTI inputs prepares with
+#'   `get_indicators_list()`
+#'   
+#' @description  More, on who we wrote it. Some help with css 
+#'   http://live.datatables.net/qocanadu/44/edit
+#'   We used scrollResize from https://datatables.net/blog/2017-12-31
+#'   
+#' @importFrom DT datatable formatStyle styleEqual
+#' @importFrom htmlwidgets JS
 #' @noRd
-#' some help with css here: http://live.datatables.net/qocanadu/44/edit
-#' We used scrollResize from https://datatables.net/blog/2017-12-31
-#' css 
 make_input_DT <- function(ind_list, ns = function(x) x, width = "100%", height = "100%", scrollY="450px") {
   
   nested_dta <- prep_input_data(ind_list, ns = ns)

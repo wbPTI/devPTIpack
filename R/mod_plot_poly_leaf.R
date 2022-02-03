@@ -20,7 +20,7 @@ mod_plot_poly_leaf_server_ui <- function(id){
 #' 
 #' 
 #' @export
-#' @import shiny
+#' @importFrom shiny moduleServer observeEvent reactiveVal
 #' @importFrom leaflet leafletProxy
 mod_plot_poly_leaf_server <- function(id, preplot_dta, shp_dta, ...){
   moduleServer( id, function(input, output, session){
@@ -69,7 +69,7 @@ mod_plot_poly_leaf_server <- function(id, preplot_dta, shp_dta, ...){
 #' @describeIn mod_plot_poly_leaf_server complementing module ment to reproduce the map and return a simple leaflet object
 #' 
 #' @export
-#' @import shiny
+#' @importFrom shiny moduleServer observeEvent
 mod_plot_leaf_export <-
   function(id, shp_dta, preplot_dta, selected_layer, ...) {
     moduleServer(id, function(input, output, session) {

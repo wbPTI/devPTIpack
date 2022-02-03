@@ -1,7 +1,7 @@
 #' dta_explorer2 module for plotting data explorer map based on the PTI inputs.
 #'
 #' @export
-#' @import shiny
+#' @importFrom shiny reactive
 #' 
 mod_dta_explorer2_server <- 
   function(id, shp_dta, input_dta, active_tab, target_tabs, 
@@ -65,7 +65,7 @@ mod_dta_explorer2_server <-
 
 #' @describeIn mod_dta_explorer2_server data explorer page UI
 #'
-#' @import shiny 
+#' @importFrom shiny fluidRow tags
 #' @importFrom leaflet leafletOutput
 mod_dta_explorer2_ui <- function(id, multi_choice, ...){
   ns <- NS(id)
@@ -87,7 +87,7 @@ mod_dta_explorer2_ui <- function(id, multi_choice, ...){
 
 #' @describeIn mod_dta_explorer2_server panel with the N bins selector
 #'
-#' @import shiny 
+#' @importFrom shiny absolutePanel
 mod_dta_explorer2_side_ui <- function(id, multi_choice, ...){
   ns <- NS(id)
   
@@ -110,7 +110,7 @@ mod_dta_explorer2_side_ui <- function(id, multi_choice, ...){
 
 #' @describeIn mod_dta_explorer2_server UI of the variables selector in Nbins side panel
 #' 
-#' @import shiny 
+#' @importFrom shiny tagList
 #' @importFrom shinyWidgets pickerInput pickerOptions
 mod_select_var_ui <- function(id, multi_choice = NULL) {
   ns <- NS(id)
@@ -137,8 +137,8 @@ mod_select_var_ui <- function(id, multi_choice = NULL) {
 
 #' @describeIn mod_dta_explorer2_server server logic for filtering variables
 #' 
-#' @import shiny 
-#' @importFrom shinyWidgets pickerInput pickerOptions
+#' @importFrom shiny observeEvent reactive debounce eventReactive
+#' @importFrom shinyWidgets pickerInput pickerOptions updatePickerInput
 mod_fltr_sel_var2_srv <- function(id, preplot_dta, choices, first_open, ...) {
   
   moduleServer(#

@@ -5,7 +5,7 @@
 #' @param active_tab,target_tabs are single character and a single/vector
 #' 
 #' @export
-#' @import shiny
+#' @importFrom shiny reactiveVal observeEvent
 mod_first_open_count_server <- function(id, active_tab, target_tabs, ...){
   moduleServer( id, function(input, output, session){
     ns <- session$ns

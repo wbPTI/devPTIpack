@@ -1,7 +1,7 @@
 #' mod_plot_poly_legend_server implements logic of dynamically plotting legend of the selected layer/layers
 #'
 #' @export
-#' @import shiny
+#' @importFrom shiny observeEvent
 #' @importFrom leaflet leafletProxy
 mod_plot_poly_legend_server <- function(id, map_dta, selected_layer){
   moduleServer( id, function(input, output, session){

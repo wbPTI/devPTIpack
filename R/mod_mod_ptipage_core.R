@@ -6,8 +6,8 @@
 #'
 #' @noRd 
 #'
-#' @importFrom shiny NS tagList 
-mod_page_twocol_pti_ui <- function(id, 
+#' @importFrom shiny NS tagList column div
+mod_ptipage_twocol_ui <- function(id, 
                                    map_height = "calc(95vh - 60px)",
                                    wt_height = "calc(95vh - 250px)", 
                                    dt_style = "zoom:0.9;",
@@ -15,6 +15,7 @@ mod_page_twocol_pti_ui <- function(id,
   ns <- NS(id)
   fillPage(
     shinyjs::useShinyjs(),
+    golem_add_external_resources(),
     div(
       column(4, 
              mod_wt_inp_ui(ns(NULL), 
@@ -34,7 +35,7 @@ mod_page_twocol_pti_ui <- function(id,
 #' page_pti Server Functions
 #'
 #' @noRd 
-mod_page_pti_server <- function(id, 
+mod_ptipage_newsrv <- function(id, 
                                 imp_dta = reactive(NULL), 
                                 shp_dta = reactive(NULL)){
   moduleServer( id, function(input, output, session){

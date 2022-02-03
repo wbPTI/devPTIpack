@@ -1,6 +1,6 @@
 #' @describeIn app_new_pti_ui onepage_pti UI
 #' @export
-#' @import shiny
+#' @importFrom shiny tagList
 #' @importFrom golem get_golem_options 
 mod_pti_onepage_ui <-
   function(request, id) {

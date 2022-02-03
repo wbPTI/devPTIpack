@@ -6,7 +6,7 @@
 #'
 #' @noRd 
 #'
-#' @importFrom shiny NS tagList dataTableOutput actionButton
+#' @importFrom shiny NS tagList actionButton
 mod_weights_rand_ui <- function(id){
   ns <- NS(id)
   uiOutput(ns("rand_weights_ui"))
