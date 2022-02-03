@@ -88,7 +88,7 @@ full_wt_inp_ui <- function(ns) {
         )
       } %>%
         # shinyjs::disabled() %>%
-        shinyjs::hidden() %>%
+        # shinyjs::hidden() %>%
         div(id = "step_4_delete")
     ) %>%
       div(id = "step_234_controls1") %>%
@@ -162,7 +162,7 @@ short_wt_inp_ui <- function(ns) {
         )
       } %>%
         # shinyjs::disabled() %>%
-        shinyjs::hidden() %>%
+        # shinyjs::hidden() %>%
         div(id = "step_4_delete")
     ) %>%
       div(id = "step_234_controls1") %>%
@@ -328,8 +328,21 @@ mod_wt_save_newsrv <- function(id, edited_ws, curr_wt, curr_wt_name) {
       
       # Activate/deactivate save button. No name specified ========
       observeEvent(
-        curr_wt_name(),
+        list(curr_wt_name(), curr_wt()),
         {
+          cur_val <- curr_wt()$weight
+          cur_val[is.na(cur_val)] <- 0
+          if (all(cur_val == 0)) {
+            actionButton(
+              ns("weights.save"),
+              "All weights must not be zero",
+              class = "btn-warning",
+              width = "100%"
+            ) %>%
+              shinyjs::disabled() %>%
+              current_btn_ui()
+          } else {
+            
           if (!isTruthy(curr_wt_name())) {
             actionButton(
               ns("weights.save"),
@@ -351,6 +364,7 @@ mod_wt_save_newsrv <- function(id, edited_ws, curr_wt, curr_wt_name) {
               # shinyjs::enable()%>%
               current_btn_ui()
           }
+          }
         },
         ignoreInit = FALSE,
         ignoreNULL = FALSE)
@@ -363,6 +377,19 @@ mod_wt_save_newsrv <- function(id, edited_ws, curr_wt, curr_wt_name) {
         req(curr_wt_name())
         # req(length(after_delete_ws()$weights_clean) > 0)
 
+        cur_val <- curr_wt()$weight
+        cur_val[is.na(cur_val)] <- 0
+        if (all(cur_val == 0)) {
+          actionButton(
+            ns("weights.save"),
+            "All weights must not be zero",
+            class = "btn-warning",
+            width = "100%"
+          ) %>%
+            shinyjs::disabled() %>%
+            current_btn_ui()
+        } else {
+        
         if (curr_wt_name() %in% names(edited_ws$weights_clean())) {
           existing_values <- edited_ws$weights_clean()[[curr_wt_name()]]
           
@@ -394,6 +421,7 @@ mod_wt_save_newsrv <- function(id, edited_ws, curr_wt, curr_wt_name) {
             width = "100%"
           ) %>%
             current_btn_ui()
+        }
         }
       })
       
@@ -427,11 +455,15 @@ mod_wt_delete_newsrv <- function(id, edited_ws, curr_wt_name) {
       # hide/show
       observe({
         if (!isTruthy(edited_ws$weights_clean())) {
-          shinyjs::hide(id = "weights.delete", anim = TRUE)
-          shinyjs::hide(id = "weights.reset", anim = TRUE)
+          # shinyjs::hide(id = "weights.delete", anim = TRUE)
+          # shinyjs::hide(id = "weights.reset", anim = TRUE)
+          shinyjs::disable(id = "weights.delete")
+          shinyjs::disable(id = "weights.reset")
         } else {
-          shinyjs::show(id = "weights.delete", anim = TRUE)
-          shinyjs::show(id = "weights.reset", anim = TRUE)
+          # shinyjs::show(id = "weights.delete", anim = TRUE)
+          # shinyjs::show(id = "weights.reset", anim = TRUE)
+          shinyjs::enable(id = "weights.delete")
+          shinyjs::enable(id = "weights.reset")
         }
       })
       
