@@ -24,9 +24,9 @@ mod_DT_inputs_ui <- function(id, height = NULL, style = NULL, ...){
       )
     )) %>%
     shiny::tagList(
-      .,
-      if (is.null(options("golem.app.prod")) || !isTRUE(options("golem.app.prod")[[1]]))
-        shiny::verbatimTextOutput(ns('wghts_dt_values'))
+      # .,
+      # if (is.null(options("golem.app.prod")) || !isTRUE(options("golem.app.prod")[[1]]))
+      #   shiny::verbatimTextOutput(ns('wghts_dt_values'))
       ) %>% 
     div(style = style, ...)
 }

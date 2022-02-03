@@ -70,7 +70,7 @@ mod_calc_pti2_server <- function(id, shp_dta, input_dta, wt_dta){
     shiny::observe({
       shiny::req(length(calc_pti()) > 0)
       shiny::showNotification("PTIs are calculated and extrapolated", 
-                              type = "default", duration = 5)
+                              type = "message", duration = 5)
     })
     
     calc_pti

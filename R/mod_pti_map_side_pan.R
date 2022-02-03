@@ -97,16 +97,24 @@ mod_get_admin_levels_ui <-
 
 #' Get number of bins Server
 #' 
-#' @param preplot_dta reactive data object with PTI data to plot.
-#' @param def_adm_opt,show_adm_opt,choose_adm_opt character (sinple values) for 
-#'      of golem options to search for clues about defualt admin layers to print
+#' @param cur_levels reactive data object with PTI data to plot.
+#' @param def_adm_opt,show_adm_opt character (simple values) for 
+#'      of golem options to search for clues about default admin layers to print
 #'      or choose from.
+#' @param show_adm_levels character vectors with names of admin 
+#'      levels to show and hide.
+#' @param choose_adm_opt,choose_adm_levels,default_adm_level,def_adm_opt disabled
 #'
 #' @importFrom shiny debounce reactive moduleServer isTruthy
-mod_get_admin_levels_srv <- function(id, preplot_dta,
-                                     def_adm_opt = "default_adm_level",
+mod_get_admin_levels_srv <- function(id, 
+                                     cur_levels,
+                                     show_adm_levels = NULL,
                                      show_adm_opt = "show_adm_levels",
-                                     choose_adm_opt = "choose_adm_levels",....) {
+                                     default_adm_level = NULL,
+                                     choose_adm_levels = NULL,
+                                     def_adm_opt = "default_adm_level",
+                                     choose_adm_opt = "choose_adm_levels",
+                                     ...) {
   moduleServer(#
     id,
     function(input, output, session) {
@@ -116,70 +124,77 @@ mod_get_admin_levels_srv <- function(id, preplot_dta,
       chb_iu <- reactiveVal(NULL)
       dta_levels <- reactiveVal(NULL)
       
-      default_adm_level <- get_golem_options(def_adm_opt)
-      show_adm_levels <- get_golem_options(show_adm_opt)
-      choose_adm_levels <- get_golem_options(choose_adm_opt)
+      if(!is.null(get_golem_options(show_adm_opt))) show_adm_levels <- get_golem_options(show_adm_opt)
+      # if(!is.null(get_golem_options(choose_adm_opt))) choose_adm_levels <- get_golem_options(choose_adm_opt)
+      # if(!is.null(get_golem_options(def_adm_opt))) default_adm_level <- get_golem_options(def_adm_opt)
       
       observeEvent(
-        preplot_dta(),
+        cur_levels(),
         {
-          req(preplot_dta())
-          preplot_dta() %>% get_current_levels() %>% dta_levels()
-          
-          if (!is.null(choose_adm_levels) && choose_adm_levels) {
-            if (!is.null(show_adm_levels) &&
-                (any(show_adm_levels %in% names(dta_levels())) |
-                 any(show_adm_levels %in% dta_levels()))
-                ) {
-              # browser()
-              dta_levels() %>% 
-                `[`(names(.) %in% show_adm_levels |
-                      (.) %in% show_adm_levels) %>%  
-                dta_levels()
-              
-            }
-            
-            plot_levels <- c(all = "All", dta_levels())  %>% unname()
-            
-            radioButtons(ns("adm_lvls_chb"), NULL, plot_levels, "All", inline = TRUE) %>%
-              column(12, .) %>% 
-              fluidRow(align="center") %>% 
-              chb_iu()
-            
-            dta_levels() %>% out_dta()
-            
-          } else {
-            if (isTruthy(default_adm_level) &&
-                (any(default_adm_level %in% names(dta_levels())) |
-                    any(default_adm_level %in% dta_levels()))) {
-              
-              dta_levels() %>% 
-                `[`(names(.) %in% default_adm_level | 
-                      (.) %in% default_adm_level) %>%  
-                dta_levels()
-              
-            } else if (isTruthy(default_adm_level) && 
-                       any(str_detect(default_adm_level, regex("all", ignore_case = T)))) {
-              
-              # Do nothing and return full data
-              
-            } else if (isTruthy(default_adm_level) &&
-                       !(any(default_adm_level %in% names(dta_levels())) |
-                         any(default_adm_level %in% dta_levels()))) {
-              
-              dta_levels() %>% 
-                `[`(length(.)) %>%
-                dta_levels()
-              
-            } else  if (!isTruthy(default_adm_level) && 
-                       isTruthy(show_adm_levels) &&
-                       any(show_adm_levels %in% names(dta_levels()))) {
-              
-              dta_levels() %>% 
-                `[`(names(.) %in% show_adm_levels | 
-                      (.) %in% show_adm_levels) %>%
-                dta_levels()
-              
+          req(cur_levels())
+          cur_levels() %>% dta_levels()
+          # browser()
+          # if (!is.null(choose_adm_levels) && choose_adm_levels) {
+          #   if (!is.null(show_adm_levels) &&
+          #       (any(show_adm_levels %in% names(dta_levels())) |
+          #        any(show_adm_levels %in% dta_levels()))
+          #       ) {
+          #     # browser()
+          #     dta_levels() %>%
+          #       `[`(names(.) %in% show_adm_levels |
+          #             (.) %in% show_adm_levels) %>%
+          #       dta_levels()
+          # 
+          #   }
+          # 
+          #   plot_levels <- c(all = "All", dta_levels())  %>% unname()
+          # 
+          #   radioButtons(ns("adm_lvls_chb"), NULL, plot_levels, "All", inline = TRUE) %>%
+          #     column(12, .) %>%
+          #     fluidRow(align="center") %>%
+          #     chb_iu()
+          # 
+          #   dta_levels() %>% out_dta()
+          # 
+          # } else 
+          {
+            {
+              if (isTruthy(default_adm_level)) {
+                if (any(default_adm_level %in% names(dta_levels())) |
+                    any(default_adm_level %in% dta_levels())) {
+                  dta_levels() %>%
+                    `[`(names(.) %in% default_adm_level |
+                          (.) %in% default_adm_level) %>%
+                    dta_levels()
+                  
+                } else if (any(str_detect(default_adm_level, regex("all", ignore_case = T)))) {
+                  # Do nothing and return full data
+                  
+                } else if (!(any(default_adm_level %in% names(dta_levels())) |
+                             any(default_adm_level %in% dta_levels()))) {
+                  dta_levels() %>%
+                    `[`(length(.)) %>%
+                    dta_levels()
+                }
+              } else {
+                if (isTruthy(show_adm_levels) && 
+                    any(show_adm_levels %in% names(dta_levels()) | 
+                        show_adm_levels %in% dta_levels())) {
+                  
+                  dta_levels() %>% 
+                    `[`(names(.) %in% show_adm_levels | 
+                          (.) %in% show_adm_levels) %>%
+                    dta_levels()
+                  
+                } else if (isTruthy(show_adm_levels) &&
+                           !any(show_adm_levels %in% names(dta_levels()) | 
+                                show_adm_levels %in% dta_levels()) &&
+                           length(show_adm_levels) == 1) {
+                  
+                  dta_levels() %>% `[`(length(.)) %>% dta_levels()
+                  
+                }
+              }
             }
             
             dta_levels() %>% out_dta()

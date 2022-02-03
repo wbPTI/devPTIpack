@@ -28,7 +28,8 @@ mod_dta_explorer2_server <-
     # N bins, selected admin levels and choose variables modules
     pre_map_dta_2 <- mod_fltr_sel_var2_srv(id, pre_map_dta_1, var_choices, first_open)
     
-    sel_adm_levels <- mod_get_admin_levels_srv(id, pre_map_dta_2,
+    sel_adm_levels <- mod_get_admin_levels_srv(id, 
+                                               reactive(get_current_levels(pre_map_dta_2())),
                                                def_adm_opt = "explorer_default_adm",
                                                show_adm_opt = "explorer_show_adm",
                                                choose_adm_opt = "explorer_choose_adm")

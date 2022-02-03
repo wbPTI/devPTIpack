@@ -5,6 +5,8 @@
 #' @export
 #' @importFrom shiny NS tagList 
 mod_plot_pti2_srv <- function(id, shp_dta, map_dta, wt_dta, active_tab, target_tabs, 
+                              default_adm_level = NULL, 
+                              show_adm_levels = NULL,
                               metadata_path = NULL,  ...) {
   
   # Check if the tab is opened at first
@@ -17,7 +19,10 @@ mod_plot_pti2_srv <- function(id, shp_dta, map_dta, wt_dta, active_tab, target_t
   pre_map_dta_2 <- mod_drop_inval_adm(id, pre_map_dta_1, wt_dta)
 
   # N bins and selected admin levels modules
-  sel_adm_levels <- mod_get_admin_levels_srv(id, pre_map_dta_2)
+  sel_adm_levels <- mod_get_admin_levels_srv(id, 
+                                             reactive(get_current_levels(pre_map_dta_2())), 
+                                             default_adm_level = default_adm_level,
+                                             show_adm_levels = show_adm_levels)
   n_bins <- mod_get_nbins_srv(id)
   
   # Filtering not relevant admin levels

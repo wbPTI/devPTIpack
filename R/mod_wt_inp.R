@@ -5,11 +5,8 @@
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
 #' @noRd 
-#' @export
-#'
 #'
 #' @importFrom shiny NS tagList 
-#' 
 #' 
 #' @examples 
 #' 
@@ -41,6 +38,8 @@ mod_wt_inp_ui <- function(id, full_ui = FALSE, height = "550px", dt_style, ...){
   # %>%  fillCol()
 }
     
+#' @describeIn mod_wt_inp_ui
+#' 
 mod_wt_inp_test_ui <- function(id){
   ns <- NS(id)
   
@@ -49,9 +48,8 @@ mod_wt_inp_test_ui <- function(id){
 }
 
 
-#' Weights input UI full
+#' @describeIn mod_wt_inp_ui Weights input UI full
 #' 
-#' @export
 full_wt_inp_ui <- function(ns) {
   
   # controls_col <-
@@ -134,9 +132,9 @@ full_wt_inp_ui <- function(ns) {
 
 
 
-#' Weights input UI full
+#' @describeIn mod_wt_inp_ui  Weights input UI full
 #' 
-#' @export
+#' 
 short_wt_inp_ui <- function(ns) {
   
   tagList(
@@ -200,9 +198,8 @@ short_wt_inp_ui <- function(ns) {
 
 
 
-#' wt_inp Server Functions
+#' @describeIn mod_wt_inp_ui  Server Functions
 #'
-#' @noRd 
 mod_wt_inp_server <- function(id, input_dta, plotted_dta = reactive(NULL)){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
@@ -291,9 +288,8 @@ mod_wt_inp_server <- function(id, input_dta, plotted_dta = reactive(NULL)){
 
 
 
-#' New WT names server processor.
+#' @describeIn mod_wt_inp_ui  New WT names server processor.
 #' 
-#' @noRd
 mod_wt_name_newsrv <- function(id, selected_ws) {
   moduleServer(#
     id,
@@ -319,8 +315,8 @@ mod_wt_name_newsrv <- function(id, selected_ws) {
 
 
 
-#' New WT save server processor.
-#' @noRd
+#' @describeIn mod_wt_inp_ui  New WT save server processor.
+#' 
 mod_wt_save_newsrv <- function(id, edited_ws, curr_wt, curr_wt_name) {
   moduleServer(#
     id,
@@ -416,8 +412,8 @@ mod_wt_save_newsrv <- function(id, edited_ws, curr_wt, curr_wt_name) {
 }
 
 
-#' Reset WT save server processor.
-#' @noRd
+#' @describeIn mod_wt_inp_ui  Reset/Delete WT save server processor.
+#' 
 mod_wt_delete_newsrv <- function(id, edited_ws, curr_wt_name) {
   moduleServer(#
     id,
@@ -476,8 +472,8 @@ mod_wt_delete_newsrv <- function(id, edited_ws, curr_wt_name) {
 }
 
 
-#' Select / update selected
-#' @noRd
+#' @describeIn mod_wt_inp_ui  Select / update selected
+#' 
 mod_wt_select_newsrv <- function(id, edited_ws, curr_wt_name) {
   moduleServer(#
     id,
@@ -548,8 +544,9 @@ mod_wt_select_newsrv <- function(id, edited_ws, curr_wt_name) {
 
 
 
-#' Update weights in the input to the selected WS
-#' @noRd
+#' @describeIn mod_wt_inp_ui  Update weights in the input to the selected WS
+#' 
+#' 
 mod_wt_upd_newsrv <- function(id, edited_ws, curr_wt, selected_wt_name) {
   moduleServer(#
     id,
@@ -585,7 +582,9 @@ mod_wt_upd_newsrv <- function(id, edited_ws, curr_wt, selected_wt_name) {
 
 
 #' Download all weights as an excel file
+#' 
 #' @noRd
+#' 
 mod_wt_dwnld_newsrv <- function(id, 
                                 edited_ws = reactiveValues(weights_clean = list(1)), 
                                 input_dta = reactive(NULL), 
@@ -665,8 +664,7 @@ mod_wt_dwnld_newsrv <- function(id,
 }
 
 
-#' Upload WS to the server
-#' @noRd
+#' @describeIn mod_wt_inp_ui  TODO: Upload WS to the server
 #' 
 mod_wt_uplod_newsrv <- function(id, imported_data, pti_indicators) {
   moduleServer(#
