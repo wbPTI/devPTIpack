@@ -145,6 +145,7 @@ complete_pti_labels <- function(dta) {
 #' @importFrom stringr str_c
 #' @importFrom leaflet addPolygons highlightOptions
 plot_pti_polygons <- function(leaf_map, poly_dta) {
+  if(isTruthy(poly_dta)) {
   leaf_map %>% 
     list() %>% 
     append(poly_dta) %>% 
@@ -173,6 +174,9 @@ plot_pti_polygons <- function(leaf_map, poly_dta) {
           )
         )
     })
+  } else {
+    leaf_map
+  }
 }
 
 

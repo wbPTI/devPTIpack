@@ -101,8 +101,8 @@ ui <- mod_ptipage_twocol_ui("pagepti")
 
 server <- function(input, output, session) {
   mod_ptipage_newsrv("pagepti",
-                     imp_dta = reactive(ukr_mtdt_full), #imp_dta), 
-                     shp_dta = reactive(ukr_shp),  #shp_dta))
+                     imp_dta = reactive(ukr_mtdt_full), #ukr_mtdt_full), #imp_dta), 
+                     shp_dta = reactive(ukr_shp), #ukr_shp),  #shp_dta))
                      show_adm_levels =  NULL #c("admin1")
                      )
 }

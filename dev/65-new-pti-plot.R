@@ -104,7 +104,7 @@ list(#
       "var_nval6_na_adm12",             0,
       "var_nval60_na_adm4",             0,
       "var_nvalinf_norm_adm24",         0,
-      "var_nvalinf_skewd_adm2",         0,
+      "var_nvalinf_skewd_adm2",        1,
       "var_nvalinf_unif_adm124",        0,
       "var_nvalinf_huge_unif_adm24",    0,
     )
@@ -150,7 +150,7 @@ adm_to_filter <-
   get_indicators_list() %>% 
   get_vars_un_avbil(names(get_current_levels(preplot_dta0))) %>% 
   get_min_admin_wght(imp_dta$weights_clean)
-
+debug(legend_map_satelite)
 
 preplot_dta <-
   preplot_dta0 %>% 
@@ -256,6 +256,17 @@ leaflet() %>%
   plot_pti_polygons(preplot_dta) %>%
   add_pti_poly_controls(preplot_dta)
 
+
+# Compare two plotting lists ==============================================
+
+# new_pl <- preplot_dta
+# old_pl <- preplot_dta[2]
+# 
+# to_drop_1 <- old_pl %>% `[`(names(.) %in% names(new_pl))
+# 
+# if (any(names(new_pl) %in% names(old_pl))) {
+#   maybe_keep <- 
+# }
 
 ### ### ### ###### ### ### ###### ### ### ###### ### ### ###### ### ### ###
 # Testing data flow logic in the app:

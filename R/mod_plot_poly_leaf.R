@@ -27,36 +27,76 @@ mod_plot_poly_leaf_server <- function(id, preplot_dta, shp_dta, ...){
     ns <- session$ns
     
     previous_plot <- reactiveVal(NULL)
+    remove_old_poly <- reactiveVal(NULL)
+    add_new_poly <- reactiveVal(NULL)
     selected_layer <- reactiveVal(NULL)
+    
+    # compare data and remove only some
+    observeEvent(
+      preplot_dta(), {
+        if (isTruthy(previous_plot()) && isTruthy(preplot_dta())) {
+          keep_vals <-
+            intersect(names(preplot_dta()), names(previous_plot())) %>%
+            keep(function(.x) {
+              out <- FALSE
+              new_dta <- preplot_dta()[[.x]]$pti_dta$pti_score
+              old_dta <- previous_plot()[[.x]]$pti_dta$pti_score
+              if (isTRUE(all.equal(new_dta, old_dta)))
+                out <- TRUE
+              out
+            }) %>%
+            unlist()
+          
+          previous_plot()[setdiff(names(previous_plot()), keep_vals)] %>% remove_old_poly()
+          preplot_dta()[setdiff(names(preplot_dta()), keep_vals)] %>% add_new_poly()
+          
+        } else if (isTruthy(previous_plot()) && !isTruthy(preplot_dta())) {
+          previous_plot() %>% remove_old_poly()
+          add_new_poly(NULL)
+          
+        } else if (!isTruthy(previous_plot()) && isTruthy(preplot_dta())) {
+          remove_old_poly(NULL)
+          preplot_dta() %>% add_new_poly()
+          
+        } else {
+          remove_old_poly(NULL)
+          add_new_poly(NULL)
+        }
+        
+      }, 
+      ignoreInit = FALSE, 
+      ignoreNULL = FALSE
+    )
     
     observeEvent(#
       input[["leaf_id_groups"]], {
         selected_layer(input[["leaf_id_groups"]])
-        # cat(selected_layer(), "\n")
-        }, ignoreNULL = FALSE, ignoreInit = TRUE)
+      }, ignoreNULL = FALSE, ignoreInit = TRUE)
     
     observeEvent(#
-      list(preplot_dta()), {
+      preplot_dta(), {
         if (!isTruthy(preplot_dta())) {
           leaflet::leafletProxy("leaf_id", deferUntilFlush = TRUE) %>%
-            clean_pti_polygons(previous_plot()) %>% 
-            clean_pti_poly_controls(previous_plot()) 
+            clean_pti_polygons(remove_old_poly()) %>% 
+            clean_pti_poly_controls(remove_old_poly()) 
+          remove_old_poly(NULL)
+          add_new_poly(NULL)
           previous_plot(NULL)
-          
         } else {
           leaflet::leafletProxy("leaf_id", deferUntilFlush = TRUE) %>%
-            clean_pti_polygons(previous_plot()) %>% 
-            clean_pti_poly_controls(previous_plot()) %>% 
-            plot_pti_polygons(preplot_dta()) %>%  
+            clean_pti_polygons(remove_old_poly()) %>% 
+            plot_pti_polygons(add_new_poly()) %>%  
+            clean_pti_poly_controls(remove_old_poly()) %>% 
             add_pti_poly_controls(preplot_dta(), selected_layer()) 
-          
+          remove_old_poly(NULL)
+          add_new_poly(NULL)
           previous_plot(preplot_dta())
         }
         
-      }, ignoreInit = FALSE, ignoreNULL = FALSE, priority = 0)
+      }, ignoreInit = FALSE, ignoreNULL = FALSE)
     
     # Plotting the legend
-    mod_plot_poly_legend_server(NULL, preplot_dta, selected_layer)
+    # mod_plot_poly_legend_server(NULL, preplot_dta, selected_layer)
     
     # returning selected layer
     out <- mod_plot_leaf_export(NULL, shp_dta, preplot_dta, selected_layer)
