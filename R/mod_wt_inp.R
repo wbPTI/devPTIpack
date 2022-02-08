@@ -23,18 +23,21 @@
 #'   ) 
 #' 
 #' 
-mod_wt_inp_ui <- function(id, full_ui = FALSE, height = "550px", dt_style, ...){
+mod_wt_inp_ui <- function(id, full_ui = FALSE, height = "550px", dt_style, wt_style = NULL, 
+                          dwnld_options = c("data", "weights", "shapes", "metadata"),
+                          ...){
   ns <- NS(id)
   
   if (full_ui) {
     controls_col <- full_wt_inp_ui(ns)
   } else {
-    controls_col <- short_wt_inp_ui(ns)
+    controls_col <- short_wt_inp_ui(ns, dwnld_options = dwnld_options)
   }
 
   controls_col %>% 
     div(style = "margin-bottom: 10px; width: -webkit-fill-available;") %>%
-    tagList(mod_DT_inputs_ui(ns(NULL), height, dt_style, ...))
+    tagList(mod_DT_inputs_ui(ns(NULL), height, dt_style)) %>% 
+    div(., wt_style = wt_style, ...)
   # %>%  fillCol()
 }
     
@@ -134,11 +137,14 @@ full_wt_inp_ui <- function(ns) {
 
 #' @describeIn mod_wt_inp_ui  Weights input UI full
 #' 
-#' 
-short_wt_inp_ui <- function(ns) {
+#' @param ns namespace
+#' @param dwnld_options character vector that defines what data download options
+#'        are available. one or all of c("data", "weights", "shapes", "metadata").
+#'        If NULL or blank, no data download options are available., 
+short_wt_inp_ui <- function(ns, dwnld_options = c("data", "weights", "shapes", "metadata")) {
   
   tagList(
-    # width = 3,
+    
     textInput(
       ns("existing.weights.name"),
       label = "Name your PTI",
@@ -146,47 +152,29 @@ short_wt_inp_ui <- function(ns) {
       value = NULL,
       width = "100%"
     ) %>%
-      div(id = "step_1_name"),
+      div(id = "step_1_name"), 
     
     tagList(
-      uiOutput(ns("save_btn")) %>%
-        div(id = "step_3_save")
-      ,
-      {
-        actionButton(
-          ns("weights.reset"),
-          "Reset PTI",
-          icon = icon("remove"),
-          class = "btn-danger",
-          width = "100%"
-        )
-      } %>%
-        # shinyjs::disabled() %>%
-        # shinyjs::hidden() %>%
-        div(id = "step_4_delete")
+      uiOutput(ns("save_btn"), inline = TRUE) %>% span(id = "step_3_save"),
+      mod_wt_delete_ui(NULL, ns("weights.reset")) %>% span(id = "step_4_delete")
     ) %>%
       div(id = "step_234_controls1") %>%
       div(id = "step_234_controls2") %>%
       div(id = "step_234_controls3"),
     
     tagList(
-      downloadButton(
-        ns("weights.download"),
-        "Download PTIs",
-        icon = icon("download"),
-        class = "btn-primary",
-        style = "width: 100%"
-      ) %>%
-        shinyjs::hidden(),
-      
-      downloadButton(
-        ns("dwnld_data"),
-        "Download PTI data",
-        icon = icon("download"),
-        class = "btn-primary",
-        style = "width: 100%"
+      tags$p(
+        style = "font-size: 10px;",
+        tags$i(
+          "Download PTI ",
+          if ("data" %in% dwnld_options) mod_dwnld_dta_link_ui(NULL, ns("dta.download"), "data"), 
+          if ("weights" %in% dwnld_options) mod_dwnld_dta_link_ui(NULL, ns("weights.download"), "scores", prefix = ", "),
+          if ("shapes" %in% dwnld_options) mod_dwnld_dta_link_ui(NULL, ns("shp.files"), "shapes", prefix = ", "), 
+          if ("metadata" %in% dwnld_options) mod_dwnld_dta_link_ui(NULL, ns("mtdt.files"), "metadata pdf", prefix = " or "),
+          "."
+        ),
+        style = "text-align: right; margin: 0 0 0px !important;"
       )
-      
     ) %>%
       div(id = "step_5_downalod_upload1") %>%
       div(id = "step_5_downalod_upload2")
@@ -200,7 +188,7 @@ short_wt_inp_ui <- function(ns) {
 
 #' @describeIn mod_wt_inp_ui  Server Functions
 #'
-mod_wt_inp_server <- function(id, input_dta, plotted_dta = reactive(NULL)){
+mod_wt_inp_server <- function(id, input_dta, plotted_dta = reactive(NULL), shapes_path = "", mtdtpdf_path = "") {
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -210,7 +198,7 @@ mod_wt_inp_server <- function(id, input_dta, plotted_dta = reactive(NULL)){
     # Step 2. Init weights input and collect weights values ===================
     curr_wt <- mod_DT_inputs_server(NULL, ind_list, upd_wt)
     curr_wt_name <- mod_wt_name_newsrv(NULL, selected_ws)
-  
+    
     # Step 3. Setting a reactive value for actively used set of weights =======
     edited_ws <- reactiveValues(
       indicators_list = ind_list,
@@ -223,7 +211,7 @@ mod_wt_inp_server <- function(id, input_dta, plotted_dta = reactive(NULL)){
     
     # Step 5. Delet/Reset current weights to the list =========================
     reset_ws <- mod_wt_delete_newsrv(NULL, edited_ws, curr_wt_name)
-    observeEvent(reset_ws$invalidator, {
+    observeEvent(reset_ws$invalidator(), {
       edited_ws$weights_clean <- reset_ws$value
     }, ignoreInit = TRUE)
     
@@ -231,7 +219,7 @@ mod_wt_inp_server <- function(id, input_dta, plotted_dta = reactive(NULL)){
     selected_ws <- mod_wt_select_newsrv(NULL, edited_ws, curr_wt_name)
     
     # Step 7. Update PTI on selecting another ================================
-    upd_wt <- mod_wt_upd_newsrv(NULL, edited_ws, curr_wt, selected_ws)
+    upd_wt <- mod_wt_upd_newsrv(NULL, edited_ws, curr_wt, selected_ws, reset_ws$invalidator)
     
     # TO DO!
     # == Upload PTI - Fix
@@ -239,11 +227,11 @@ mod_wt_inp_server <- function(id, input_dta, plotted_dta = reactive(NULL)){
     
     # Step 6. Upload weights from a file =====================================
     uploaded_ws <- mod_wt_uplod_newsrv(NULL, input_dta, ind_list)
-    # observeEvent(uploaded_ws(), {uploaded_ws() %>% edited_ws()}, ignoreInit = TRUE)
-  
+    
     # Step 8. Download weights server =========================================
-    mod_wt_dwnld_newsrv(NULL, edited_ws, input_dta = input_dta, 
-                        plotted_dta = plotted_dta)
+    mod_wt_dwnload_newsrv(NULL, input_dta = input_dta, edited_ws = edited_ws, 
+                          plotted_dta = plotted_dta, filename_glue = "{.country}",
+                          shapes_path = shapes_path, mtdtpdf_path = mtdtpdf_path)
     
     output$wt_tests_out <- renderPrint({
       list(
@@ -251,7 +239,7 @@ mod_wt_inp_server <- function(id, input_dta, plotted_dta = reactive(NULL)){
         curr_wt_name = curr_wt_name(),
         curr_wt = curr_wt(),
         selected_ws = selected_ws()
-        ) %>% 
+      ) %>%
         str(max.level = 3)
     })
     
@@ -274,13 +262,13 @@ mod_wt_inp_server <- function(id, input_dta, plotted_dta = reactive(NULL)){
     
     
     # edited_ws
- 
+    
   })
 }
-    
+
 ## To be copied in the UI
 # mod_wt_inp_ui("wt_inp_ui_1")
-    
+
 ## To be copied in the server
 # mod_wt_inp_server("wt_inp_ui_1")
 
@@ -335,35 +323,36 @@ mod_wt_save_newsrv <- function(id, edited_ws, curr_wt, curr_wt_name) {
           if (all(cur_val == 0)) {
             actionButton(
               ns("weights.save"),
-              "All weights must not be zero",
-              class = "btn-warning",
-              width = "100%"
+              "Modify weights",
+              icon = icon("warning"),
+              class = "btn-warning btn-xs",
+              width = "63%"
             ) %>%
               shinyjs::disabled() %>%
               current_btn_ui()
           } else {
             
-          if (!isTruthy(curr_wt_name())) {
-            actionButton(
-              ns("weights.save"),
-              label = "Provide a name",
-              icon = icon("exclamation-triangle"),
-              class = "btn-warning",
-              width = "100%"
-            ) %>%
-              shinyjs::disabled() %>%
-              current_btn_ui()
-          } else {
-            actionButton(
-              ns("weights.save"),
-              "Save and plot PTI",
-              icon = icon("save"),
-              class = "btn-success",
-              width = "100%"
-            ) %>%
-              # shinyjs::enable()%>%
-              current_btn_ui()
-          }
+            if (!isTruthy(curr_wt_name())) {
+              actionButton(
+                ns("weights.save"),
+                label = "Provide a name",
+                icon = icon("warning"),
+                class = "btn-warning btn-xs",
+                width = "63%"
+              ) %>%
+                shinyjs::disabled() %>%
+                current_btn_ui()
+            } else {
+              actionButton(
+                ns("weights.save"),
+                "Save and plot PTI",
+                icon = icon("save"),
+                class = "btn-success btn-xs",
+                width = "63%"
+              ) %>%
+                # shinyjs::enable()%>%
+                current_btn_ui()
+            }
           }
         },
         ignoreInit = FALSE,
@@ -376,52 +365,54 @@ mod_wt_save_newsrv <- function(id, edited_ws, curr_wt, curr_wt_name) {
         req(curr_wt())
         req(curr_wt_name())
         # req(length(after_delete_ws()$weights_clean) > 0)
-
+        
         cur_val <- curr_wt()$weight
         cur_val[is.na(cur_val)] <- 0
         if (all(cur_val == 0)) {
           actionButton(
             ns("weights.save"),
-            "All weights must not be zero",
-            class = "btn-warning",
-            width = "100%"
+            "Modify weights",
+            icon = icon("warning"),
+            class = "btn-warning btn-xs",
+            width = "63%"
           ) %>%
             shinyjs::disabled() %>%
             current_btn_ui()
         } else {
-        
-        if (curr_wt_name() %in% names(edited_ws$weights_clean())) {
-          existing_values <- edited_ws$weights_clean()[[curr_wt_name()]]
           
-          if (isTRUE(all_equal(existing_values, curr_wt(), convert = TRUE))) {
-            actionButton(
-              ns("weights.save"),
-              "No changes to save",
-              class = "btn-info",
-              width = "100%"
-            ) %>%
-              shinyjs::disabled() %>%
-              current_btn_ui()
+          if (curr_wt_name() %in% names(edited_ws$weights_clean())) {
+            existing_values <- edited_ws$weights_clean()[[curr_wt_name()]]
+            
+            if (isTRUE(all_equal(existing_values, curr_wt(), convert = TRUE))) {
+              actionButton(
+                ns("weights.save"),
+                "No changes to save",
+                icon = icon("warning"),
+                class = "btn-info btn-xs",
+                width = "63%"
+              ) %>%
+                shinyjs::disabled() %>%
+                current_btn_ui()
+            } else {
+              actionButton(
+                ns("weights.save"),
+                "Save changes and plot PTI",
+                icon = icon("save"),
+                class = "btn-success btn-xs",
+                width = "63%"
+              ) %>%
+                current_btn_ui()
+            }
           } else {
             actionButton(
               ns("weights.save"),
-              "Save changes and plot PTI",
+              "Save and plot new PTI",
               icon = icon("save"),
-              class = "btn-success",
-              width = "100%"
+              class = "btn-success btn-xs",
+              width = "63%"
             ) %>%
               current_btn_ui()
           }
-        } else {
-          actionButton(
-            ns("weights.save"),
-            "Save and plot new PTI",
-            icon = icon("save"),
-            class = "btn-success",
-            width = "100%"
-          ) %>%
-            current_btn_ui()
-        }
         }
       })
       
@@ -440,16 +431,32 @@ mod_wt_save_newsrv <- function(id, edited_ws, curr_wt, curr_wt_name) {
 }
 
 
+#' @describeIn mod_wt_inp_ui  Reset/Delete WT UI button
+#' 
+
+mod_wt_delete_ui <- function(id = NULL,inputId = "weights.reset", label = "Reset PTI" ) {
+  ns <- NS(id)
+  actionButton(
+    inputId = ns(inputId), 
+    label = label,
+    icon = icon("remove"),
+    class = "btn-danger btn-xs",
+    width = "35%"
+  )
+}
+
+
 #' @describeIn mod_wt_inp_ui  Reset/Delete WT save server processor.
 #' 
+
 mod_wt_delete_newsrv <- function(id, edited_ws, curr_wt_name) {
   moduleServer(#
     id,
     function(input, output, session) {
       ns <- session$ns
       return_ws <- reactiveValues(
-        invalidator = 0,
-        value = reactive(NULL)
+        invalidator = reactiveVal(0),
+        value = reactiveVal(NULL)
       )
       
       # hide/show
@@ -484,19 +491,19 @@ mod_wt_delete_newsrv <- function(id, edited_ws, curr_wt_name) {
         {
           out_wt <- edited_ws$weights_clean()
           out_wt[[curr_wt_name()]] <- NULL
-          return_ws$invalidator <- return_ws$invalidator + 1
+          (return_ws$invalidator() + 1) %>% return_ws$invalidator()
           if (length(out_wt) == 0) {
-            return_ws$value <- reactive(NULL)
+            return_ws$value(NULL) 
           } else {
-            return_ws$value <- reactive(out_wt)
+            return_ws$value(out_wt)
           }
         })
       
       observeEvent(#
         input$weights.reset,
         {
-          return_ws$invalidator <- return_ws$invalidator + 1
-          return_ws$value <- reactive(NULL)
+          (return_ws$invalidator() + 1) %>% return_ws$invalidator()
+          return_ws$value(NULL)
         })
       
       return_ws
@@ -578,8 +585,7 @@ mod_wt_select_newsrv <- function(id, edited_ws, curr_wt_name) {
 
 #' @describeIn mod_wt_inp_ui  Update weights in the input to the selected WS
 #' 
-#' 
-mod_wt_upd_newsrv <- function(id, edited_ws, curr_wt, selected_wt_name) {
+mod_wt_upd_newsrv <- function(id, edited_ws, curr_wt, selected_wt_name, reset_invalidator) {
   moduleServer(#
     id,
     function(input, output, session) {
@@ -587,9 +593,9 @@ mod_wt_upd_newsrv <- function(id, edited_ws, curr_wt, selected_wt_name) {
       
       upd_to_reactive <- reactiveVal()
       
-      observe({
-        selected_wt_name()
-        isolate({
+      observeEvent(
+        selected_wt_name(), 
+        {
           if (!isTruthy(edited_ws$weights_clean())) {
             upd_to <-
               edited_ws$indicators_list() %>%
@@ -597,13 +603,21 @@ mod_wt_upd_newsrv <- function(id, edited_ws, curr_wt, selected_wt_name) {
               mutate(weight = 0L)
           } else {
             req(selected_wt_name() %in% names(edited_ws$weights_clean()))
-            upd_to <-
-              edited_ws$weights_clean()[[selected_wt_name()]]
+            upd_to <- edited_ws$weights_clean()[[selected_wt_name()]]
           }
           req(!identical(upd_to, curr_wt()))
           upd_to %>% upd_to_reactive()
-        })
-      })
+        }, ignoreInit = FALSE)
+      
+      observeEvent(
+        reset_invalidator(),
+        {
+          upd_to <-
+            edited_ws$indicators_list() %>%
+            select(var_code) %>%
+            mutate(weight = 0L)
+          upd_to %>% upd_to_reactive()
+        }, ignoreInit = TRUE, ignoreNULL = TRUE)
       
       upd_to_reactive
       
@@ -613,90 +627,123 @@ mod_wt_upd_newsrv <- function(id, edited_ws, curr_wt, selected_wt_name) {
 
 
 
-#' Download all weights as an excel file
+#' @describeIn mod_wt_inp_ui  data download module for weights page
 #' 
 #' @noRd
 #' 
-mod_wt_dwnld_newsrv <- function(id, 
-                                edited_ws = reactiveValues(weights_clean = list(1)), 
-                                input_dta = reactive(NULL), 
-                                plotted_dta = reactive(NULL),
-                                ...) {
-  moduleServer(#
+mod_wt_dwnload_newsrv <- function(id, 
+                                  input_dta = reactive(NULL),
+                                  edited_ws = reactiveValues(weights_clean = reactive(NULL), 
+                                                             indicators_list = reactive(NULL)),
+                                  plotted_dta = reactive(NULL),
+                                  filename_glue = "{.country} weights.xlsx",
+                                  shapes_path = NULL,
+                                  mtdtpdf_path = NULL) {
+  moduleServer(
     id,
     function(input, output, session) {
       ns <- session$ns
       
-      out_list <- reactiveValues()
+      exp_dta <-
+        prepare_export_data(input_dta, edited_ws$weights_clean, edited_ws$indicators_list,
+                            plotted_dta, filename_glue = filename_glue)
       
-      observeEvent(#
-        input_dta(), {
-          req(input_dta())
-          if (isTruthy(input_dta())) {
-            input_dta() %>%
-              fct_inp_for_exp() %>%
-              iwalk( ~ {
-                out_list[[.y]] <- .x
-              })
-          }
-        })
+      # Data download server
+      mod_dwnld_dta_xlsx_server(NULL, "dta.download",
+                                file_name = reactive(str_c("PTI data for ", exp_dta$file_name(), ".xlsx")),
+                                dta_dwnld = reactive(list(exp_dta$exp_inputs()) %>% purrr::flatten()))
       
-      observeEvent(#
-        edited_ws$weights_clean(),
-        {
-          if (isTruthy(edited_ws$weights_clean())) {
-            out_list[["weights_table"]] <-
-              edited_ws$weights_clean() %>%
-              fct_internal_wt_to_exp(edited_ws$indicators_list())
-          } else {
-            out_list[["weights_table"]] <- NULL
-          }
-        },
-        ignoreInit = TRUE,
-        ignoreNULL = FALSE)
+      # weights download server
+      mod_dwnld_dta_xlsx_server(NULL, "weights.download",
+                                file_name = reactive(str_c("PTI weights for ", exp_dta$file_name(), ".xlsx")),
+                                dta_dwnld = reactive(
+                                  list(exp_dta$exp_inputs(), exp_dta$exp_wght(), exp_dta$exp_pltdta()) %>%
+                                    purrr::flatten()
+                                ))
       
-      prev_ploted_names <- reactiveVal(NULL)
-
-      observeEvent(#
-        plotted_dta(),
-        {
-          if (isTruthy(plotted_dta())) {
-            plotted_dta() %>%
-              get_pti_scores_export() %>%
-              iwalk(~{
-                prev_ploted_names() %>% 
-                  append(.y) %>% unlist() %>% unique() %>% 
-                  prev_ploted_names()
-                out_list[[.y]] <- .x
-              })
-          } else {
-            prev_ploted_names() %>% 
-              walk(~{
-                if (.x %in% names(out_list)) {
-                  out_list[[.x]] <- NULL
-                }
-              })
-            prev_ploted_names(NULL)
-          }
-        },
-        ignoreInit = TRUE,
-        ignoreNULL = FALSE)
+      # Metadata PDF file download
+      mod_dwnld_file_server(NULL, "mtdt.files", shapes_path)
       
-      dta_dwnld <-
-        reactive({
-          out_list %>% reactiveValuesToList() %>% keep(isTruthy)
-        })
+      # Metadata PDF file download
+      mod_dwnld_file_server(NULL, "shp.files", mtdtpdf_path)
       
-      # Write export data
-      output$dwnld_data <- downloadHandler(
-        filename = function() {dta_dwnld()$general[1,1][[1]] %>% str_c(., "-pti-data.xlsx")},
-        content = function(con) {writexl::write_xlsx(dta_dwnld(), con)}
-      )
     })
 }
 
 
+#' @describeIn mod_wt_inp_ui prepare data for data downlaod 
+#' 
+#' @noRd
+#' 
+#' 
+prepare_export_data <-
+  function(input_dta = reactive(NULL),
+           weights_clean = reactive(NULL),
+           indicators_list = reactive(NULL),
+           plotted_dta = reactive(NULL),
+           filename_glue = "{.country} weights.xlsx") {
+    
+    out_list <- reactiveValues(
+      file_name = reactiveVal(NULL),
+      exp_inputs = reactiveVal(NULL),
+      exp_wght = reactiveVal(NULL),
+      exp_pltdta = reactiveVal(NULL),
+      dta = reactive(NULL)
+    )
+    
+    observeEvent(#
+      input_dta(), {
+        if (isTruthy(input_dta())) {
+          input_dta() %>% fct_inp_for_exp() %>% out_list$exp_inputs()
+        } else {
+          out_list$exp_inputs(NULL)
+        }
+      })
+    
+    observeEvent(#
+      list(weights_clean(), indicators_list()),
+      {
+        if (isTruthy(weights_clean()) && isTruthy(indicators_list())) {
+          weights_clean() %>% fct_internal_wt_to_exp(indicators_list()) %>% out_list$exp_wght() %>% 
+            str_c(., " ")
+        } else {
+          out_list$exp_wght(NULL)
+        }
+      })
+    
+    observeEvent(#
+      plotted_dta(),
+      {
+        if (isTruthy(plotted_dta())) {
+          plotted_dta() %>%
+            get_pti_scores_export() %>%
+            out_list$exp_pltdta()
+        } else {
+          out_list$exp_pltdta(NULL)
+        }
+      })
+    
+    observeEvent(#
+      input_dta(),
+      {
+        if (isTruthy(input_dta()$general %>% unlist() %>% `[[`(1))) {
+          .country <-
+            input_dta()$general %>% unlist() %>% `[[`(1) %>% as.character()
+        } else {
+          .country <- ""
+        }
+        glue(filename_glue) %>% out_list$file_name()
+      })
+    
+    out_list
+    
+  }
+
+
+
 #' @describeIn mod_wt_inp_ui  TODO: Upload WS to the server
+#' 
+#' @noRd
 #' 
 mod_wt_uplod_newsrv <- function(id, imported_data, pti_indicators) {
   moduleServer(#

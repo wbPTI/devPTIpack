@@ -13,12 +13,12 @@
 #'
 #' @importFrom shiny NS tagList 
 #' @importFrom leaflet leafletOutput
-mod_map_pti_leaf_ui <- function(id, ...){
+mod_map_pti_leaf_ui <- function(id, side_width = 350, side_ui = NULL, ...){
   ns <- NS(id)
   
   tagList(
     leafletOutput(ns("leaf_id"), ...),
-    mod_leaf_side_panel_ui(id)
+    mod_leaf_side_panel_ui(id, side_width, side_ui)
   ) %>% 
     tags$div(
       style = "position:relative;"

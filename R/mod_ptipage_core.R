@@ -8,10 +8,11 @@
 #' @param map_height,wt_height are css heights of the map part. calc(95vh - 60px) 
 #' @param dt_style additional css style passed to the DataTable with weights
 #' @param full_ui TRUE/FALSE is the complete input layout has to be plotted;
+#' @param dwnld_options character vector that defines what data download options
+#'        are available. one or all of c("data", "weights", "shapes", "metadata").
+#'        If NULL or blank, no data download options are available., 
 #' @param ... other arguments (not in use)
-#' #
-#' ,input,output,session Internal parameters for {shiny}.
-#'
+#' 
 #' @noRd 
 #' @export
 #'
@@ -21,7 +22,8 @@ mod_ptipage_twocol_ui <- function(id,
                                   full_ui = FALSE,
                                   map_height = "calc(95vh - 60px)",
                                   wt_height = "calc(95vh - 250px)", 
-                                  dt_style = "zoom:0.9;",
+                                  dt_style = "zoom:0.9;", 
+                                  dwnld_options = c("data", "weights", "shapes", "metadata"),
                                   ...) {
   ns <- NS(id)
   shiny::fillPage(
@@ -35,7 +37,9 @@ mod_ptipage_twocol_ui <- function(id,
           ns(NULL),
           full_ui = FALSE,
           height = wt_height,
-          dt_style = dt_style
+          dt_style = dt_style,
+          dwnld_options = dwnld_options,
+          ...
         )
       ),
       shiny::column(#
@@ -44,24 +48,64 @@ mod_ptipage_twocol_ui <- function(id,
         mod_map_pti_leaf_ui(
           ns(NULL), 
           height = map_height
-          )
         )
       )
     )
-  }
+  )
+}
+
+#' @describeIn mod_ptipage_twocol_ui PTI page with the the absolute panel layout
+#' 
+mod_ptipage_box_ui <- function(id, 
+                               full_ui = FALSE,
+                               map_height = "calc(95vh - 60px)",
+                               wt_height = "calc(55vh - 150px)", 
+                               dt_style = "zoom:0.95;",
+                               wt_style = "zoom:0.80;",
+                               dwnld_options = c("data", "weights", "shapes", "metadata"),
+                               ...) {
+  ns <- NS(id)
+  
+  wt_ui <- 
+    mod_wt_inp_ui(#
+      ns(NULL),
+      full_ui = FALSE,
+      height = wt_height,
+      dt_style = dt_style,
+      wt_style = wt_style,
+      dwnld_options = dwnld_options,
+      ...
+      )
+    
+  shiny::fillPage(
+    shinyjs::useShinyjs(),
+    golem_add_external_resources(),
+    shiny::div(mod_map_pti_leaf_ui(
+      ns(NULL),
+      height = map_height,
+      side_ui = wt_ui
+    ))
+  )
+}
     
 
 #' @describeIn mod_ptipage_twocol_ui
 #' 
 #' @param imp_dta reactive list of tibbles with standardized PTI inputs data
 #' @param shp_dta reactive list of geo-referenced tibbles with polygons shapes
+#' @param active_tab reactive with the name of the tab currently opened in the app
+#'        Sometimes, app does note render the map unless it is explicitly called
+#'        by a tab change. If the tab name opened is in the vector of allowed 
+#'        tab names `target_tabs` , then the map will force re-render on the first open.
+#' @param target_tabs list of tab names, where map will force re-rende on first open.
 #' @param show_adm_levels vector of admin levels to show and select from.
 #'        if NULL - all levels are printed. If single value, e.g. 'admin2'
 #'        exclusively one level is plotted unless there is not data for such level,
 #'        then one level with the highest dis aggregation is plotted.
 #'        If vector c("admin1", "admin4"), only level specified are plotted. If 
 #'        no data exist for levels specified
-#'        plotted. if
+#'        plotted.
+#' @param shapes_path,mtdtpdf_path path to the files with map shapes and metadata pdf.
 #' @param ... other parameters to pass to server logic and golem_options (see description)
 #' 
 #' @export
@@ -70,8 +114,12 @@ mod_ptipage_twocol_ui <- function(id,
 mod_ptipage_newsrv <- function(id,
                                imp_dta = reactive(NULL), 
                                shp_dta = reactive(NULL),
+                               active_tab = reactive(NULL),
+                               target_tabs = NULL,
                                default_adm_level = NULL, 
                                show_adm_levels = NULL,
+                               shapes_path = "", 
+                               mtdtpdf_path = "",
                                ...){
   
   moduleServer( id, function(input, output, session){
@@ -80,7 +128,8 @@ mod_ptipage_newsrv <- function(id,
     # Inputs
     wt_dta <- mod_wt_inp_server(NULL, 
                                 input_dta = imp_dta, 
-                                plotted_dta = reactive(plotted_dta()$pre_map_dta()))
+                                plotted_dta = reactive(plotted_dta()$pre_map_dta()),
+                                shapes_path = "", mtdtpdf_path = "")
     
     observe({
       req(golem::get_golem_options("diagnostics"))
@@ -107,9 +156,9 @@ mod_ptipage_newsrv <- function(id,
                         shp_dta = shp_dta, 
                         map_dta = map_dta, 
                         wt_dta =  wt_dta, 
-                        active_tab = reactive("PTI"),
-                        target_tabs = "PTI", 
-                        metadata_path = "metadata_path",
+                        active_tab = active_tab,
+                        target_tabs = target_tabs, 
+                        metadata_path = mtdtpdf_path,
                         default_adm_level = default_adm_level,
                         show_adm_levels = show_adm_levels)
     

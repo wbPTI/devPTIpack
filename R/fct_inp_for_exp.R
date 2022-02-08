@@ -17,20 +17,24 @@ fct_inp_for_exp <- function(dta) {
     }) %>%
     distinct()
   
-  new_names <- setNames(object = new_names$var_name, 
-                        new_names$var_code)
+  new_names <- setNames(object = new_names$var_name, new_names$var_code)
   
   dta %>%
-    `[`(str_detect(names(.), "general|admin\\d_|point_")) %>%
+    `[`(str_detect(names(.), "general|admin\\d_|point_|metad")) %>%
     imap( ~ {
       if (str_detect(.y, "admin\\d_")) {
-        # browser()
-        .x <-
-          .x %>%
-          rename_at(vars(any_of(names(new_names))), function(x) {
-            new_names[x]
-          }) %>%
+        .x <- .x %>%
+          rename_at(vars(any_of(names(new_names))), function(x) {new_names[x]}) %>%
           select(-matches("admin\\dPcod"))  
+      }
+      
+      if (str_detect(.y, "metadata")) {
+        .x <- 
+          .x %>% 
+          filter(!fltr_exclude_pti | !fltr_exclude_explorer) %>% 
+          arrange(across(any_of(c('pillar_group', "var_order")))) %>% 
+          select(any_of(c("var_name", "var_description", "var_units", "pillar_name", "pillar_description"))) %>% 
+          distinct()
       }
       .x
     }) %>% 

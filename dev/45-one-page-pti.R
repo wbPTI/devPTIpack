@@ -97,12 +97,13 @@ options(golem.app.prod = FALSE)
 
 
 devtools::load_all()
-ui <- mod_ptipage_twocol_ui("pagepti")
+ui <- mod_ptipage_twocol_ui("pagepti",
+                            dwnld_options = c("data", "weights"))
 
 server <- function(input, output, session) {
   mod_ptipage_newsrv("pagepti",
-                     imp_dta = reactive(ukr_mtdt_full), #ukr_mtdt_full), #imp_dta), 
-                     shp_dta = reactive(ukr_shp), #ukr_shp),  #shp_dta))
+                     imp_dta = reactive(imp_dta), #ukr_mtdt_full), #imp_dta),
+                     shp_dta = reactive(shp_dta), #ukr_shp),  #shp_dta))
                      show_adm_levels =  NULL #c("admin1")
                      )
 }
@@ -115,5 +116,20 @@ shinyApp(ui, server)
 
 
 
+# Side panel UI -----------------------------------------------------------
 
-w# Convertin one page PTI into a module
+
+devtools::load_all()
+ui <- mod_ptipage_box_ui("pagepti")
+
+server <- function(input, output, session) {
+  mod_ptipage_newsrv("pagepti",
+                     imp_dta = reactive(ukr_mtdt_full), #ukr_mtdt_full), #imp_dta), 
+                     shp_dta = reactive(ukr_shp), #ukr_shp),  #shp_dta))
+                     show_adm_levels =  NULL #c("admin1")
+  )
+}
+
+shinyApp(ui, server)
+
+# w# Convertin one page PTI into a module

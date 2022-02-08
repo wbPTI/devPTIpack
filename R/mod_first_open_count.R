@@ -14,8 +14,8 @@ mod_first_open_count_server <- function(id, active_tab, target_tabs, ...){
     invalidator <- reactiveVal(NULL)
     
     observeEvent(active_tab(), {
-      if ((active_tab() %in% target_tabs) &
-          (!active_tab() %in% once_opened())) {
+      if ((is.null(active_tab()) && all(is.null(target_tabs))) || 
+          (active_tab() %in% target_tabs && !active_tab() %in% once_opened())) {
         once_opened() %>%
           c(., active_tab()) %>%
           unique() %>%

@@ -105,7 +105,7 @@ add_two_action_btn <- function(id, ns) {
     ns() %>%
     actionButton(.,
                  "Set to 1",
-                 class = "btn btn-primary btn-sm",
+                 class = "btn btn-primary btn-xs",
                  # width = "45%",
                  style = "margin-top: 0px;")
   
@@ -114,7 +114,7 @@ add_two_action_btn <- function(id, ns) {
     ns() %>%
     actionButton(.,
                  "Set to 0",
-                 class = "btn btn-primary btn-sm",
+                 class = "btn btn-primary btn-xs",
                  # width = "45%",
                  style = "margin-top: 0px;")
   

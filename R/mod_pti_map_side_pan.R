@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList absolutePanel
-mod_leaf_side_panel_ui <- function(id, ...){
+mod_leaf_side_panel_ui <- function(id, side_width = 200, side_ui = NULL, ...){
   ns <- NS(id)
   
   absolutePanel(
@@ -20,13 +20,14 @@ mod_leaf_side_panel_ui <- function(id, ...){
     fixed = FALSE,
     draggable = FALSE, 
     left = "auto", bottom = "auto",
-    width = 200,
+    width = side_width,
     height = "auto",
     top = 10, right = 10,
     
     mod_get_nbins_ui(id),
     mod_get_admin_levels_ui(id),
-    mod_map_dwnld_ui(id)
+    mod_map_dwnld_ui(id),
+    side_ui
   )
 }
 
@@ -245,7 +246,7 @@ mod_map_dwnld_ui <- function(id) {
   tags$p(
     style = "font-size: 12px;",
     tags$i(
-      "Download map as ",
+      "Export map as ",
       downloadLink(ns("map_png"), ".png"),
       " or ",
       downloadLink(ns("map_pdf"), ".pdf")

@@ -25,7 +25,7 @@ ui <- fluidPage(
   shinyjs::useShinyjs(),
   fluidRow(
     column(4, 
-           mod_wt_inp_ui("input_tbl_1", full_ui = TRUE, height = "50vh", dt_style = "zoom:0.9;")
+           mod_wt_inp_ui("input_tbl_1", full_ui = FALSE, height = "50vh", dt_style = "zoom:0.9;")
            ),
     column(7, 
            mod_wt_inp_test_ui("input_tbl_1")
@@ -42,7 +42,9 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
-  mod_wt_inp_server("input_tbl_1", input_dta = reactive(imp_dta))
+  mod_wt_inp_server("input_tbl_1", input_dta = reactive(imp_dta), 
+                    shapes_path = normalizePath("../other_countries/Somalia.rds"),
+                    mtdtpdf_path = normalizePath("../other_countries/Sudan-pti-metadata.pdf"))
   # mod_wt_inp_server("input_tbl_2", input_dta = reactive(imp_dta))
 }
 

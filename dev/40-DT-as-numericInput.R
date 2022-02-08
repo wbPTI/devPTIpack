@@ -1,7 +1,6 @@
 # rethinking the weights page logic
 library(tidyverse)
 # library(devPTIpack)
-devtools::load_all()
 library(profvis)
 library(DT)
 library(shiny)
@@ -19,13 +18,13 @@ imp_dta <- "../other_countries/south_sudan/South_Sudan--metadata-2021-11-29_v2.1
 # nss <- function(x) x
 
 # Step 1. Convert input data into the table-ready style ========================
-ind_list <- imp_dta %>% get_indicators_list()
+# ind_list <- imp_dta %>% get_indicators_list()
 
 # # Profiling. ~80ms , Ok
 # profvis::profvis({ukr_mtdt_full %>% get_indicators_list()})
 
 # Step 2. Generate inputs UI and render it. ========================
-devtools::load_all()
+# devtools::load_all()
 # make_input_DT(ind_list)
 
 # # # Profiling. ~160ms , Ok
@@ -57,41 +56,60 @@ devtools::load_all()
 # shinyApp(ui, server)
 
 
-# Adding tooltip to the DT content =====================================
+# # Adding tooltip to the DT content =====================================
+# 
+# # This is a little problematic.
+# nested_dta <- prep_input_data(ind_list, ns = function(x)x)
+# targets_dta <- make_vis_targets_for_dt(nested_dta)
+# 
+# 
+# # Tailoring the WT page layout ===========================================
+# options(golem.app.prod = TRUE)
+# devtools::load_all()
+# ui <- fluidPage(
+#   shinyjs::useShinyjs(),
+#   fluidRow(
+#     column(5,
+#            mod_wt_inp_ui("input_tbl_1", dt_style = "max-height: calc(70vh);"),
+#            style = "padding-right: 0px; padding-left: 5px;"),
+#     column(7,
+#            leaflet::leaflet() %>%
+#              leaflet::addTiles() %>%
+#              setView(-93.65, 42.0285, zoom = 12) ,
+#            absolutePanel(
+#                mod_wt_inp_ui("input_tbl_2", dt_style = "max-height: 300px;") %>%
+#                  div(style = "zoom:0.8;"),
+#                top = 10, right = 75, width = 350, height = 550,
+#                style = "!important; z-index: 1000;")
+#            )
+#   )
+# )
+# 
+# server <- function(input, output, session) {
+#   mod_wt_inp_server("input_tbl_1", input_dta = reactive(imp_dta))
+#   mod_wt_inp_server("input_tbl_2", input_dta = reactive(imp_dta))
+# }
+# 
+# # devtools::load_all()
+# shinyApp(ui, server)
 
-# This is a little problematic.
-nested_dta <- prep_input_data(ind_list, ns = function(x)x)
-targets_dta <- make_vis_targets_for_dt(nested_dta)
+
+# Checking the inputs UI layout -------------------------------------------
 
 
-# Tailoring the WT page layout ===========================================
-options(golem.app.prod = TRUE)
 devtools::load_all()
-ui <- fluidPage(
-  shinyjs::useShinyjs(),
-  fluidRow(
-    column(5,
-           mod_wt_inp_ui("input_tbl_1", dt_style = "max-height: calc(70vh);"),
-           style = "padding-right: 0px; padding-left: 5px;"),
-    column(7,
-           leaflet::leaflet() %>%
-             leaflet::addTiles() %>%
-             setView(-93.65, 42.0285, zoom = 12) ,
-           absolutePanel(
-               mod_wt_inp_ui("input_tbl_2", dt_style = "max-height: 300px;") %>%
-                 div(style = "zoom:0.8;"),
-               top = 10, right = 75, width = 350, height = 550,
-               style = "!important; z-index: 1000;")
-           )
-  )
-)
+ui <- mod_ptipage_twocol_ui("pagepti")
 
 server <- function(input, output, session) {
-  mod_wt_inp_server("input_tbl_1", input_dta = reactive(imp_dta))
-  mod_wt_inp_server("input_tbl_2", input_dta = reactive(imp_dta))
+  mod_ptipage_newsrv("pagepti",
+                     imp_dta = reactive(ukr_mtdt_full), #ukr_mtdt_full), #imp_dta),
+                     shp_dta = reactive(ukr_shp), #ukr_shp),  #shp_dta))
+                     show_adm_levels =  NULL #c("admin1")
+  )
 }
 
-# devtools::load_all()
+
+devtools::load_all()
 shinyApp(ui, server)
 
 
