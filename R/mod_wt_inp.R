@@ -8,8 +8,8 @@
 #'
 #' @importFrom shiny NS tagList 
 #' 
-#' @examples 
-#' 
+#' @examples
+#'\dontrun{
 #' column(
 #'   5, 
 #'   mod_wt_inp_ui("input_tbl_1", dt_style = "max-height: calc(70vh);"),
@@ -21,7 +21,7 @@
 #'     div(style = "zoom:0.8;"),
 #'   top = 10, right = 75, width = 350, height = 550, style = "!important; z-index: 1000;")
 #'   ) 
-#' 
+#'}
 #' 
 mod_wt_inp_ui <- function(id,
                           full_ui = FALSE,

@@ -14,10 +14,13 @@ pkgload::load_all(export_all = FALSE, helpers = FALSE, attach_testthat = FALSE)
 
 library(tidyverse)
 
-shp_dta <- devPTIpack::ukr_shps
-imp_dta <- devPTIpack::ukr_mtdt_full
+shp_dta <- "../other_countries/south_sudan/South_Sudan.rds" %>% read_rds() #devPTIpack::ukr_shp
+imp_dta <- "../other_countries/south_sudan/South_Sudan--metadata-2021-11-29_v2.1.xlsx" %>% 
+  devPTIpack::fct_template_reader()
 imp_dta$indicators_list <- devPTIpack::get_indicators_list(imp_dta)
-imp_dta$weights_clean <- devPTIpack::get_rand_weights(imp_dta$indicators_list)
+imp_dta$weights_clean <- devPTIpack::get_rand_weights(imp_dta$indicators_list) 
+# %>% 
+#   map(~{.x %>% mutate(weight = ifelse(var_code %in% str_c("v", c(25:50)), 0, weight))})
 
 
 # Weighting logic -----------------------------------
@@ -27,7 +30,7 @@ mt <- shp_dta %>% get_mt()
 adm_lvls <- mt %>% get_adm_levels()
 
 calc_wght <- 
-  imp_dta$weights_clean %>%
+  imp_dta$weights_clean[1] %>%
   get_weighted_data(long_vars, indicators_list = imp_dta$indicators_list) %>% 
   get_scores_data() %>% 
   imap(~ expand_adm_levels(.x, mt) %>%
@@ -43,6 +46,7 @@ preplot_dta <-
   calc_wght %>% 
   preplot_reshape_wghtd_dta() %>%
   filter_admin_levels() %>% 
+  # `[[`(4)
   add_legend_paras(nbins = 7) %>% 
   complete_pti_labels() %>% 
   rev()
@@ -69,11 +73,11 @@ library(tidyverse)
 
 # Data explorer module logic -------------------------------------------
 
-input_dta <- devPTIpack::ukr_mtdt_full
+input_dta <- imp_dta
 # input_dta$admin1_States <- 
 #   input_dta$admin1_States %>% 
 #   dplyr::mutate(sdn_pop_2020_un_const = sdn_pop_dens_2020_un_const)
-shp_dta <- ukr_shps
+shp_dta <- shp_dta
 indicators_list <- get_indicators_list(input_dta, "fltr_exclude_explorer")
 # %>% 
 #   filter(var_name %in% c(
@@ -133,7 +137,7 @@ pre_map_dta_1 %>%
 
 pre_map_dta_1 %>% 
   filter_var_explorer(selected) %>% 
-  filter_admin_levels("States") %>% 
+  filter_admin_levels("Counties") %>% 
   add_legend_paras(nbins = 7) %>% 
   rev()
 
@@ -157,8 +161,8 @@ input_dta$admin1_States <-
 
 devPTIpack::run_dev_pti_plot(
   pti.name = "Sample country PTI",
-  shape_dta = ukr_shps,
-  data_dta = input_dta, 
+  shape_dta = shp_dta,
+  data_dta = imp_dta, 
   default_adm_level = "admin2",
   choose_adm_levels = TRUE,
   explorer_choose_adm = FALSE,

@@ -4,7 +4,7 @@ options(shiny.reactlog = FALSE)
 golem::detach_all_attached()
 golem::document_and_reload()
 pkgload::load_all(export_all = FALSE, helpers = FALSE, attach_testthat = FALSE)
-# devPTIpack::run_dev_map_pti(shape_dta = ukr_shps, data_dta = ukr_mtdt_full, show_waiter = FALSE)
+# devPTIpack::run_dev_map_pti(shape_dta = ukr_shp, data_dta = ukr_mtdt_full, show_waiter = FALSE)
 
 
 
@@ -15,7 +15,7 @@ pkgload::load_all(export_all = FALSE, helpers = FALSE, attach_testthat = FALSE)
 library(tidyverse)
 library(leaflet)
 
-# shp_dta <- #devPTIpack::ukr_shps
+# shp_dta <- #devPTIpack::ukr_shp
 
 # imp_dta <- devPTIpack::ukr_mtdt_full
 # imp_dta$indicators_list <- devPTIpack::get_indicators_list(imp_dta)
@@ -104,7 +104,7 @@ input_dta <- devPTIpack::ukr_mtdt_full
 # input_dta$admin1_States <- 
 #   input_dta$admin1_States %>% 
 #   dplyr::mutate(sdn_pop_2020_un_const = sdn_pop_dens_2020_un_const)
-shp_dta <- ukr_shps
+shp_dta <- ukr_shp
   
 indicators_list <- get_indicators_list(input_dta, "fltr_exclude_explorer")
 # %>% 
@@ -189,7 +189,7 @@ input_dta$admin1_States <-
 
 devPTIpack::run_dev_pti_plot(
   pti.name = "Sample country PTI",
-  shape_dta = ukr_shps,
+  shape_dta = ukr_shp,
   data_dta = input_dta, 
   default_adm_level = "admin2",
   choose_adm_levels = TRUE,

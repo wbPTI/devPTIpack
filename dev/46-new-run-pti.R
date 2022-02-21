@@ -7,7 +7,7 @@ library(DT)
 library(shiny)
 
 
-# shp_dta <- "../other_countries/south_sudan/South_Sudan.rds" %>% read_rds() #devPTIpack::ukr_shps
+# shp_dta <- "../other_countries/south_sudan/South_Sudan.rds" %>% read_rds() #devPTIpack::ukr_shp
 imp_dta <- ukr_mtdt_full
   # # # "../other_countries/south_sudan/South_Sudan--metadata-2021-11-29_v2.1.xlsx" %>%
   # # # "../other_countries/somalia/mtdt-2021-11-08-00-53-06.xlsx" %>%
@@ -23,8 +23,8 @@ shp_dta <- ukr_shp
 # Tailoring the WT page layout ===========================================
 options(golem.app.prod = FALSE)
 
-
 devtools::load_all()
+launch_pti_onepage(shp_dta = ukr_shp, imp_dta = ukr_mtdt_full)
 
 # ui <- 
 #   navbarPage(
@@ -78,68 +78,5 @@ devtools::load_all()
 
 # Function for running only on PTI page  =====================================
 
-#' Start two-col PTI with some sample data
-#' 
-#' @importFrom rlang is_missing
-#' @inheritParams mod_ptipage_twocol_ui
-#' @inheritParams mod_ptipage_newsrv
-launch_pti_onepage <- 
-  function(shp_dta, 
-           imp_dta, 
-           app_name = NULL, 
-           show_waiter = TRUE, 
-           show_adm_levels = NULL,
-           wt_dwnld_options = c("data", "weights", "shapes", "metadata"),
-           shapes_path = ".",
-           mtdtpdf_path = ".",
-           # map_height = "calc(98vh)",
-           # wt_height = "calc(55vh)", 
-           ...) {
-    
-    if (rlang::is_missing(shp_dta)) {
-      stop("'shp_dta' is missing. Provide a valid list with geometries!")
-    }
-    
-    if (rlang::is_missing(imp_dta)) {
-      stop("'imp_dta' is missing. Provide a valid list with metadata!")
-    }
-  
-    # ui
-    ui_here <-
-      fluidPage(
-        title = app_name,
-        mod_ptipage_twocol_ui(
-          "pagepti",
-          wt_dwnld_options = wt_dwnld_options,
-          show_waiter = show_waiter,
-          # map_height = map_height,
-          # wt_height = wt_height,
-          ...
-        ) %>% 
-          fluidRow()
-      )
-    
-    # server
-    server_here <- function(input, output, session) {
-      mod_ptipage_newsrv("pagepti",
-                         imp_dta = reactive(imp_dta),
-                         shp_dta = reactive(shp_dta),
-                         show_adm_levels =  show_adm_levels,
-                         show_waiter = show_waiter,
-                         shapes_path = normalizePath(shapes_path),
-                         mtdtpdf_path = normalizePath(mtdtpdf_path),
-                         ...
-      )
-    }
-    
-    with_golem_options(
-      app = shinyApp(ui = ui_here, server = server_here), 
-      golem_opts = rlang::dots_list(...)
-    )
-  
-}
-
-
-launch_pti_onepage(shp_dta = ukr_shp, imp_dta = ukr_mtdt_full)
 
 

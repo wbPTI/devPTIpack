@@ -7,7 +7,7 @@ library(DT)
 library(shiny)
 
 
-# shp_dta <- "../other_countries/south_sudan/South_Sudan.rds" %>% read_rds() #devPTIpack::ukr_shps
+# shp_dta <- "../other_countries/south_sudan/South_Sudan.rds" %>% read_rds() #devPTIpack::ukr_shp
 imp_dta <- #ukr_mtdt_full
   # # "../other_countries/south_sudan/South_Sudan--metadata-2021-11-29_v2.1.xlsx" %>%
   # # "../other_countries/somalia/mtdt-2021-11-08-00-53-06.xlsx" %>%
