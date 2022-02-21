@@ -7,7 +7,8 @@
 mod_plot_pti2_srv <- function(id, shp_dta, map_dta, wt_dta, active_tab, target_tabs, 
                               default_adm_level = NULL, 
                               show_adm_levels = NULL,
-                              metadata_path = NULL,  ...) {
+                              metadata_path = NULL, 
+                              shapes_path = NULL, ...) {
   
   # Check if the tab is opened at first
   first_open <- mod_first_open_count_server(id, active_tab, target_tabs)
@@ -46,7 +47,7 @@ mod_plot_pti2_srv <- function(id, shp_dta, map_dta, wt_dta, active_tab, target_t
   out_leaf <- mod_plot_poly_leaf_server(id, pre_map_dta_3, shp_dta, init_leaf)
   
   # Map download server functions
-  mod_map_dwnld_srv(id, out_leaf, metadata_path = metadata_path)
+  mod_map_dwnld_srv(id, out_leaf, metadata_path = metadata_path, shapes_path = shapes_path)
   
   # Data download 
   reactive({list(pre_map_dta = pre_map_dta_3)})#, init_leaf = init_leaf)})

@@ -96,7 +96,7 @@ mod_plot_poly_leaf_server <- function(id, preplot_dta, shp_dta, ...){
       }, ignoreInit = FALSE, ignoreNULL = FALSE)
     
     # Plotting the legend
-    # mod_plot_poly_legend_server(NULL, preplot_dta, selected_layer)
+    mod_plot_poly_legend_server(NULL, preplot_dta, selected_layer)
     
     # returning selected layer
     out <- mod_plot_leaf_export(NULL, shp_dta, preplot_dta, selected_layer)

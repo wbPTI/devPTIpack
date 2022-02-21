@@ -289,7 +289,7 @@ validate_single_geom <- function(focus_geom, full_geom){
 }
 
 
-#' Validate all geometries in a data frame
+#' @describeIn validate_single_geom Validate all geometries in a data frame
 #' @noRd
 #' @export
 #' @importFrom purrr walk
