@@ -1,10 +1,10 @@
-#' wt_inp UI Function
+#' UI Function for plotting weights controls
 #'
 #' @description A shiny Module.
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
-#'
-#' @noRd 
+#' @param height css for height in the `dataTableOutput` function.
+#' @param dt_style additional styling css for outer div where `dataTableOutput` is placed in.
 #'
 #' @importFrom shiny NS tagList 
 #' 
@@ -23,19 +23,25 @@
 #'   ) 
 #' 
 #' 
-mod_wt_inp_ui <- function(id, full_ui = FALSE, height = "550px", dt_style, wt_style = NULL, 
-                          dwnld_options = c("data", "weights", "shapes", "metadata"),
-                          ...){
+mod_wt_inp_ui <- function(id,
+                          full_ui = FALSE,
+                          height = "inherit",
+                          dt_style = "height: 450px;",
+                          wt_style = NULL,
+                          wt_dwnld_options = c("data", "weights", "shapes", "metadata"),
+                          ...) {
+  
   ns <- NS(id)
   
   if (full_ui) {
     controls_col <- full_wt_inp_ui(ns)
   } else {
-    controls_col <- short_wt_inp_ui(ns, dwnld_options = dwnld_options)
+    controls_col <- short_wt_inp_ui(ns, dwnld_options = wt_dwnld_options)
   }
 
   controls_col %>% 
-    div(style = "margin-bottom: 10px; width: -webkit-fill-available;") %>%
+    # div(style = "margin-bottom: 10px; width: -webkit-fill-available;") %>%
+    div(style = "margin-bottom: 10px; width: 100%;") %>%
     tagList(mod_DT_inputs_ui(ns(NULL), height, dt_style)) %>% 
     div(., wt_style = wt_style, ...)
   # %>%  fillCol()
@@ -188,7 +194,7 @@ short_wt_inp_ui <- function(ns, dwnld_options = c("data", "weights", "shapes", "
 
 #' @describeIn mod_wt_inp_ui  Server Functions
 #'
-mod_wt_inp_server <- function(id, input_dta, plotted_dta = reactive(NULL), shapes_path = "", mtdtpdf_path = "") {
+mod_wt_inp_server <- function(id, input_dta, plotted_dta = reactive(NULL), shapes_path = "", mtdtpdf_path = "", show_waiter = FALSE) {
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -246,7 +252,7 @@ mod_wt_inp_server <- function(id, input_dta, plotted_dta = reactive(NULL), shape
     # Stop any waiter if needed
     observe({
       req(!all(is.na(curr_wt()$weight)))
-      waiter::waiter_hide()
+      if (show_waiter) waiter::waiter_hide()
     })
     
     # save_ws_out <-

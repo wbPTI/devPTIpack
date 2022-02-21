@@ -97,22 +97,25 @@ options(golem.app.prod = FALSE)
 
 
 devtools::load_all()
-ui <- mod_ptipage_twocol_ui("pagepti",
-                            dwnld_options = c("data", "weights"))
+ui <- mod_ptipage_twocol_ui("pagepti", map_height = "99vh",
+                            wt_dwnld_options = c("data", "weights", "shapes", "metadata"), show_waiter = FALSE)
 
 server <- function(input, output, session) {
   mod_ptipage_newsrv("pagepti",
-                     imp_dta = reactive(imp_dta), #ukr_mtdt_full), #imp_dta),
-                     shp_dta = reactive(shp_dta), #ukr_shp),  #shp_dta))
-                     show_adm_levels =  NULL #c("admin1")
+                     imp_dta = reactive(ukr_mtdt_full), #ukr_mtdt_full), #imp_dta),
+                     shp_dta = reactive(ukr_shp), #ukr_shp),  #shp_dta))
+                     show_adm_levels =  NULL,
+                     shapes_path = normalizePath("../other_countries/Mozambique.rds"),
+                     mtdtpdf_path = normalizePath("app.R"), 
+                     show_waiter = TRUE
                      )
 }
 
 shinyApp(ui, server)
 
-# Legend Fails when we have all zeros. Rewrite the legend. 
+# Legend Fails when we have all zeros. Rewrite the legend.
 # Check the panel of map layer switch. for taking long to load.
-# Check the gap between leaflet drawing the map and pc finishing computations. 
+# Check the gap between leaflet drawing the map and pc finishing computations.
 
 
 
@@ -123,11 +126,24 @@ devtools::load_all()
 ui <- mod_ptipage_box_ui("pagepti")
 
 server <- function(input, output, session) {
+  
+  data_to_pass <- 
   mod_ptipage_newsrv("pagepti",
-                     imp_dta = reactive(ukr_mtdt_full), #ukr_mtdt_full), #imp_dta), 
+                     imp_dta = reactive(ukr_mtdt_full), #ukr_mtdt_full), #imp_dta),
                      shp_dta = reactive(ukr_shp), #ukr_shp),  #shp_dta))
-                     show_adm_levels =  NULL #c("admin1")
+                     show_adm_levels =  NULL,
+                     shapes_path = normalizePath("../other_countries/Mozambique.rds"),
+                     mtdtpdf_path = normalizePath("app.R")
   )
+  
+  # observe({
+  #   browser()
+  #   data_to_pass
+  #   # data_to_pass$wt_dta() %>% str(max.level =1)
+  #   # data_to_pass$plotted_dta()$pre_map_dta() %>% str(max.level =1)
+  #   data_to_pass$plotted_dta()$pre_map_dta() %>% str(max.level =1)
+  #   # data_to_pass$map_dta() %>% str(max.level =1)
+  # })
 }
 
 shinyApp(ui, server)

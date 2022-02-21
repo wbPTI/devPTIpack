@@ -140,8 +140,9 @@ app_new_pti_ui <- function(request) {
       navbarPage(
         title = div(div(
           id = "img-logo-navbar",
+          style="right: 70px;", 
           img(src = "www/WBG_Horizontal-black-web.png",
-              style = "width: auto; height: 40px;")
+              style = "width: auto; height: 40px")
         ),
         as.character(golem::get_golem_options("pti.name"))
         ), 

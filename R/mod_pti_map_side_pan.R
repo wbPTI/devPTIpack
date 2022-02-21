@@ -7,7 +7,9 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList absolutePanel
-mod_leaf_side_panel_ui <- function(id, side_width = 200, side_ui = NULL, ...){
+mod_leaf_side_panel_ui <- function(id, side_width = 200, side_ui = NULL, 
+                                   map_dwnld_options = c("shapes", "metadata"), 
+                                   ...){
   ns <- NS(id)
   
   absolutePanel(
@@ -24,10 +26,13 @@ mod_leaf_side_panel_ui <- function(id, side_width = 200, side_ui = NULL, ...){
     height = "auto",
     top = 10, right = 10,
     
-    mod_get_nbins_ui(id),
-    mod_get_admin_levels_ui(id),
-    mod_map_dwnld_ui(id),
-    side_ui
+    tagList(
+      side_ui,
+      if (!is.null(side_ui)) hr(style = "margin: 5px;"),
+      mod_get_nbins_ui(id),
+      mod_get_admin_levels_ui(id),
+      mod_map_dwnld_ui(id, map_dwnld_options)
+    )
   )
 }
 
@@ -241,26 +246,45 @@ mod_get_admin_levels_srv <- function(id,
 #' @noRd 
 #'
 #' @importFrom shiny NS tags downloadLink tagList
-mod_map_dwnld_ui <- function(id) {
+mod_map_dwnld_ui <- function(id, map_dwnld_options = c("shapes", "metadata")) {
   ns <- NS(id)
+  
+  download_data_ui <- tagList(
+    if (is.null(map_dwnld_options)) {
+      ""
+    } else {
+      tags$p(style = "font-size: 12px; text-align: right; margin: 0 0 0px !important;",
+             tags$i(
+               mod_dwnld_local_file_ui(ns("map_metadata"), "Download metadata"),
+               " or ",
+               mod_dwnld_local_file_ui(ns("map_shapes"), "shape files.")
+             ))
+    }
+  )
+  
   tags$p(
-    style = "font-size: 12px;",
+    style = "font-size: 12px; ; text-align: right; margin: 0 0 0px !important;",
     tags$i(
       "Export map as ",
       downloadLink(ns("map_png"), ".png"),
       " or ",
-      downloadLink(ns("map_pdf"), ".pdf")
+      downloadLink(ns("map_pdf"), ".pdf"),
+      "."
     ),
     style = "text-align: right; margin: 0 0 0px !important;"
   ) %>%
     tagList(
-      tags$p(
-        style = "font-size: 12px; text-align: right; margin: 0 0 0px !important;",
-        tags$i(mod_dwnld_local_file_ui(ns("map_metadata"), "Download metadata"))
-      )
+      download_data_ui
+     # tags$p(
+     #   style = "font-size: 12px; text-align: right; margin: 0 0 0px !important;",
+     #   tags$i(
+     #     mod_dwnld_local_file_ui(ns("map_metadata"), "Download metadata"),
+     #     " or ", 
+     #     mod_dwnld_local_file_ui(ns("map_shapes"), "shape files.")
+     #     )
+     #   )
     )
-  
-}
+  }
 
 
 
@@ -274,7 +298,7 @@ mod_map_dwnld_ui <- function(id) {
 #' @importFrom curl curl_version
 #' @import ggplot2
 #' 
-mod_map_dwnld_srv <- function(id, plotting_map, metadata_path = NULL) {
+mod_map_dwnld_srv <- function(id, plotting_map, metadata_path = NULL, shapes_path = NULL) {
   moduleServer(#
     id,
     function(input, output, session) {
@@ -439,6 +463,17 @@ mod_map_dwnld_srv <- function(id, plotting_map, metadata_path = NULL) {
       } else {
         mod_dwnld_local_file_server("map_metadata", metadata_path)
         mod_dwnld_local_file_server(ns("map_metadata"), metadata_path)
+      }
+      
+      
+      if (is.null(shapes_path) || !file.exists(shapes_path)) {
+        mod_dwnld_local_file_server("map_shapes", "app-metadata/15-zam-pti-data-overview.pdf", 
+                                    "shapes-{.pti_name}-{Sys.Date()}.{.ext}")
+        mod_dwnld_local_file_server(ns("map_shapes"), "app-metadata/15-zam-pti-data-overview.pdf", 
+                                    "shapes-{.pti_name}-{Sys.Date()}.{.ext}")
+      } else {
+        mod_dwnld_local_file_server("map_shapes", shapes_path, "shapes-{.pti_name}-{Sys.Date()}.{.ext}")
+        mod_dwnld_local_file_server(ns("map_shapes"), shapes_path, "shapes-{.pti_name}-{Sys.Date()}.{.ext}")
       }
       
     })

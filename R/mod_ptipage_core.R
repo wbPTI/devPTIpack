@@ -6,48 +6,67 @@
 #' @param cols vector with two values that should not exceed 12 in sum to
 #'             define split of the column layout
 #' @param map_height,wt_height are css heights of the map part. calc(95vh - 60px) 
-#' @param dt_style additional css style passed to the DataTable with weights
+#' @param dt_style,wt_style additional css style passed to the DataTable with weights
 #' @param full_ui TRUE/FALSE is the complete input layout has to be plotted;
-#' @param dwnld_options character vector that defines what data download options
-#'        are available. one or all of c("data", "weights", "shapes", "metadata").
+#' @param wt_dwnld_options,map_dwnld_options character vector that defines what 
+#'        data download options are available in weights and on the map. Any of 
+#'        c("data", "weights", "shapes", "metadata").
 #'        If NULL or blank, no data download options are available., 
 #' @param ... other arguments (not in use)
 #' 
-#' @noRd 
 #' @export
 #'
 #' @importFrom shiny NS tagList column div
 mod_ptipage_twocol_ui <- function(id, 
                                   cols = c(4,8),
                                   full_ui = FALSE,
-                                  map_height = "calc(95vh - 60px)",
-                                  wt_height = "calc(95vh - 250px)", 
-                                  dt_style = "zoom:0.9;", 
-                                  dwnld_options = c("data", "weights", "shapes", "metadata"),
+                                  map_height = "calc(100vh)", #"calc(95vh - 60px)",
+                                  wt_height = "inherit", 
+                                  dt_style = "zoom:0.9; height: calc(40vh);", 
+                                  wt_style = NULL,
+                                  wt_dwnld_options = c("data", "weights", "shapes", "metadata"),
+                                  map_dwnld_options = c("shapes", "metadata"),
+                                  show_waiter = FALSE,
                                   ...) {
   ns <- NS(id)
-  shiny::fillPage(
+  
+  spinner <- tagList(
+    waiter::spin_chasing_dots(),
+    br(),
+    golem::get_golem_options("pti.name") %>%
+      as.character() %>%
+      str_c(., "Loading...") %>%
+      span(style = "color:white;")
+  )
+  
+  shiny::bootstrapPage(
     shinyjs::useShinyjs(),
+    waiter::use_waiter(),
+    if (is.null(show_waiter) | (!is.null(show_waiter) && show_waiter)) {waiter::waiter_show_on_load(spinner)},
     golem_add_external_resources(),
-    shiny::div(
+    div(
       shiny::column(
         cols[[1]],
-        style = "padding-right: 5; padding-left: 5;",
+        class = "order-sm-last",
+        style = "padding-right: 5px; padding-left: 5px;",
         mod_wt_inp_ui(
           ns(NULL),
           full_ui = FALSE,
           height = wt_height,
           dt_style = dt_style,
-          dwnld_options = dwnld_options,
+          wt_style = wt_style,
+          wt_dwnld_options = wt_dwnld_options,
           ...
         )
       ),
       shiny::column(#
         cols[[2]],
-        style = "padding-left: 0; padding-right: 0;",
+        class = "order-sm-first",
+        style = "padding-right: 0px; padding-left: 0px;",
         mod_map_pti_leaf_ui(
           ns(NULL), 
-          height = map_height
+          height = map_height,
+          map_dwnld_options = map_dwnld_options
         )
       )
     )
@@ -58,13 +77,24 @@ mod_ptipage_twocol_ui <- function(id,
 #' 
 mod_ptipage_box_ui <- function(id, 
                                full_ui = FALSE,
-                               map_height = "calc(95vh - 60px)",
-                               wt_height = "calc(55vh - 150px)", 
-                               dt_style = "zoom:0.95;",
-                               wt_style = "zoom:0.80;",
-                               dwnld_options = c("data", "weights", "shapes", "metadata"),
+                               map_height = "calc(100vh)", #"calc(95vh - 60px)",
+                               wt_height = "inherit", 
+                               dt_style = "zoom:0.9; height: calc(35vh);", 
+                               wt_style = "zoom:0.75;",
+                               wt_dwnld_options = c("data", "weights", "shapes", "metadata"),
+                               map_dwnld_options = NULL,
+                               show_waiter = FALSE,
                                ...) {
   ns <- NS(id)
+  
+  spinner <- tagList(
+    waiter::spin_chasing_dots(),
+    br(),
+    golem::get_golem_options("pti.name") %>%
+      as.character() %>%
+      str_c(., ". Loading...") %>%
+      span(style = "color:white;")
+  )
   
   wt_ui <- 
     mod_wt_inp_ui(#
@@ -73,17 +103,20 @@ mod_ptipage_box_ui <- function(id,
       height = wt_height,
       dt_style = dt_style,
       wt_style = wt_style,
-      dwnld_options = dwnld_options,
+      wt_dwnld_options = wt_dwnld_options,
       ...
       )
     
   shiny::fillPage(
     shinyjs::useShinyjs(),
     golem_add_external_resources(),
+    waiter::use_waiter(),
+    if (is.null(show_waiter) | (!is.null(show_waiter) && show_waiter)) {waiter::waiter_show_on_load(spinner)},
     shiny::div(mod_map_pti_leaf_ui(
       ns(NULL),
       height = map_height,
-      side_ui = wt_ui
+      side_ui = wt_ui,
+      map_dwnld_options = map_dwnld_options
     ))
   )
 }
@@ -110,7 +143,6 @@ mod_ptipage_box_ui <- function(id,
 #' 
 #' @export
 #'
-#' @noRd 
 mod_ptipage_newsrv <- function(id,
                                imp_dta = reactive(NULL), 
                                shp_dta = reactive(NULL),
@@ -120,6 +152,7 @@ mod_ptipage_newsrv <- function(id,
                                show_adm_levels = NULL,
                                shapes_path = "", 
                                mtdtpdf_path = "",
+                               show_waiter = FALSE,
                                ...){
   
   moduleServer( id, function(input, output, session){
@@ -129,7 +162,9 @@ mod_ptipage_newsrv <- function(id,
     wt_dta <- mod_wt_inp_server(NULL, 
                                 input_dta = imp_dta, 
                                 plotted_dta = reactive(plotted_dta()$pre_map_dta()),
-                                shapes_path = "", mtdtpdf_path = "")
+                                shapes_path = shapes_path, 
+                                mtdtpdf_path = mtdtpdf_path,
+                                show_waiter = show_waiter)
     
     observe({
       req(golem::get_golem_options("diagnostics"))
@@ -159,14 +194,20 @@ mod_ptipage_newsrv <- function(id,
                         active_tab = active_tab,
                         target_tabs = target_tabs, 
                         metadata_path = mtdtpdf_path,
+                        shapes_path = shapes_path,
                         default_adm_level = default_adm_level,
                         show_adm_levels = show_adm_levels)
     
     observe({
       req(golem::get_golem_options("diagnostics"))
-      req(plotted_dta()$pre_map_dta())
       cat("PTI: End plot data to export ", as.character(Sys.time()), "\n" )
     })
+    
+    reactiveValues(
+      plotted_dta = plotted_dta,
+      map_dta = map_dta,
+      wt_dta = wt_dta
+    )
     
   })
 }

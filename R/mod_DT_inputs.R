@@ -9,7 +9,7 @@
 #' @importFrom shiny NS tagList div
 #' @importFrom DT dataTableOutput
 #' @importFrom glue glue
-mod_DT_inputs_ui <- function(id, height = NULL, style = NULL, ...){
+mod_DT_inputs_ui <- function(id, height = NULL, dt_style = NULL, ...){
   ns <- NS(id)
   if(is.null(height)) height <- "550px"
   
@@ -28,7 +28,7 @@ mod_DT_inputs_ui <- function(id, height = NULL, style = NULL, ...){
       # if (is.null(options("golem.app.prod")) || !isTRUE(options("golem.app.prod")[[1]]))
       #   shiny::verbatimTextOutput(ns('wghts_dt_values'))
       ) %>% 
-    div(style = style, ...)
+    div(style = dt_style, ...)
 }
 
 #' dtNumInputs Server Functions
@@ -104,19 +104,19 @@ add_two_action_btn <- function(id, ns) {
     str_c("pillar_", id, "_set_one") %>%
     ns() %>%
     actionButton(.,
-                 "Set to 1",
-                 class = "btn btn-primary btn-xs",
-                 # width = "45%",
+                 "All 1",
+                 class = "btn-primary btn-xs",
+                 width = "40%",
                  style = "margin-top: 0px;")
   
   btn_two <- 
     str_c("pillar_", id, "_set_zero") %>%
     ns() %>%
     actionButton(.,
-                 "Set to 0",
-                 class = "btn btn-primary btn-xs",
-                 # width = "45%",
-                 style = "margin-top: 0px;")
+                 "All 0",
+                 class = "btn-primary btn-xs",
+                 width = "40%",
+                 style = "margin-top: 0px; padding: 1px;")
   
   tagList(btn_one, btn_two)
   
@@ -181,7 +181,7 @@ prep_input_data <- function(ind_list, ns) {
           } ),
         type == "variable" ~ 
           map_chr(var_code, ~{
-            numericInput(ns(.x), label = NULL, value = 0, step = 1, width = "80%") %>% 
+            numericInput(ns(.x), label = NULL, value = 0, step = 1, width = "100%") %>% 
               as.character()
           }),
         FALSE ~ ""

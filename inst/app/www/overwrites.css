@@ -168,3 +168,12 @@ div#driver-popover-item {
 #driver-page-overlay {
   opacity: 0 !important;
 }
+
+.DTcontainer {
+    /* box-sizing: border-box; */
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    padding: 5px;
+}
