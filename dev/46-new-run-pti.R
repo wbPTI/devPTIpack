@@ -23,57 +23,93 @@ shp_dta <- ukr_shp
 # Tailoring the WT page layout ===========================================
 options(golem.app.prod = FALSE)
 
-devtools::load_all()
-launch_pti_onepage(shp_dta = ukr_shp, imp_dta = ukr_mtdt_full)
+# devtools::load_all()
+# launch_pti_onepage(shp_dta = ukr_shp, imp_dta = ukr_mtdt_full)
 
-# ui <- 
+
+# Multitab layout ========================================================
+devtools::load_all()
+launch_pti(shp_dta = ukr_shp, imp_dta = ukr_mtdt_full)
+
+# ui <-
 #   navbarPage(
 #     title = add_logo("App Name"),
 #     collapsible = TRUE,
-#     id = "main_sidebar",
+#     id = "tabpan",
 #     selected = "Info",
 #     tabPanel("Info"),
-#     tabPanel("PTI",
-#              mod_ptipage_twocol_ui("pagepti",
-#                                    wt_dwnld_options = c("data", "weights", "shapes", "metadata"))
-#              ),
-#     tabPanel("PTI comparison",
-#              mod_ptipage_box_ui("pagepti2",
-#                                    wt_dwnld_options = c("data", "weights", "shapes", "metadata"))),
-#     tabPanel("Data explorer", h3("Some content"))
+#     tabPanel(
+#       "PTI",
+#       use_cicerone(),
+#       mod_ptipage_twocol_ui(
+#         "pagepti",
+#         map_height = "calc(100vh - 60px)",
+#         wt_dwnld_options = c("data", "weights", "shapes", "metadata"),
+#         show_waiter = TRUE
+#       ) %>%
+#         fluidRow()
+#       ),
+#     tabPanel(
+#       "PTI comparison", 
+#       mod_pti_comparepage_ui("page_comparepti")
+#       ),
+#     tabPanel(
+#       "Data explorer",
+#       mod_dta_explorer2_ui("explorer_page", multi_choice = FALSE, height = "calc(100vh - 60px)")
+#       )
 #   )
 # 
 # 
 # 
 # server <- function(input, output, session) {
-#   mod_ptipage_newsrv("pagepti",
-#                      imp_dta = reactive(imp_dta), #ukr_mtdt_full), #imp_dta),
-#                      shp_dta = reactive(shp_dta), #ukr_shp),  #shp_dta))
-#                      show_adm_levels =  NULL,
-#                      shapes_path = normalizePath("../other_countries/Mozambique.rds"),
-#                      # active_tab = reactive(NULL),
-#                      # target_tabs = NULL,
-#                      # default_adm_level = NULL, 
-#                      # show_adm_levels = NULL,
-#                      show_waiter = FALSE,
-#                      mtdtpdf_path = normalizePath("app.R")
-#   )
-#   mod_ptipage_newsrv("pagepti2",
-#                      imp_dta = reactive(imp_dta), #ukr_mtdt_full), #imp_dta),
-#                      shp_dta = reactive(shp_dta), #ukr_shp),  #shp_dta))
-#                      show_adm_levels =  NULL,
-#                      shapes_path = normalizePath("../other_countries/Mozambique.rds"),
-#                      # active_tab = reactive(NULL),
-#                      # target_tabs = NULL,
-#                      # default_adm_level = NULL, 
-#                      # show_adm_levels = NULL,
-#                      show_waiter = FALSE,
-#                      mtdtpdf_path = normalizePath("app.R")
-#   )
+#   
+#   # Checking what tab is open.
+#   active_tab <- reactive(input$tabpan)
+#   
+#   # Info tab + guide logic
+#   mod_infotab_server(NULL, 
+#                      tabpan_id = "tabpan", 
+#                      infotab_id = "Info", 
+#                      firsttab_id = "PTI", 
+#                      ptitab_id = "PTI", 
+#                      comparetab_id = "PTI comparison", 
+#                      exploretab_id = "Data explorer")
+#   
+#   plt_dta <- 
+#     mod_ptipage_newsrv("pagepti",
+#                        imp_dta = reactive(imp_dta), 
+#                        shp_dta = reactive(shp_dta), 
+#                        show_adm_levels =  NULL,
+#                        mtdtpdf_path = normalizePath("."),
+#                        shapes_path = normalizePath("."),
+#                        active_tab = active_tab,
+#                        target_tabs = "PTI",
+#                        # default_adm_level = NULL,
+#                        show_waiter = TRUE
+#                        )
+#   
+#   # Compare page visualization
+#   mod_pti_comparepage_newsrv("page_comparepti",
+#                              shp_dta = reactive(shp_dta),
+#                              map_dta = plt_dta$map_dta,
+#                              wt_dta = plt_dta$wt_dta,
+#                              active_tab = active_tab,
+#                              target_tabs = "PTI comparison",
+#                              mtdtpdf_path = ".",
+#                              shapes_path = ".")
+#   
+#   # Adding explorer
+#   mod_dta_explorer2_server("explorer_page", 
+#                            shp_dta = reactive(shp_dta),
+#                            input_dta = reactive(imp_dta), 
+#                            active_tab = function() "Data explorer",
+#                            target_tabs = "Data explorer",
+#                            mtdtpdf_path = ".")
 # }
 # 
-# # shinyApp(ui, server)
-
+# 
+# 
+# shinyApp(ui, server)
 
 
 # Function for running only on PTI page  =====================================
