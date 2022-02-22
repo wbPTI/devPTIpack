@@ -47,6 +47,19 @@ mod_plot_poly_leaf_server <- function(id, preplot_dta, shp_dta, ...){
             }) %>%
             unlist()
           
+          # Compare legends
+          leg_change <- 
+            keep_vals %>% 
+            map_lgl(~{
+              all.equal(
+                preplot_dta()[[.x]]$leg$our_labels,  
+                previous_plot()[[.x]]$leg$our_labels
+                ) %>% 
+                isTRUE()
+            })
+          
+          keep_vals <- keep_vals[leg_change]
+          
           previous_plot()[setdiff(names(previous_plot()), keep_vals)] %>% remove_old_poly()
           preplot_dta()[setdiff(names(preplot_dta()), keep_vals)] %>% add_new_poly()
           

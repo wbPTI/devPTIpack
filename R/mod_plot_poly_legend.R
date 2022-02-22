@@ -10,7 +10,7 @@ mod_plot_poly_legend_server <- function(id, map_dta, selected_layer){
     old_layer <- reactiveVal(NULL)
     
     observeEvent(
-      selected_layer(), {
+      list(selected_layer(), map_dta()), {
         
         # Removing any old legend
         if (isTruthy(old_layer())) {
@@ -58,7 +58,7 @@ plot_pti_legend <- function(leaf_map, map_dta, selected_layer) {
         .y %>%
           leaflet::addLegend(
             position = "bottomleft",
-            labels = .x$leg$our_labels,
+            labels = .x$leg$our_labels_category,
             colors = .x$leg$pal(.x$leg$our_values),
             opacity = 1,
             title = title,
