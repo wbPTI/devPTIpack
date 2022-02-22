@@ -42,17 +42,16 @@ launch_pti_onepage <-
     }
     
     ui_fn <- 
-      switch (ui_type[[1]],
-              twocol = mod_ptipage_twocol_ui,
-              box = mod_ptipage_box_ui
-      )
-    
+      switch(ui_type[[1]],
+             twocol = mod_ptipage_twocol_ui,
+             box = mod_ptipage_box_ui
+             )
     
     map_dwnld_options <- 
       switch(ui_type[[1]],
              twocol = map_dwnld_options,
              box = NULL
-      )
+             )
     
     # ui
     ui_here <-
@@ -61,7 +60,6 @@ launch_pti_onepage <-
         ui_fn("pagepti",
               wt_dwnld_options = wt_dwnld_options,
               map_dwnld_options = map_dwnld_options,
-              show_waiter = show_waiter,
               map_height = map_height,
               dt_style = dt_style , 
               ...

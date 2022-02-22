@@ -27,8 +27,9 @@ mod_calc_pti2_server <- function(id, shp_dta, input_dta, wt_dta){
     # 0. Data preparation 
     
     ## 0.1 All data in the long format
-    long_vars <- eventReactive(wt_dta(), { 
-      wt_dta() %>% pivot_pti_dta((.)$indicators_list) 
+    wt_dta_local <- reactive({wt_dta() %>% `[`(names(.) %>% str_detect("admin|indicators_list"))})
+    long_vars <- eventReactive(wt_dta_local(), { 
+      wt_dta_local() %>% pivot_pti_dta((.)$indicators_list) 
       })
     
     ## 0.2 Key ID columns of each admin level. 

@@ -22,29 +22,18 @@ mod_ptipage_twocol_ui <- function(id,
                                   full_ui = FALSE,
                                   map_height = "calc(100vh)", #"calc(95vh - 60px)",
                                   wt_height = "inherit", 
-                                  dt_style = "zoom:0.9; height: calc(95vh - 250px);", 
+                                  dt_style = "zoom:0.95; height: calc(95vh - 250px);", 
                                   wt_style = NULL,
                                   wt_dwnld_options = c("data", "weights", "shapes", "metadata"),
                                   map_dwnld_options = c("shapes", "metadata"),
-                                  show_waiter = FALSE,
                                   ...) {
   ns <- NS(id)
   
-  spinner <- tagList(
-    waiter::spin_chasing_dots(),
-    br(),
-    golem::get_golem_options("pti.name") %>%
-      as.character() %>%
-      str_c(., "Loading...") %>%
-      span(style = "color:white;")
-  )
-  
   shiny::bootstrapPage(
     shinyjs::useShinyjs(),
-    waiter::use_waiter(),
-    if (is.null(show_waiter) | (!is.null(show_waiter) && show_waiter)) {waiter::waiter_show_on_load(spinner)},
     golem_add_external_resources(),
     div(
+      id = ns("pti-waiter-area"),
       shiny::column(
         cols[[1]],
         class = "order-sm-last",
@@ -69,7 +58,8 @@ mod_ptipage_twocol_ui <- function(id,
           map_dwnld_options = map_dwnld_options
         )
       )
-    )
+    ) %>% 
+      mod_waiter_ui(., ns(NULL))
   )
 }
 
@@ -80,22 +70,12 @@ mod_ptipage_box_ui <- function(id,
                                map_height = "calc(100vh)", #"calc(95vh - 60px)",
                                wt_height = "inherit", 
                                dt_style = "zoom:0.9; height: calc(35vh);", 
-                               wt_style = "zoom:0.75;",
+                               wt_style = "zoom:0.8;",
                                wt_dwnld_options = c("data", "weights", "shapes", "metadata"),
                                map_dwnld_options = NULL,
-                               show_waiter = FALSE,
                                ...) {
   ns <- NS(id)
-  
-  spinner <- tagList(
-    waiter::spin_chasing_dots(),
-    br(),
-    golem::get_golem_options("pti.name") %>%
-      as.character() %>%
-      str_c(., ". Loading...") %>%
-      span(style = "color:white;")
-  )
-  
+
   wt_ui <- 
     mod_wt_inp_ui(#
       ns(NULL),
@@ -110,15 +90,14 @@ mod_ptipage_box_ui <- function(id,
   shiny::fillPage(
     shinyjs::useShinyjs(),
     golem_add_external_resources(),
-    waiter::use_waiter(),
-    if (is.null(show_waiter) | (!is.null(show_waiter) && show_waiter)) {waiter::waiter_show_on_load(spinner)},
     shiny::div(mod_map_pti_leaf_ui(
       ns(NULL),
       height = map_height,
       side_ui = wt_ui,
       map_dwnld_options = map_dwnld_options
     ))
-  )
+  ) %>% 
+    mod_waiter_ui(., ns(NULL))
 }
     
 
@@ -158,13 +137,21 @@ mod_ptipage_newsrv <- function(id,
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
+    # Waiter
+    mod_waiter_newsrv(
+      NULL, 
+      show_waiter = show_waiter, 
+      hade_invalidator = reactive({req(isTruthy(wt_dta()$curr_wt$weight))})
+      )
+    
     # Inputs
     wt_dta <- mod_wt_inp_server(NULL, 
                                 input_dta = imp_dta, 
                                 plotted_dta = reactive(plotted_dta()$pre_map_dta()),
                                 shapes_path = shapes_path, 
-                                mtdtpdf_path = mtdtpdf_path,
-                                show_waiter = show_waiter)
+                                mtdtpdf_path = mtdtpdf_path)
+    
+
     
     observe({
       req(golem::get_golem_options("diagnostics"))

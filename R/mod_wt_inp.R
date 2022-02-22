@@ -194,7 +194,7 @@ short_wt_inp_ui <- function(ns, dwnld_options = c("data", "weights", "shapes", "
 
 #' @describeIn mod_wt_inp_ui  Server Functions
 #'
-mod_wt_inp_server <- function(id, input_dta, plotted_dta = reactive(NULL), shapes_path = "", mtdtpdf_path = "", show_waiter = FALSE) {
+mod_wt_inp_server <- function(id, input_dta, plotted_dta = reactive(NULL), shapes_path = "", mtdtpdf_path = "") {
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -249,19 +249,14 @@ mod_wt_inp_server <- function(id, input_dta, plotted_dta = reactive(NULL), shape
         str(max.level = 3)
     })
     
-    # Stop any waiter if needed
-    observe({
-      req(!all(is.na(curr_wt()$weight)))
-      if (show_waiter) waiter::waiter_hide()
-    })
-    
     # save_ws_out <-
     reactive({
       input_dta() %>%
         append(
           list(
             weights_clean = edited_ws$weights_clean(),
-            indicators_list = edited_ws$indicators_list()
+            indicators_list = edited_ws$indicators_list(),
+            curr_wt = curr_wt()
           )
         )
     })
