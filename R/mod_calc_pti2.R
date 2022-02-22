@@ -27,8 +27,18 @@ mod_calc_pti2_server <- function(id, shp_dta, input_dta, wt_dta){
     # 0. Data preparation 
     
     ## 0.1 All data in the long format
-    wt_dta_local <- reactive({wt_dta() %>% `[`(names(.) %>% str_detect("admin|indicators_list"))})
-    long_vars <- eventReactive(wt_dta_local(), { 
+    wt_dta_local <- reactiveVal(NULL)
+    observeEvent(wt_dta(), {
+      new_val <- wt_dta() %>% `[`(names(.) %>% str_detect("admin|indicators_list|weights_clean"))
+      if (isTruthy(wt_dta_local())) {
+        if (!identical(new_val, wt_dta_local())) {
+          wt_dta_local(new_val)}
+      } else {
+        wt_dta_local(new_val)
+      }
+    })
+    
+    long_vars <- eventReactive(wt_dta_local(), {
       wt_dta_local() %>% pivot_pti_dta((.)$indicators_list) 
       })
     
@@ -42,12 +52,12 @@ mod_calc_pti2_server <- function(id, shp_dta, input_dta, wt_dta){
     # Calculating PTis in one reactive expression
     calc_pti <-
       shiny::eventReactive(#
-        wt_dta()$weights_clean,
+        wt_dta_local()$weights_clean,
         {
-          wt_dta()$weights_clean %>%
+          wt_dta_local()$weights_clean %>%
             
             # 1 Weighting data according to the existing weighting scheme.
-            get_weighted_data(long_vars(), indicators_list = wt_dta()$indicators_list) %>% 
+            get_weighted_data(long_vars(), indicators_list = wt_dta_local()$indicators_list) %>% 
           
             # 2 Calculate PTI scores
             get_scores_data() %>% 

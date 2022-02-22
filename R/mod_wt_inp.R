@@ -143,6 +143,7 @@ full_wt_inp_ui <- function(ns) {
 
 #' @describeIn mod_wt_inp_ui  Weights input UI full
 #' 
+#' @importFrom shiny textInput
 #' @param ns namespace
 #' @param dwnld_options character vector that defines what data download options
 #'        are available. one or all of c("data", "weights", "shapes", "metadata").

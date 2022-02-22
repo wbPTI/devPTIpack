@@ -33,7 +33,6 @@ mod_ptipage_twocol_ui <- function(id,
     shinyjs::useShinyjs(),
     golem_add_external_resources(),
     div(
-      id = ns("pti-waiter-area"),
       shiny::column(
         cols[[1]],
         class = "order-sm-last",
@@ -57,10 +56,10 @@ mod_ptipage_twocol_ui <- function(id,
           height = map_height,
           map_dwnld_options = map_dwnld_options
         )
-      )
-    ) %>% 
-      mod_waiter_ui(., ns(NULL))
-  )
+      ) 
+    ) 
+  ) %>% 
+    mod_waiter_ui(., ns(NULL))
 }
 
 #' @describeIn mod_ptipage_twocol_ui PTI page with the the absolute panel layout
@@ -70,7 +69,8 @@ mod_ptipage_box_ui <- function(id,
                                map_height = "calc(100vh)", #"calc(95vh - 60px)",
                                wt_height = "inherit", 
                                dt_style = "zoom:0.9; height: calc(35vh);", 
-                               wt_style = "zoom:0.8;",
+                               wt_style = "zoom:0.9;",
+                               side_width = 450,
                                wt_dwnld_options = c("data", "weights", "shapes", "metadata"),
                                map_dwnld_options = NULL,
                                ...) {
@@ -94,10 +94,11 @@ mod_ptipage_box_ui <- function(id,
       ns(NULL),
       height = map_height,
       side_ui = wt_ui,
+      side_width = side_width,
       map_dwnld_options = map_dwnld_options
-    ))
-  ) %>% 
-    mod_waiter_ui(., ns(NULL))
+    )) %>% 
+      mod_waiter_ui(., ns(NULL))
+  ) 
 }
     
 
@@ -137,10 +138,14 @@ mod_ptipage_newsrv <- function(id,
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
+    # invalidates if the tab, where this module resides was opened once
+    first_open <- mod_tab_open_first_newserv(id, active_tab, target_tabs)
+    
     # Waiter
     mod_waiter_newsrv(
       NULL, 
       show_waiter = show_waiter, 
+      tab_opened = first_open,
       hade_invalidator = reactive({req(isTruthy(wt_dta()$curr_wt$weight))})
       )
     
