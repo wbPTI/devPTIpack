@@ -7,44 +7,58 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_waiter_ui <- function(ui, id = NULL){
+mod_waiter_ui <- function(ui, id = NULL, show_waiter = FALSE, ...){
   ns <- NS(id)
-  div(id = ns("pti-waiter"), waiter::useWaiter(), ui)
+  
+  spinner <- make_spinner(
+    golem::get_golem_options("pti.name") %>%
+      as.character() %>%
+      str_c(., " Loading PTI module...")
+  )
+  
+  div(id = ns("pti-waiter"),
+      waiter::useWaiter(),
+      if (show_waiter) waiter::waiter_show_on_load(html = spinner),
+      ui)
 }
     
 #' waiter Server Functions
 #'
 #' @param show_waiter logical weather to include a waiter
-#' @param hade_invalidator reactive to invalidate and hide the waiter
+#' @param hide_invalidator reactive to invalidate and hide the waiter
 #' @noRd 
+#' @importFrom waiter Waiter
 mod_waiter_newsrv <- function(id, 
                               show_waiter = FALSE, 
                               tab_opened = reactive(NULL),
-                              hade_invalidator = reactive(NULL)){
+                              hide_invalidator = reactive(NULL)){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    
     spinner <- make_spinner(
       golem::get_golem_options("pti.name") %>%
         as.character() %>%
         str_c(., " Loading PTI module...")
-      )
+    )
     
     w <- waiter::Waiter$new(id = ns("pti-waiter"), html = spinner)
     
     observe({
       req(show_waiter)
       req(tab_opened())
-      w$initialize()
+      # w$initialize()
       w$show()
     }, priority = 100)
     
     observe({
       req(show_waiter)
-      req(hade_invalidator())
+      req(hide_invalidator())
       w$hide()
+      waiter::waiter_hide()
     })
   })
 }
+
    
 #' make a spinner
 #' 
