@@ -5,7 +5,7 @@
 #' 
 mod_dta_explorer2_server <- 
   function(id, shp_dta, input_dta, active_tab, target_tabs, 
-           metadata_path = NULL,  ...) {
+           mtdtpdf_path = NULL,  ...) {
     
     # Check if the tab is opened at first
     first_open <- mod_first_open_count_server(id, active_tab, target_tabs)
@@ -52,10 +52,10 @@ mod_dta_explorer2_server <-
     init_leaf <- mod_plot_init_leaf_server(id, shp_dta)
     
     # Plotting of the map
-    out_leaf <- mod_plot_poly_leaf_server(id, pre_map_dta_3, shp_dta)
+    out_leaf <- mod_plot_poly_leaf_server(id, pre_map_dta_3, shp_dta, leg_type = "value")
     
     # Map download server functions
-    mod_map_dwnld_srv(id, out_leaf, metadata_path = metadata_path)
+    mod_map_dwnld_srv(id, out_leaf, metadata_path = mtdtpdf_path)
     
     # Data download 
     reactive({

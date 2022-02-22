@@ -42,7 +42,11 @@ mod_wt_inp_ui <- function(id,
   controls_col %>% 
     # div(style = "margin-bottom: 10px; width: -webkit-fill-available;") %>%
     div(style = "margin-bottom: 10px; width: 100%;") %>%
-    tagList(mod_DT_inputs_ui(ns(NULL), height, dt_style)) %>% 
+    tagList(
+      div(id = "step_5_modify_weights", 
+          mod_DT_inputs_ui(ns(NULL), height, dt_style)
+          )
+      ) %>% 
     div(., wt_style = wt_style, ...)
   # %>%  fillCol()
 }
@@ -171,7 +175,7 @@ short_wt_inp_ui <- function(ns, dwnld_options = c("data", "weights", "shapes", "
     
     tagList(
       tags$p(
-        style = "font-size: 10px;",
+        style = "font-size: 12px;",
         tags$i(
           "Download PTI ",
           if ("data" %in% dwnld_options) mod_dwnld_dta_link_ui(NULL, ns("dta.download"), "data"), 

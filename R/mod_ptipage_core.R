@@ -20,6 +20,7 @@
 mod_ptipage_twocol_ui <- function(id, 
                                   cols = c(4,8),
                                   full_ui = FALSE,
+                                  show_waiter = FALSE,
                                   map_height = "calc(100vh)", #"calc(95vh - 60px)",
                                   wt_height = "inherit", 
                                   dt_style = "zoom:0.95; height: calc(95vh - 250px);", 
@@ -55,17 +56,19 @@ mod_ptipage_twocol_ui <- function(id,
           ns(NULL), 
           height = map_height,
           map_dwnld_options = map_dwnld_options
-        )
+        ) %>% 
+          div(id = "step_8_map_inspection1")
       ) 
     ) 
   ) %>% 
-    mod_waiter_ui(., ns(NULL))
+    mod_waiter_ui(., ns(NULL), show_waiter = show_waiter)
 }
 
 #' @describeIn mod_ptipage_twocol_ui PTI page with the the absolute panel layout
 #' 
 mod_ptipage_box_ui <- function(id, 
                                full_ui = FALSE,
+                               show_waiter = FALSE,
                                map_height = "calc(100vh)", #"calc(95vh - 60px)",
                                wt_height = "inherit", 
                                dt_style = "zoom:0.9; height: calc(35vh);", 
@@ -97,7 +100,7 @@ mod_ptipage_box_ui <- function(id,
       side_width = side_width,
       map_dwnld_options = map_dwnld_options
     )) %>% 
-      mod_waiter_ui(., ns(NULL))
+      mod_waiter_ui(., ns(NULL), show_waiter = show_waiter)
   ) 
 }
     
@@ -142,12 +145,8 @@ mod_ptipage_newsrv <- function(id,
     first_open <- mod_tab_open_first_newserv(id, active_tab, target_tabs)
     
     # Waiter
-    mod_waiter_newsrv(
-      NULL, 
-      show_waiter = show_waiter, 
-      tab_opened = first_open,
-      hade_invalidator = reactive({req(isTruthy(wt_dta()$curr_wt$weight))})
-      )
+    mod_waiter_newsrv(NULL, show_waiter = show_waiter, tab_opened = first_open,
+      hide_invalidator = reactive({req(isTruthy(wt_dta()$curr_wt$weight))}))
     
     # Inputs
     wt_dta <- mod_wt_inp_server(NULL, 

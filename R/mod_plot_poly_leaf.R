@@ -22,7 +22,7 @@ mod_plot_poly_leaf_server_ui <- function(id){
 #' @export
 #' @importFrom shiny moduleServer observeEvent reactiveVal
 #' @importFrom leaflet leafletProxy
-mod_plot_poly_leaf_server <- function(id, preplot_dta, shp_dta, ...){
+mod_plot_poly_leaf_server <- function(id, preplot_dta, shp_dta, leg_type = "value", ...){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -109,7 +109,7 @@ mod_plot_poly_leaf_server <- function(id, preplot_dta, shp_dta, ...){
       }, ignoreInit = FALSE, ignoreNULL = FALSE)
     
     # Plotting the legend
-    mod_plot_poly_legend_server(NULL, preplot_dta, selected_layer)
+    mod_plot_poly_legend_server(NULL, preplot_dta, selected_layer, leg_type = leg_type)
     
     # returning selected layer
     out <- mod_plot_leaf_export(NULL, shp_dta, preplot_dta, selected_layer)

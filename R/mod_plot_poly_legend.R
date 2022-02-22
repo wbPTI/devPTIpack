@@ -3,7 +3,7 @@
 #' @export
 #' @importFrom shiny observeEvent
 #' @importFrom leaflet leafletProxy
-mod_plot_poly_legend_server <- function(id, map_dta, selected_layer){
+mod_plot_poly_legend_server <- function(id, map_dta, selected_layer, leg_type = "priority"){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
  
@@ -27,7 +27,7 @@ mod_plot_poly_legend_server <- function(id, map_dta, selected_layer){
           old_layer(selected_layer())
           
           leaflet::leafletProxy("leaf_id", deferUntilFlush = TRUE)  %>% 
-            plot_pti_legend(map_dta(), selected_layer())
+            plot_pti_legend(., map_dta(), selected_layer(), leg_type = leg_type)
           
         }
         
@@ -38,12 +38,20 @@ mod_plot_poly_legend_server <- function(id, map_dta, selected_layer){
 
 #' @describeIn mod_plot_poly_legend_server Function to plot Legend for the PTI polygons outside of shiny reactive environment
 #' 
+#' @param leg_type type of the legend to plot (value or priority)
+#' 
 #' @export
 #' @importFrom leaflet addLegend
 #' @importFrom purrr reduce
 #' @importFrom stringr str_c
-plot_pti_legend <- function(leaf_map, map_dta, selected_layer) {
+plot_pti_legend <- function(leaf_map, map_dta, selected_layer, leg_type = "priority") {
   if (isTruthy(selected_layer)) {
+    
+    leg_type_2 <-
+      switch (leg_type,
+              priority = "our_labels_category",
+              value = "our_labels")
+    
     leaf_map %>%
       list() %>%
       append({
@@ -58,7 +66,7 @@ plot_pti_legend <- function(leaf_map, map_dta, selected_layer) {
         .y %>%
           leaflet::addLegend(
             position = "bottomleft",
-            labels = .x$leg$our_labels_category,
+            labels = .x$leg[[leg_type_2]],
             colors = .x$leg$pal(.x$leg$our_values),
             opacity = 1,
             title = title,

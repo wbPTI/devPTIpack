@@ -11,8 +11,7 @@
 mod_explrr_onepage_ui <- function(id, multi_choice = FALSE, ...){
   ns <- NS(id)
   tagList(
-    mod_dta_explorer2_ui(id, multi_choice, ...)#,
-    # devPTIpack::golem_add_external_resources()
+    mod_dta_explorer2_ui(id, multi_choice, ...)
   )
 }
     

@@ -153,7 +153,7 @@ mod_info_page_server <-
 #'
 #' @importFrom htmltools HTML
 #' @import cicerone
-compile_guides <- function() {
+compile_guides <- function(tabpan_id = "main_sidebar") {
   
   out_cice <- 
     Cicerone$new(#
@@ -170,7 +170,7 @@ compile_guides <- function() {
       show_btns = TRUE,
       on_highlight_started = str_c(
         'function() {
-        $("#main_sidebar a[data-value=\'PTI\']").tab(\'show\');
+        $("#', tabpan_id, ' a[data-value=\'PTI\']").tab(\'show\');
       }')
     )$step(
       el = "step_5_modify_weights", 
@@ -267,7 +267,7 @@ compile_guides <- function() {
       position = "right-top",
       show_btns = TRUE
     )$step(
-      el = "main_sidebar",
+      el = tabpan_id,
       title = "Switch between tabs",
       description =
         htmltools::HTML(
@@ -277,13 +277,13 @@ compile_guides <- function() {
       show_btns = TRUE,
       on_highlight_started = str_c(
         'function() {
-        $("#main_sidebar a[data-value=\'PTI\']").tab(\'show\');
+        $("#', tabpan_id, ' a[data-value=\'PTI\']").tab(\'show\');
       }')
     )
   
   out_cice <- 
     out_cice$step(
-      el = "#main_sidebar li:nth-child(3)", 
+      el = str_c("#", tabpan_id, " li:nth-child(3)"), 
       is_id = FALSE,
       title = "Compare multiple PTIs side-by-side.",
       description =
@@ -294,7 +294,7 @@ compile_guides <- function() {
       show_btns = TRUE,
       on_highlight_started = str_c(
         'function() {
-        $("#main_sidebar a[data-value=\'PTI comparison\']").tab(\'show\');
+        $("#', tabpan_id, ' a[data-value=\'PTI comparison\']").tab(\'show\');
       }')
     )$step(
       el = "compare_left_1", 
@@ -311,7 +311,7 @@ compile_guides <- function() {
   
   out_cice <- 
     out_cice$step(
-      el = "#main_sidebar li:nth-child(4)", 
+      el = str_c("#", tabpan_id, " li:nth-child(4)"), 
       is_id = FALSE,
       title = "Explore actual data behind PTI",
       description =
@@ -333,7 +333,7 @@ compile_guides <- function() {
       show_btns = TRUE,
       on_highlight_started = str_c(
         'function() {
-        $("#main_sidebar a[data-value=\'Data explorer\']").tab(\'show\');
+        $("#', tabpan_id, ' a[data-value=\'Data explorer\']").tab(\'show\');
       }')
     )
   

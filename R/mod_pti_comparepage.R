@@ -44,7 +44,7 @@ mod_pti_comparepage_newsrv <-
            wt_dta,
            active_tab,
            target_tabs,
-           metadata_path = ".",
+           mtdtpdf_path = ".",
            shapes_path = ".",
            ...){
     
@@ -57,7 +57,7 @@ mod_pti_comparepage_newsrv <-
                       wt_dta = wt_dta,
                       active_tab = active_tab,
                       target_tabs = target_tabs,
-                      metadata_path = metadata_path, 
+                      metadata_path = mtdtpdf_path, 
                       shapes_path = shapes_path,
                       ...)
     
@@ -67,7 +67,7 @@ mod_pti_comparepage_newsrv <-
                       wt_dta = wt_dta,
                       active_tab = active_tab,
                       target_tabs = target_tabs,
-                      metadata_path = metadata_path,
+                      metadata_path = mtdtpdf_path,
                       shapes_path = shapes_path,
                       ...)
   })

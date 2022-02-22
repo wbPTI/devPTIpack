@@ -44,7 +44,7 @@ mod_plot_pti2_srv <- function(id, shp_dta, map_dta, wt_dta, active_tab, target_t
   init_leaf <- mod_plot_init_leaf_server(id, shp_dta, first_open)
   
   # Plotting of the map
-  out_leaf <- mod_plot_poly_leaf_server(id, pre_map_dta_3, shp_dta, init_leaf)
+  out_leaf <- mod_plot_poly_leaf_server(id, pre_map_dta_3, shp_dta, init_leaf, leg_type = "priority")
   
   # Map download server functions
   mod_map_dwnld_srv(id, out_leaf, metadata_path = metadata_path, shapes_path = shapes_path)
