@@ -7,25 +7,14 @@ library(shiny)
 # remotes::install_github("EBukin/devPTIpack", force = TRUE)
 library(devPTIpack)
 
-# pkgload::load_all(export_all = FALSE, helpers = FALSE, attach_testthat = FALSE)
-
-run_new_pti(
-  pti.name = "{{COUNTRY NAME}}",
-  # shape_path = NULL,
-  shape_dta = ukr_shp, 
-  # data_path = NULL,
-  data_dta = ukr_mtdt_full,
-  metadata_path = NULL,
-  show_waiter = TRUE,
-  
-  default_adm_level = "admin2",
-  show_adm_levels = c("admin1", "admin2", "admin3", "admin4"),
-  choose_adm_levels = TRUE,
-  
-  explorer_choose_adm = FALSE,
-  explorer_default_adm = "all",
-  explorer_multiple_var = FALSE,
-  
-  full_ui = FALSE,
-  pti_landing_page = "./landing-page.md"
+launch_pti(
+  shp_dta = ukr_shp,                 # or readRDS("...")
+  inp_dta = ukr_mtdt_full,           # or devPTIpack::fct_template_reader("...")
+  app_name = "{{COUNTRY NAME}}", 
+  show_waiter = TRUE, 
+  show_adm_levels = NULL,            # c("admin1", "admin2")
+  shapes_path = ".", 
+  mtdtpdf_path = "." #,
+  # pti_landing_page = "./landing-page.md"
 )
+

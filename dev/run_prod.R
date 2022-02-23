@@ -11,7 +11,7 @@ library(devPTIpack)
 
 launch_pti(
   shp_dta = ukr_shp,                 # or readRDS("...")
-  imp_dta = ukr_mtdt_full,           # or devPTIpack::fct_template_reader("...")
+  inp_dta = ukr_mtdt_full,           # or devPTIpack::fct_template_reader("...")
   app_name = "{{COUNTRY NAME}}", 
   show_waiter = TRUE, 
   show_adm_levels = "admin2",
