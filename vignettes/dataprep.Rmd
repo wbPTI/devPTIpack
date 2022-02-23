@@ -1,0 +1,31 @@
+---
+title: "Data preparation for the PTI app"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Data preparation for a PTI app}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(devPTIpack)
+```
+
+To make a PTI app, developers must prepare geometries and metadata in a standardized way, so that it can  be used to make PTI app.
+
+## Preparing geometries
+
+TBD....
+
+
+## Preparing Metadata
+
+
+TBD...
