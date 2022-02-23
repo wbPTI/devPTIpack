@@ -4,8 +4,13 @@
 #' @importFrom shiny reactive
 #' 
 mod_dta_explorer2_server <- 
-  function(id, shp_dta, input_dta, active_tab, target_tabs, 
-           mtdtpdf_path = NULL,  ...) {
+  function(id, 
+           shp_dta, 
+           input_dta, 
+           active_tab, 
+           target_tabs, 
+           mtdtpdf_path = NULL,  
+           shapes_path = NULL, ...) {
     
     # Check if the tab is opened at first
     first_open <- mod_first_open_count_server(id, active_tab, target_tabs)
@@ -40,7 +45,6 @@ mod_dta_explorer2_server <-
       req(sel_adm_levels())
       req(n_bins())
       req(first_open())
-      # browser()
       pre_map_dta_2() %>%
         filter_admin_levels(sel_adm_levels()) %>%
         add_legend_paras(nbins = n_bins()) %>%
@@ -55,7 +59,7 @@ mod_dta_explorer2_server <-
     out_leaf <- mod_plot_poly_leaf_server(id, pre_map_dta_3, shp_dta, leg_type = "value")
     
     # Map download server functions
-    mod_map_dwnld_srv(id, out_leaf, metadata_path = mtdtpdf_path)
+    mod_map_dwnld_srv(id, out_leaf, metadata_path = mtdtpdf_path, shapes_path = shapes_path)
     
     # Data download 
     reactive({
@@ -222,11 +226,11 @@ reshaped_explorer_dta <- function(long_dta, ind_list) {
       str_c(
         "<strong>{spatial_name}</strong>",
         "<br/>Variable: <strong>{ifelse(is.na(pti_name), 'No data', pti_name)}</strong>",
-        "<br/>Value: <strong>{ifelse(is.na(pti_score), 'No data', scales::label_number(accuracy = 0.00001)(pti_score))}</strong>",
+        "<br/>Value: <strong>{ifelse(is.na(pti_score), 'No data', round(pti_score, 6))}</strong>",
         "<br/>",
         collapse = ""
       )
-    ) 
+    )
   
   new_name <- str_extract(names(out), "admin\\d")
   names(out) <- new_name

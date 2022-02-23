@@ -7,6 +7,7 @@
 #' @importFrom stringr str_detect str_extract str_c
 #' @importFrom tidyr pivot_wider
 #' 
+#' @export
 expand_adm_levels <- function(wtd_scrd_dta, mt) {
   
   adm_lvls <- mt %>% get_adm_levels() %>% set_names(.)
@@ -119,6 +120,7 @@ merge_expandedn_adm_levels <- function(dta) {
 #' @importFrom tidyr separate
 #' @import dplyr
 #' 
+#' @export
 agg_pti_scores <- function(extrap_dta, adm_ids, na_rm_pti2 = NULL) {
   
   na_rm_pti <- get_golem_options("na_rm_pti")
@@ -192,6 +194,7 @@ agg_pti_scores <- function(extrap_dta, adm_ids, na_rm_pti2 = NULL) {
 
 #' Label PTI observations in a generic way
 #'
+#' @export
 label_generic_pti <- function(dta, glue_expr = generic_pti_glue()) {
   dta  %>%
     map(~ {
@@ -205,6 +208,7 @@ label_generic_pti <- function(dta, glue_expr = generic_pti_glue()) {
 #' @describeIn label_generic_pti glue string for labeling observations
 #' 
 #' 
+#' @export
 generic_pti_glue <- function() {
   c(
     "<strong>{spatial_name}</strong>",
@@ -220,7 +224,7 @@ generic_pti_glue <- function() {
 #' Restructure PTI data in the way acceptable for the mapping part of the app
 #' 
 #' @noRd
-#' 
+#' @export
 structure_pti_data <- function(dta, shp_dta) {
   
   dta %>%
@@ -273,10 +277,11 @@ structure_pti_data <- function(dta, shp_dta) {
               is.na(pti_label),
               str_c("<strong>",spatial_name, "</strong><br/>PTI score: <strong>No data</strong><br/>"),
               pti_label
-              ) %>% 
-            map(~htmltools::HTML(.x))
+              )
+          # %>% 
+          #   map(~htmltools::HTML(.x))
         ) %>% 
-        mutate(pti_label = map(pti_label, ~htmltools::HTML(.x))) %>% 
+        # mutate(pti_label = map(pti_label, ~htmltools::HTML(.x))) %>% 
         tidyr::pivot_wider(
           names_from = "pti_code",
           values_from = c("pti_score", "pti_label"),

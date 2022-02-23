@@ -156,7 +156,7 @@ plot_pti_polygons <- function(leaf_map, poly_dta) {
         leaflet::addPolygons(
           data = y$pti_dta,
           fillColor = ~ y$leg$pal(y$pti_dta$pti_score),
-          label = y$pti_dta$pti_label, # map(y$pti_dta$pti_label, ~ shiny::HTML(.)),
+          label =  map(y$pti_dta$pti_label, ~ shiny::HTML(.)), #y$pti_dta$pti_label, #
           options = pathOptions(pane = "polygons"),
           group = str_c(y$pti_codes, " (", y$admin_level, ")"),
           # layerId = str_c(y$pti_dta[[id_var]], " ", y$pti_codes, " (", y$admin_level, ")"),
