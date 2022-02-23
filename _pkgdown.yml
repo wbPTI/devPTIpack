@@ -1,2 +1,12 @@
 url: https://ebukin.github.io/devPTIpack/
+home:
+  title: PTI package for dashboards development
+authors:
+  Eduard Bukin:
+    href: https://EBukin.github.io/
+  Takaaki Masaki:
+    href: https://takaakimasaki.github.io/
+template:
+  bootstrap: 5
+lang: en
 
