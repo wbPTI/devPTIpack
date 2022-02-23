@@ -91,12 +91,15 @@ launch_pti_onepage <-
 
 #' @describeIn launch_pti_onepage start a PTI app with explorer and compare page
 #' 
+#' @param tabs character vector, where user can decide what PTI components to include.
+#'   Options are: c("info", "compare", "explorer", "how").
 #' @export
 launch_pti <- 
   function(shp_dta, 
            inp_dta, 
            ui_type = c("twocol", "box"),
            app_name = "Some app", 
+           tabs = c("info", "compare", "explorer"),
            show_waiter = TRUE, 
            show_adm_levels = NULL,
            wt_dwnld_options = c("data", "weights", "shapes", "metadata"),
@@ -127,14 +130,15 @@ launch_pti <-
              box = NULL
       )
     
+    if (!"info" %in% tabs) {selected_tab <- "PTI"} else {selected_tab <- "Info"}
     # ui
     ui_here <-
       navbarPage(
         title = add_logo(app_name),
         collapsible = TRUE,
         id = "tabpan",
-        selected = "Info",
-        tabPanel("Info"),
+        selected = selected_tab,
+        if ("info" %in% tabs) tabPanel("Info", ""),
         tabPanel("PTI",
                  use_cicerone(),
                  ui_fn("pagepti",
@@ -146,12 +150,15 @@ launch_pti <-
                        ...) %>% 
                    fluidRow()
         ),
-        tabPanel("PTI comparison", 
+        if ("compare" %in% tabs) tabPanel("PTI comparison", 
                  mod_pti_comparepage_ui("page_comparepti")
         ),
-        tabPanel("Data explorer",
-                 mod_dta_explorer2_ui("explorer_page", multi_choice = FALSE, height = "calc(100vh - 60px)")
-        )
+        if ("explorer" %in% tabs) tabPanel("Data explorer",
+                 mod_dta_explorer2_ui("explorer_page", 
+                                      multi_choice = FALSE, 
+                                      height = "calc(100vh - 60px)")
+        ),
+        if ("how" %in% tabs) tabPanel("How it works?")
       ) %>% 
       tagList(golem_add_external_resources(), use_cicerone())
     
@@ -161,6 +168,7 @@ launch_pti <-
       
       # Checking what tab is open.
       active_tab <- reactive(input$tabpan)
+      # observe(cat("tab: ", active_tab(), "\n"))
       
       # Info tab + guide logic
       mod_infotab_server(NULL, 
@@ -193,21 +201,21 @@ launch_pti <-
                                  target_tabs = "PTI comparison",
                                  mtdtpdf_path = normalizePath(mtdtpdf_path),
                                  shapes_path = normalizePath(shapes_path))
-      
+
       # Adding explorer
-      mod_dta_explorer2_server("explorer_page", 
+      mod_dta_explorer2_server("explorer_page",
                                shp_dta = reactive(shp_dta),
-                               input_dta = reactive(inp_dta), 
-                               active_tab = function() "Data explorer",
+                               input_dta = reactive(inp_dta),
+                               active_tab = active_tab,
                                target_tabs = "Data explorer",
-                               mtdtpdf_path = normalizePath(mtdtpdf_path))
+                               mtdtpdf_path = normalizePath(mtdtpdf_path),
+                               shapes_path = normalizePath(shapes_path))
     }
     
     with_golem_options(
       app = shinyApp(ui = ui_here, server = server_here), 
       golem_opts = rlang::dots_list(...) %>% append(list(pti.name = app_name))
     )
-    
     
   }
 

@@ -668,10 +668,10 @@ mod_wt_dwnload_newsrv <- function(id,
                                 ))
       
       # Metadata PDF file download
-      mod_dwnld_file_server(NULL, "mtdt.files", shapes_path)
+      mod_dwnld_file_server(NULL, "mtdt.files", mtdtpdf_path)
       
       # Metadata PDF file download
-      mod_dwnld_file_server(NULL, "shp.files", mtdtpdf_path)
+      mod_dwnld_file_server(NULL, "shp.files", shapes_path)
       
     })
 }

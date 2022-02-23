@@ -14,11 +14,16 @@ pkgload::load_all(export_all = FALSE, helpers = FALSE, attach_testthat = FALSE)
 
 library(tidyverse)
 
-shp_dta <- "../other_countries/south_sudan/South_Sudan.rds" %>% read_rds() #devPTIpack::ukr_shp
-imp_dta <- "../other_countries/south_sudan/South_Sudan--metadata-2021-11-29_v2.1.xlsx" %>% 
-  devPTIpack::fct_template_reader()
+# shp_dta <- "../other_countries/south_sudan/South_Sudan.rds" %>% read_rds() #devPTIpack::ukr_shp
+# imp_dta <- "../other_countries/south_sudan/South_Sudan--metadata-2021-11-29_v2.1.xlsx" %>% 
+#   devPTIpack::fct_template_reader()
+
+shp_dta = readRDS("../examplePTIapp/app-data/admin_bounds.rds")
+imp_dta = devPTIpack::fct_template_reader("../examplePTIapp/app-data/mtdt.xlsx")
 imp_dta$indicators_list <- devPTIpack::get_indicators_list(imp_dta)
 imp_dta$weights_clean <- devPTIpack::get_rand_weights(imp_dta$indicators_list) 
+
+
 # %>% 
 #   map(~{.x %>% mutate(weight = ifelse(var_code %in% str_c("v", c(25:50)), 0, weight))})
 
@@ -73,6 +78,7 @@ library(tidyverse)
 
 # Data explorer module logic -------------------------------------------
 
+devtools::load_all()
 input_dta <- imp_dta
 # input_dta$admin1_States <- 
 #   input_dta$admin1_States %>% 
@@ -100,6 +106,22 @@ pre_map_dta_1 <-
   input_dta %>% 
   pivot_pti_dta(indicators_list) %>% 
   reshaped_explorer_dta(indicators_list) %>% 
+  structure_pti_data(shp_dta) %>% 
+  preplot_reshape_wghtd_dta() 
+
+
+profvis::profvis({
+pre_map_dta_1 <-
+  input_dta %>% 
+  pivot_pti_dta(indicators_list) %>% 
+  reshaped_explorer_dta(indicators_list) %>% 
+  structure_pti_data(shp_dta) %>% 
+  preplot_reshape_wghtd_dta() 
+}, interval = 0.005)
+
+
+pre_map_dta_2 <- 
+  pre_map_dta_1 %>% 
   structure_pti_data(shp_dta) %>% 
   preplot_reshape_wghtd_dta() 
 

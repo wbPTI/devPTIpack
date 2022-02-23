@@ -48,6 +48,9 @@ mod_plot_pti2_srv <- function(id, shp_dta, map_dta, wt_dta, active_tab, target_t
   
   # Map download server functions
   mod_map_dwnld_srv(id, out_leaf, metadata_path = metadata_path, shapes_path = shapes_path)
+  mod_dwnld_file_server(id, "mtdt.files.side", filepath = metadata_path)
+  mod_dwnld_file_server(id, "shp.files.side", filepath = shapes_path)
+  
   
   # Data download 
   reactive({list(pre_map_dta = pre_map_dta_3)})#, init_leaf = init_leaf)})
@@ -57,13 +60,15 @@ mod_plot_pti2_srv <- function(id, shp_dta, map_dta, wt_dta, active_tab, target_t
 #' @describeIn mod_plot_pti2_srv server side function for side-by-side PTI plotting
 #' 
 mod_plot_pti_comparison_srv  <-
-  function(id, shp_dta, map_dta, wt_dta, active_tab, target_tabs, metadata_path = NULL,  ...){
+  function(id, shp_dta, map_dta, wt_dta, active_tab, target_tabs, metadata_path = NULL,  shapes_path = NULL, ...){
     moduleServer(id, function(input, output, session) {
         ns <- session$ns
         
-        mod_plot_pti2_srv("first_leaf", shp_dta, map_dta, wt_dta, active_tab, target_tabs, metadata_path , ...)
+        mod_plot_pti2_srv("first_leaf", shp_dta, map_dta, wt_dta, active_tab, target_tabs,
+                          metadata_path = metadata_path, shapes_path = shapes_path, ...)
         
-        mod_plot_pti2_srv("second_leaf", shp_dta, map_dta, wt_dta, active_tab, target_tabs, metadata_path , ...)
+        mod_plot_pti2_srv("second_leaf", shp_dta, map_dta, wt_dta, active_tab, target_tabs, 
+                          metadata_path = metadata_path, shapes_path = shapes_path, ...)
         
       }
     )

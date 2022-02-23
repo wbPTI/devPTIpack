@@ -60,6 +60,8 @@ mod_dta_explorer2_server <-
     
     # Map download server functions
     mod_map_dwnld_srv(id, out_leaf, metadata_path = mtdtpdf_path, shapes_path = shapes_path)
+    mod_dwnld_file_server(id, "mtdt.files.side", filepath = mtdtpdf_path)
+    mod_dwnld_file_server(id, "shp.files.side", filepath = shapes_path)
     
     # Data download 
     reactive({

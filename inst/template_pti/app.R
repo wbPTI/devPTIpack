@@ -7,9 +7,10 @@ library(shiny)
 # remotes::install_github("EBukin/devPTIpack", force = TRUE)
 library(devPTIpack)
 
-launch_pti(
-  shp_dta = ukr_shp,                 # or readRDS("...")
-  inp_dta = ukr_mtdt_full,           # or devPTIpack::fct_template_reader("...")
+options( "golem.app.prod" = TRUE)
+devPTIpack::launch_pti(
+  shp_dta = devPTIpack::ukr_shp,                 # or readRDS("...")
+  inp_dta = devPTIpack::ukr_mtdt_full,           # or devPTIpack::fct_template_reader("...")
   app_name = "{{COUNTRY NAME}}", 
   show_waiter = TRUE, 
   show_adm_levels = NULL,            # c("admin1", "admin2")

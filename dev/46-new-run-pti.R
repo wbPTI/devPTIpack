@@ -7,29 +7,30 @@ library(DT)
 library(shiny)
 
 
-# shp_dta <- "../other_countries/south_sudan/South_Sudan.rds" %>% read_rds() #devPTIpack::ukr_shp
-imp_dta <- ukr_mtdt_full
-  # # # "../other_countries/south_sudan/South_Sudan--metadata-2021-11-29_v2.1.xlsx" %>%
-  # # # "../other_countries/somalia/mtdt-2021-11-08-00-53-06.xlsx" %>%
-  # "../other_countries/tzn/Tanzania--metadata-2022-01-28.xlsx" %>%
-  # devPTIpack::fct_template_reader()
-
-
+inp_dta <- ukr_mtdt_full
 shp_dta <- ukr_shp
-  # "../other_countries/tzn/Tanzania.rds" %>% read_rds()
-
-# Generic WT page layout
 
 # Tailoring the WT page layout ===========================================
-options(golem.app.prod = FALSE)
+options(golem.app.prod = TRUE)
 
 # devtools::load_all()
-# launch_pti_onepage(shp_dta = ukr_shp, imp_dta = ukr_mtdt_full)
+# launch_pti_onepage(shp_dta = ukr_shp, inp_dta = ukr_mtdt_full)
 
 
 # Multitab layout ========================================================
 devtools::load_all()
-launch_pti(shp_dta = ukr_shp, imp_dta = ukr_mtdt_full)
+
+
+launch_pti(
+  shp_dta = ukr_shp, #readRDS("../examplePTIapp/app-data/admin_bounds.rds"), # ukr_shp, #
+  inp_dta = ukr_mtdt_full, #devPTIpack::fct_template_reader("../examplePTIapp/app-data/mtdt.xlsx") # ukr_mtdt_full #
+  shapes_path = "../examplePTIapp/app-data/shapefiles.zip",
+  mtdtpdf_path = "../examplePTIapp/app-data/metadata.pdf", 
+  show_waiter = FALSE, 
+  show_adm_levels = c("admin1", "admin2", "admin3", "admin4")
+  )
+
+
 
 # ui <-
 #   navbarPage(
@@ -77,7 +78,7 @@ launch_pti(shp_dta = ukr_shp, imp_dta = ukr_mtdt_full)
 #   
 #   plt_dta <- 
 #     mod_ptipage_newsrv("pagepti",
-#                        imp_dta = reactive(imp_dta), 
+#                        inp_dta = reactive(inp_dta), 
 #                        shp_dta = reactive(shp_dta), 
 #                        show_adm_levels =  NULL,
 #                        mtdtpdf_path = normalizePath("."),
@@ -101,7 +102,7 @@ launch_pti(shp_dta = ukr_shp, imp_dta = ukr_mtdt_full)
 #   # Adding explorer
 #   mod_dta_explorer2_server("explorer_page", 
 #                            shp_dta = reactive(shp_dta),
-#                            input_dta = reactive(imp_dta), 
+#                            input_dta = reactive(inp_dta), 
 #                            active_tab = function() "Data explorer",
 #                            target_tabs = "Data explorer",
 #                            mtdtpdf_path = ".")

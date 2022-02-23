@@ -253,13 +253,26 @@ mod_map_dwnld_ui <- function(id, map_dwnld_options = c("shapes", "metadata")) {
     if (is.null(map_dwnld_options)) {
       ""
     } else {
-      tags$p(style = "font-size: 12px; text-align: right; margin: 0 0 0px !important;",
-             tags$i(
-               mod_dwnld_local_file_ui(ns("map_metadata"), "Download metadata"),
-               " or ",
-               mod_dwnld_local_file_ui(ns("map_shapes"), "shape files.")
-             ))
+      # tags$p(style = "font-size: 12px; text-align: right; margin: 0 0 0px !important;",
+      #        tags$i(
+      #          mod_dwnld_local_file_ui(ns("map_metadata"), "Download metadata"),
+      #          " or ",
+      #          mod_dwnld_local_file_ui(ns("map_shapes"), "shape files.")
+      #        ))
+      tags$p(
+        style = "font-size: 12px;",
+        tags$i(
+          "Download ",
+          if ("data" %in% map_dwnld_options) mod_dwnld_dta_link_ui(NULL, ns("dta.download.side"), "data"), 
+          if ("weights" %in% map_dwnld_options) mod_dwnld_dta_link_ui(NULL, ns("weights.download.side"), "scores", prefix = " "),
+          if ("shapes" %in% map_dwnld_options) mod_dwnld_dta_link_ui(NULL, ns("shp.files.side"), "shapes", prefix = " "), 
+          if ("metadata" %in% map_dwnld_options) mod_dwnld_dta_link_ui(NULL, ns("mtdt.files.side"), "metadata pdf", prefix = " or "),
+          "."
+        ),
+        style = "text-align: right; margin: 0 0 0px !important;"
+      )
     }
+    
   )
   
   tags$p(
@@ -457,24 +470,16 @@ mod_map_dwnld_srv <- function(id, plotting_map, metadata_path = NULL, shapes_pat
           }
         )
       
-      if (is.null(metadata_path) || !file.exists(metadata_path)) {
-        mod_dwnld_local_file_server("map_metadata", "app-metadata/15-zam-pti-data-overview.pdf")
-        mod_dwnld_local_file_server(ns("map_metadata"), "app-metadata/15-zam-pti-data-overview.pdf")
-      } else {
+      # if (is.null(metadata_path) || !file.exists(metadata_path)) {
         mod_dwnld_local_file_server("map_metadata", metadata_path)
         mod_dwnld_local_file_server(ns("map_metadata"), metadata_path)
-      }
+      # }
+
       
-      
-      if (is.null(shapes_path) || !file.exists(shapes_path)) {
-        mod_dwnld_local_file_server("map_shapes", "app-metadata/15-zam-pti-data-overview.pdf", 
-                                    "shapes-{.pti_name}-{Sys.Date()}.{.ext}")
-        mod_dwnld_local_file_server(ns("map_shapes"), "app-metadata/15-zam-pti-data-overview.pdf", 
-                                    "shapes-{.pti_name}-{Sys.Date()}.{.ext}")
-      } else {
-        mod_dwnld_local_file_server("map_shapes", shapes_path, "shapes-{.pti_name}-{Sys.Date()}.{.ext}")
-        mod_dwnld_local_file_server(ns("map_shapes"), shapes_path, "shapes-{.pti_name}-{Sys.Date()}.{.ext}")
-      }
+      # if (is.null(shapes_path) || !file.exists(shapes_path)) {
+        mod_dwnld_local_file_server("map_shapes", shapes_path, basename(shapes_path))
+        mod_dwnld_local_file_server(ns("map_shapes"), shapes_path, basename(shapes_path))
+      # }
       
     })
   
