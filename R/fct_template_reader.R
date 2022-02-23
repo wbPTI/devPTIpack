@@ -1,10 +1,9 @@
-
-
-#' Fucntion for reading xlsx files with the templates
+#' Read PTI metadata excel file in a standardized way.
+#' 
+#' @param ... is the path to the metadata xlsx file
 #'
 #' @export
 #' @import dplyr purrr stringr readxl
-#' @noRd
 fct_template_reader <- function(...) {
   flpth <- file.path(...)
   # browser()

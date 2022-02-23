@@ -1,6 +1,15 @@
-#' create_new_pti 
+#' create_new_pti Create a directory with key apps' files and `app.R` needed for deployment
 #'
-#' @description A fct function
+#' @description Copies a template app folder structure to the location/name 
+#'   specified. Creates `app.R` as well as the RStudio project to simplify
+#'   the  workflow.
+#'   
+#' @param path full path to the place where the app's folder must be along with
+#'   the not yet existing app folder name. The folder will be created automatically.
+#' 
+#' @param app_name optional. name of folder where the app should be.
+#' 
+#' @param open logical, if the app's folder should be opened as an RStudio project. 
 #'
 #' @return The return value, if any, from executing the function.
 #'
@@ -9,12 +18,12 @@
 #' @importFrom  yesno yesno
 #' @importFrom  rstudioapi isAvailable initializeProject openProject
 #' @export
-create_new_pti <- function(path, open = TRUE, package_name = basename(path)) {
+create_new_pti <- function(path, open = TRUE, app_name = basename(path)) {
   
   path <- fs::path_expand(path)
   
-  if (path == "." & package_name == fs::path_file(path)) {
-    package_name <- fs::path_file(getwd())
+  if (path == "." & app_name == fs::path_file(path)) {
+    app_name <- fs::path_file(getwd())
   }
   
   if (fs::dir_exists(path)) {
@@ -51,6 +60,5 @@ create_new_pti <- function(path, open = TRUE, package_name = basename(path)) {
   }
   
   return(invisible(fs::path_abs(path)))
-  
   
 }

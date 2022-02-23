@@ -21,7 +21,7 @@ mod_ptipage_twocol_ui <- function(id,
                                   cols = c(4,8),
                                   full_ui = FALSE,
                                   show_waiter = FALSE,
-                                  map_height = "calc(100vh)", #"calc(95vh - 60px)",
+                                  map_height = "calc(99vh)", #"calc(95vh - 60px)",
                                   wt_height = "inherit", 
                                   dt_style = "zoom:0.95; height: calc(95vh - 250px);", 
                                   wt_style = NULL,
@@ -66,6 +66,8 @@ mod_ptipage_twocol_ui <- function(id,
 
 #' @describeIn mod_ptipage_twocol_ui PTI page with the the absolute panel layout
 #' 
+#' @export
+#' 
 mod_ptipage_box_ui <- function(id, 
                                full_ui = FALSE,
                                show_waiter = FALSE,
@@ -107,7 +109,7 @@ mod_ptipage_box_ui <- function(id,
 
 #' @describeIn mod_ptipage_twocol_ui
 #' 
-#' @param imp_dta reactive list of tibbles with standardized PTI inputs data
+#' @param inp_dta reactive list of tibbles with standardized PTI inputs data
 #' @param shp_dta reactive list of geo-referenced tibbles with polygons shapes
 #' @param active_tab reactive with the name of the tab currently opened in the app
 #'        Sometimes, app does note render the map unless it is explicitly called
@@ -127,7 +129,7 @@ mod_ptipage_box_ui <- function(id,
 #' @export
 #'
 mod_ptipage_newsrv <- function(id,
-                               imp_dta = reactive(NULL), 
+                               inp_dta = reactive(NULL), 
                                shp_dta = reactive(NULL),
                                active_tab = reactive(NULL),
                                target_tabs = NULL,
@@ -150,7 +152,7 @@ mod_ptipage_newsrv <- function(id,
     
     # Inputs
     wt_dta <- mod_wt_inp_server(NULL, 
-                                input_dta = imp_dta, 
+                                input_dta = inp_dta, 
                                 plotted_dta = reactive(plotted_dta()$pre_map_dta()),
                                 shapes_path = shapes_path, 
                                 mtdtpdf_path = mtdtpdf_path)
@@ -167,7 +169,7 @@ mod_ptipage_newsrv <- function(id,
     map_dta <-
       mod_calc_pti2_server(NULL,
                            shp_dta = shp_dta,
-                           input_dta = imp_dta,
+                           input_dta = inp_dta,
                            wt_dta = wt_dta)
     
     observe({

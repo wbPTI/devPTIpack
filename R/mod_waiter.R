@@ -1,33 +1,46 @@
-#' waiter UI wrappere
+#' @describeIn mod_waiter_newsrv waiter UI wrapper
 #'
-#' @description Adds waiter to any object in the.
+#' @description user interface for the waiter
 #'
-#' @param id,input,output,session Internal parameters for {shiny}.
+#' @param ui user interface to wrap in the waiter
+#' @param id ns identifier
+#' @param show_waiter starts waiter on app's start.
 #'
-#' @noRd 
-#'
+#' 
 #' @importFrom shiny NS tagList 
+#' @importFrom waiter useWaiter waiter_show_on_load
+#' @importFrom golem get_golem_options
 mod_waiter_ui <- function(ui, id = NULL, show_waiter = FALSE, ...){
   ns <- NS(id)
   
-  spinner <- make_spinner(
+  spinner <-
     golem::get_golem_options("pti.name") %>%
-      as.character() %>%
-      str_c(., " Loading PTI module...")
-  )
+    as.character() %>%
+    str_c(., " Loading PTI module...") %>% 
+    make_spinner( )
   
-  div(id = ns("pti-waiter"),
-      waiter::useWaiter(),
-      if (show_waiter) waiter::waiter_show_on_load(html = spinner),
-      ui)
+  div(
+    id = ns("pti-waiter"),
+    waiter::useWaiter(),
+    if (show_waiter)
+      waiter::waiter_show_on_load(html = spinner),
+    ui
+  )
 }
     
 #' waiter Server Functions
+#' 
+#' @description This server function stops waiter based on the change in the 
+#'   invalidating reactive parameter.
+#'   
+#'   `hide_invalidator` reactive. to invalidate and hide the waiter.
+#'   `tab_opened` reactive. if qualifies under `req()`, a waiter is launched on the page.
 #'
-#' @param show_waiter logical weather to include a waiter
-#' @param hide_invalidator reactive to invalidate and hide the waiter
-#' @noRd 
-#' @importFrom waiter Waiter
+#' @param show_waiter logical TRUE/FALSE, indicates weather to include a waiter
+#'     into the shiny app. 
+#'     
+#' 
+#' @importFrom waiter Waiter waiter_hide
 mod_waiter_newsrv <- function(id, 
                               show_waiter = FALSE, 
                               tab_opened = reactive(NULL),
@@ -35,11 +48,12 @@ mod_waiter_newsrv <- function(id,
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    spinner <- make_spinner(
+    app_name <- 
       golem::get_golem_options("pti.name") %>%
-        as.character() %>%
-        str_c(., " Loading PTI module...")
-    )
+      as.character() %>%
+      str_c(., " Loading PTI module...")
+    if (identical(character(0), app_name)) app_name <- "Loading PTI module"
+    spinner <- app_name %>% make_spinner()
     
     w <- waiter::Waiter$new(id = ns("pti-waiter"), html = spinner)
     
@@ -60,9 +74,9 @@ mod_waiter_newsrv <- function(id,
 }
 
    
-#' make a spinner
+#' @describeIn mod_waiter_newsrv waiter makes a spinner
 #' 
-#' @noRd
+#' @importFrom waiter spin_chasing_dots
 make_spinner <- function(spin_text = "") {
   tagList(
     waiter::spin_chasing_dots(),
