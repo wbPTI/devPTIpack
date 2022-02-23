@@ -7,7 +7,6 @@
 #' @importFrom stringr str_detect str_extract str_c
 #' @importFrom tidyr pivot_wider
 #' 
-#' @export
 expand_adm_levels <- function(wtd_scrd_dta, mt) {
   
   adm_lvls <- mt %>% get_adm_levels() %>% set_names(.)
@@ -94,7 +93,6 @@ expand_adm_levels <- function(wtd_scrd_dta, mt) {
 #' 
 #' @noRd
 #' 
-#' @export
 merge_expandedn_adm_levels <- function(dta) {
   dta %>%
     transpose() %>%
@@ -121,7 +119,6 @@ merge_expandedn_adm_levels <- function(dta) {
 #' @importFrom tidyr separate
 #' @import dplyr
 #' 
-#' @export
 agg_pti_scores <- function(extrap_dta, adm_ids, na_rm_pti2 = NULL) {
   
   na_rm_pti <- get_golem_options("na_rm_pti")
@@ -195,7 +192,6 @@ agg_pti_scores <- function(extrap_dta, adm_ids, na_rm_pti2 = NULL) {
 
 #' Label PTI observations in a generic way
 #'
-#' @export
 label_generic_pti <- function(dta, glue_expr = generic_pti_glue()) {
   dta  %>%
     map(~ {
@@ -207,7 +203,8 @@ label_generic_pti <- function(dta, glue_expr = generic_pti_glue()) {
 }
 
 #' @describeIn label_generic_pti glue string for labeling observations
-#' @export
+#' 
+#' 
 generic_pti_glue <- function() {
   c(
     "<strong>{spatial_name}</strong>",
@@ -223,63 +220,111 @@ generic_pti_glue <- function() {
 #' Restructure PTI data in the way acceptable for the mapping part of the app
 #' 
 #' @noRd
-#' @export
+#' 
 structure_pti_data <- function(dta, shp_dta) {
   
   dta %>%
-    imap(~ {
+    purrr::imap(~ {
       name_var <-  str_c(.y, "Name")
       name_var <- sym(name_var)
       pti_codes <-
         .x$pti_name %>%
         unique() %>%
         set_names(nm = str_c("pti_ind_", seq_along(.)))
+      pti_codes2 <- tibble(pti_code = names(pti_codes), pti_name = pti_codes)
       
-      pti_data <-
-        .x %>%
-        mutate(pti_code = NA_character_) %>%
-        list() %>%
-        append(as.list(pti_codes)) %>%
-        reduce2(names(pti_codes), function(x, y, z) {
-          x %>%
-            mutate(pti_code = ifelse(pti_name == y, z, pti_code))
-        }) %>%
-        select(-pti_name) %>%
+      .x  %>% left_join(pti_codes2, by = "pti_name")
+      
+      # pti_data <-
+      #   .x %>%
+      #   mutate(pti_code = NA_character_) %>%
+      #   list() %>%
+      #   append(as.list(pti_codes)) %>%
+      #   reduce2(names(pti_codes), function(x, y, z) {
+      #     x %>%
+      #       mutate(pti_code = ifelse(pti_name == y, z, pti_code))
+      #   }) %>%
+      #   select(-pti_name) %>%
+      #   tidyr::pivot_wider(
+      #     names_from = "pti_code",
+      #     values_from = c("pti_score", "pti_label"),
+      #     names_sep = ".."
+      #   )
+      
+      pti_data1 <- 
+        .x  %>% 
+        left_join(pti_codes2, by = "pti_name") %>%
+        select(-pti_name) 
+      
+      var_match <- pti_data1 %>% select(matches("admin\\dPcod")) %>% names()
+      var_match2 <- sym(var_match)
+      var_to_expand <- c(var_match, "pti_code")
+      var_to_distinct <- c(var_match, "spatial_name")
+      
+      pti_data2 <- 
+        pti_data1 %>% 
+        tidyr::expand(!!var_match2, pti_code) %>%
+        left_join(distinct(select(pti_data1, all_of(var_to_distinct))), by = var_match) %>% 
+        left_join(pti_data1, by = c(var_match, "spatial_name", "pti_code")) %>% 
+        # filter(is.na(pti_label)) %>%
+        mutate(
+          pti_label = 
+            ifelse(
+              is.na(pti_label),
+              str_c("<strong>",spatial_name, "</strong><br/>PTI score: <strong>No data</strong><br/>"),
+              pti_label
+              ) %>% 
+            map(~htmltools::HTML(.x))
+        ) %>% 
+        mutate(pti_label = map(pti_label, ~htmltools::HTML(.x))) %>% 
         tidyr::pivot_wider(
           names_from = "pti_code",
           values_from = c("pti_score", "pti_label"),
           names_sep = ".."
         )
       
-      
-      pti_data <-
+      pti_data0 <- 
         shp_dta %>%
         magrittr::extract(str_detect(names(.), .y)) %>%
-        magrittr::extract2(1) %>%
-        left_join(pti_data, by = names(.x) %>% magrittr::extract(str_detect(., "admin\\d"))) %>%
-        # mutate_at(vars(contains("pti_label")),
-        #           # list(~ purrr::map(., ~ if(is.null(.x)) htmltools::HTML("No data") else htmltools::HTML(.x))))
-        #           
-        #           list( ~ifelse(is.null(.), "No data", .))
-        #           ) %>%
-        #           # list( ~ purrr::map(., ~ if (is.null(.x))
-        #           #   ("No data")
-        #           #   else
-        #           #     (.x)
-        #           # ))) %>%
-        mutate(spatial_name = ifelse(is.na(spatial_name),!!name_var, spatial_name)) %>%
-        mutate_at(vars(contains("pti_label")),
-                  list(~ purrr::map(., ~ifelse(
-                    is.na(.),
-                    glue::glue(
-                      "<strong>{spatial_name}</strong>",
-                      "<br/>PTI score: <strong>No data</strong>",
-                      "<br/>"
-                      # "<br/>Administrative level: {admin0Pcod}"
-                    ),
-                    .
-                  ) %>% htmltools::HTML(.))))
+        magrittr::extract2(1) %>% 
+        left_join(pti_data2, by = names(.x) %>% magrittr::extract(str_detect(., "admin\\d")))
+    
       
+      # browser()
+      # pti_data <-
+      #   shp_dta %>%
+      #   magrittr::extract(str_detect(names(.), .y)) %>%
+      #   magrittr::extract2(1) %>%
+      #   left_join(pti_data2, by = names(.x) %>% magrittr::extract(str_detect(., "admin\\d"))) %>%
+      #   # mutate_at(vars(contains("pti_label")),
+      #   #           # list(~ purrr::map(., ~ if(is.null(.x)) htmltools::HTML("No data") else htmltools::HTML(.x))))
+      #   #           
+      #   #           list( ~ifelse(is.null(.), "No data", .))
+      #   #           ) %>%
+      #   #           # list( ~ purrr::map(., ~ if (is.null(.x))
+      #   #           #   ("No data")
+      #   #           #   else
+      #   #           #     (.x)
+      #   #           # ))) %>%
+      #   mutate(spatial_name = ifelse(is.na(spatial_name),!!name_var, spatial_name)) %>%
+      #   mutate(
+      #     across(#
+      #       contains("pti_label"), #
+      #       ~ purrr::map(., ~ {
+      #         ifelse(
+      #           is.na(.),
+      #           glue::glue(
+      #             "<strong>{spatial_name}</strong>",
+      #             "<br/>PTI score: <strong>No data</strong>",
+      #             "<br/>"
+      #             # "<br/>Administrative level: {admin0Pcod}"
+      #           ),
+      #           .
+      #         ) %>% htmltools::HTML(.)
+      #       })
+      #       )
+      #     )
+          
       admin_level <- shp_dta %>% names() %>% `[`(str_detect(., .y))
       admin_level <-
         set_names(
@@ -287,7 +332,7 @@ structure_pti_data <- function(dta, shp_dta) {
           str_extract(admin_level, "^(.*?)_") %>% str_replace("_", "")
         )
       
-      list(pti_data = pti_data,
+      list(pti_data = pti_data0,
            pti_codes = pti_codes,
            admin_level =  admin_level)
       
