@@ -99,44 +99,45 @@ This is how a typical PTI folder looks like.
 After the basic app folder was created, users need to populate it with
 data and make some minor edits.
 
-Step 1. Prepare proper `metadata.xlsx` and `shapes.rds` files; Files
-names can be anything. One will have to specify correct paths to the
-files in `app.R`.
+-   Step 1. Prepare proper `metadata.xlsx` and `shapes.rds` files; Files
+    names can be anything. One will have to specify correct paths to the
+    files in `app.R`.
 
-Step 2. Place shapes and metadata into the `app-data` folder. Use the
-`app-data` folder to store also other data such as archive with the
-geometrical boundaries or metadata pdf documentation.
+-   Step 2. Place shapes and metadata into the `app-data` folder. Use
+    the `app-data` folder to store also other data such as archive with
+    the geometrical boundaries or metadata pdf documentation.
 
-Step 3. Knit `metadata.Rmd` in order to generate `metadata.pdf`
-documentation of the data used in the app. This documentation is based
-on the `metadata.xlsx` and `shapes.rds`. Remember to re-render metadata
-PDF whenever the metadata changes.
+-   Step 3. Knit `metadata.Rmd` in order to generate `metadata.pdf`
+    documentation of the data used in the app. This documentation is
+    based on the `metadata.xlsx` and `shapes.rds`. Remember to re-render
+    metadata PDF whenever the metadata changes.
 
-Step 4. Modify the `app.R` file specifying paths to `metadata.xlsx`,
-`shapes.rds`, pdf documentation and archive with the geometrical
-boundaries. Change the app’s name and tune `devPTIpack::launch_pti()`
-function according to your needs.
+-   Step 4. Modify the `app.R` file specifying paths to `metadata.xlsx`,
+    `shapes.rds`, pdf documentation and archive with the geometrical
+    boundaries. Change the app’s name and tune
+    `devPTIpack::launch_pti()` function according to your needs.
 
-Note, that `inp_dta` parameter in `devPTIpack::launch_pti()` shell be
-specified as a pre-loaded r object. As it is usually generated based on
-the `metadata.xlsx`, use `devPTIpack::fct_template_reader()` (see
-`?devPTIpack::fct_template_reader`).
+    Note, that `inp_dta` parameter in `devPTIpack::launch_pti()` shell
+    be specified as a pre-loaded r object. As it is usually generated
+    based on the `metadata.xlsx`, use
+    `devPTIpack::fct_template_reader()` (see
+    `?devPTIpack::fct_template_reader`).
 
-Step 5. Run the app and troubleshoot its functioning. Remember, if the
-app does not start, it is likely that there are some discrepancies in
-the data preparation. Always use the built-in data to check if the app
-launches from its own folder. You may try using
-`devPTIpack::validate_geometries()` or `devPTIpack::validate_metadata()`
-to check if geometries or metadata are prepared properly. These
-validation functions, however, are not exhaustive, thus, consult
-`vignette("dataprep")` or ask for help.
+-   Step 5. Run the app and troubleshoot its functioning. Remember, if
+    the app does not start, it is likely that there are some
+    discrepancies in the data preparation. Always use the built-in data
+    to check if the app launches from its own folder. You may try using
+    `devPTIpack::validate_geometries()` or
+    `devPTIpack::validate_metadata()` to check if geometries or metadata
+    are prepared properly. These validation functions, however, are not
+    exhaustive, thus, consult `vignette("dataprep")` or ask for help.
 
-Step 6. Develop additional functionality in folder `R`.
+-   Step 6. Develop additional functionality in folder `R`.
 
-Step 7. `landing-page.md` is an optional parameter and may be used for
-customizing the info modal that pops-up when the app launches.
+-   Step 7. `landing-page.md` is an optional parameter and may be used
+    for customizing the info modal that pops-up when the app launches.
 
-Fully specified app folder may look like this:
+Fully, completed app folder may look like this:
 
     +-- app-data
     |   +-- admin_bounds.rds
@@ -151,7 +152,7 @@ Fully specified app folder may look like this:
         \-- _disable_autoload.R
 
 The `app.R` script, which launches the app and could be used to deploy
-such app to an external server looks in the following way:
+such app to an external server is:
 
     # Launch the ShinyApp (Do not remove this comment)
     # To deploy, run: rsconnect::deployApp()
@@ -213,12 +214,14 @@ Building the App with
     shinyApp(ui, server)
 
 Here is another example of embedding the PTI into an existing dashboard.
+It should be runnable in the console if all necessary packages are
+installed.
 
 -   Note that most of the code below describe the dashboard layout and
     structure and only a few lines are dedicated to the PTI.
--   Remember to disable waiter when embedding module in a multi-tab
+-   Remember to disable waiter when embedding module in a multitab
     dashboard.
--   More elaborate example of multi-tab dashboard is in the source code
+-   More elaborate example of multitab dashboard is in the source code
     of the function `devPTIpack::launch_pti`.
 
 <!-- -->

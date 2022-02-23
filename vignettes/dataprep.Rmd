@@ -2,7 +2,7 @@
 title: "Data preparation for the PTI app"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Data preparation for a PTI app}
+  %\VignetteIndexEntry{"Data preparation for the PTI app}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
