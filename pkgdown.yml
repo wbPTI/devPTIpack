@@ -1,0 +1,10 @@
+pandoc: 2.7.3
+pkgdown: 2.0.2
+pkgdown_sha: ~
+articles:
+  dataprep: dataprep.html
+last_built: 2022-02-23T02:31Z
+urls:
+  reference: https://ebukin.github.io/devPTIpack/reference
+  article: https://ebukin.github.io/devPTIpack/articles
+
