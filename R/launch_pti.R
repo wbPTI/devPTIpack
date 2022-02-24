@@ -146,8 +146,7 @@ launch_pti <-
                        map_dwnld_options = map_dwnld_options,
                        map_height = map_height,
                        show_waiter = show_waiter,
-                       dt_style = dt_style , 
-                       ...) %>% 
+                       dt_style = dt_style) %>% 
                    fluidRow()
         ),
         if ("compare" %in% tabs) tabPanel("PTI comparison", 

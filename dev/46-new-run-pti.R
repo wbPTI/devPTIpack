@@ -7,11 +7,11 @@ library(DT)
 library(shiny)
 
 
-inp_dta <- ukr_mtdt_full
-shp_dta <- ukr_shp
+# inp_dta <- ukr_mtdt_full
+# shp_dta <- ukr_shp
 
 # Tailoring the WT page layout ===========================================
-options(golem.app.prod = TRUE)
+options(golem.app.prod = FALSE)
 
 # devtools::load_all()
 # launch_pti_onepage(shp_dta = ukr_shp, inp_dta = ukr_mtdt_full)
@@ -20,14 +20,23 @@ options(golem.app.prod = TRUE)
 # Multitab layout ========================================================
 devtools::load_all()
 
+options(golem.app.prod = FALSE)
+options(shiny.fullstacktrace = TRUE)
+options(shiny.reactlog = TRUE)
 
 launch_pti(
   shp_dta = ukr_shp, #readRDS("../examplePTIapp/app-data/admin_bounds.rds"), # ukr_shp, #
   inp_dta = ukr_mtdt_full, #devPTIpack::fct_template_reader("../examplePTIapp/app-data/mtdt.xlsx") # ukr_mtdt_full #
   shapes_path = "../examplePTIapp/app-data/shapefiles.zip",
   mtdtpdf_path = "../examplePTIapp/app-data/metadata.pdf", 
-  show_waiter = FALSE, 
-  show_adm_levels = c("admin1", "admin2", "admin3", "admin4")
+  app_name = "Somalia PTI", 
+  show_waiter = TRUE, 
+  show_adm_levels = c("admin1", "admin2", "admin3"),
+  explorer_show_adm =  c("admin1", "admin2", "admin3"),
+  # explorer_choose_adm = TRUE,
+  explorer_default_adm = "all",
+  explorer_multiple_var = FALSE,
+  
   )
 
 
