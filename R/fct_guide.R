@@ -122,10 +122,10 @@ guide_launch_pti <- function(
         el = "compare_left_1",
         is_id = TRUE,
         title = "Select different PTIs and bins numbers.",
-        description =
-          tags$image(src = "www/030-compare.gif", class = "popoverimg") %>%
-          as.character() %>%
-          htmltools::HTML(),
+        # description =
+        #   tags$image(src = "www/030-compare.gif", class = "popoverimg") %>%
+        #   as.character() %>%
+        #   htmltools::HTML(),
         position = "mid-center",
         show_btns = TRUE
       )
@@ -154,10 +154,10 @@ guide_launch_pti <- function(
         el = "explorer_1",
         is_id = TRUE,
         title = "Explore data",
-        description =
-          tags$image(src = "www/035-explorer.gif", class = "popoverimg") %>%
-          as.character() %>%
-          htmltools::HTML(),
+        # description =
+        #   tags$image(src = "www/035-explorer.gif", class = "popoverimg") %>%
+        #   as.character() %>%
+        #   htmltools::HTML(),
         position = "mid-center",
         show_btns = TRUE,
         on_highlight_started = 
