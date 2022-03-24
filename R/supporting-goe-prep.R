@@ -89,7 +89,8 @@ plot_pti_plotslist <-
 gg_admin_list <- function(dta,
                           multiply = 1,
                           mt = zam_bounds_simple,
-                          metadata = NULL) {
+                          metadata = NULL,
+                          legend_position=c(0.9,0.2)) {
   spat_agg <-
     dta %>%
     names() %>%
@@ -131,7 +132,7 @@ gg_admin_list <- function(dta,
         #   begin = 0.4,
         #   breaks = scales::breaks_pretty(12))+
         theme_minimal() +
-        theme(legend.position = c(0.9, 0.2)) +
+        theme(legend.position = legend_position) +
         labs(title = ddta$var)
     })
   plot_list
