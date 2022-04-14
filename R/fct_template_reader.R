@@ -50,7 +50,7 @@ fct_template_reader <- function(...) {
     keep(~!is.null(.))
   
   # Converting tables weights_table to weights_clean
-  if (!is.null(tmplt$weights_table ) & 
+  if (!is.null(tmplt$weights_table ) && 
       nrow(tmplt$weights_table) > 0) {
     tmplt$weights_clean <-
       tmplt$weights_table %>% 
@@ -60,7 +60,7 @@ fct_template_reader <- function(...) {
   }
   
   
-  if (!is.null(tmplt$metadata ) & 
+  if (!is.null(tmplt$metadata ) && 
       nrow(tmplt$metadata) > 0) {
     
     tmplt$metadata <- 

@@ -127,6 +127,7 @@ add_two_action_btn <- function(id, ns) {
 #' 
 #' @noRd
 #' @importFrom glue glue
+#' @importFrom shinyBS tipify
 prep_input_data <- function(ind_list, ns) {
   ind_list %>% 
     mutate(
@@ -139,12 +140,20 @@ prep_input_data <- function(ind_list, ns) {
           NA_character_
         }
       }) %>% 
-        ifelse(is.na(.), ., str_c("Available year(s): ", ., "</br>")),
-      var_description = map(var_description, ~shiny::markdown(.x)),
+        ifelse(is.na(.), ., str_c("<p>Available year(s): ", ., "</p>")),
+      var_description = 
+        map_chr(var_description, ~shiny::markdown(.x)) %>% 
+        str_replace_all("\n", ""),
+      var_description = 
+        ifelse(
+          length(var_description) == 0 | is.na(var_description), 
+          "", var_description),
       tooltip_text = 
-        glue("<strong>{var_name}</strong><p>{var_description}</p>",
-             "Admin level(s): {var_adm_levels}</br>{var_years}",
-             "Available year(s): {var_adm_levels}</br>"),
+        glue("<strong>{var_name}</strong>",
+             "{var_description}",
+             "Admin level(s): {var_adm_levels}",
+             "{var_years}", 
+             .na = ""),
       var_description = tooltip_text,
       pillar_description = as.character(pillar_description),
       pillar_description = map(pillar_description, ~shiny::markdown(.x)),
@@ -186,7 +195,27 @@ prep_input_data <- function(ind_list, ns) {
           }),
         FALSE ~ ""
       ) 
-    )
+    ) %>%
+    mutate(#
+      var_name =
+        pmap_chr(#
+          list(var_name, var_description, row_number()),
+          ~ {
+            ttip <-
+              shinyBS::tipify(
+                actionLink(
+                  str_c(ns("inp-inf-"), ..3), "(info)",
+                  icon = icon("info-circle", style = "color:blue;")
+                ),
+                title =  ..2,
+                # content = ..2,
+                placement = "right",
+                trigger = "focus"
+              ) %>%
+              as.character() %>%
+              str_replace_all("[\n|\r]", "")
+            str_c(..1, " ", ttip)
+          })) 
   # %>% 
   #   mutate(
   #     var_name = 

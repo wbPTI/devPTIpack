@@ -58,10 +58,108 @@ imp_dta <- "../other_countries/south_sudan/South_Sudan--metadata-2021-11-29_v2.1
 
 # # Adding tooltip to the DT content =====================================
 # 
-# # This is a little problematic.
-# nested_dta <- prep_input_data(ind_list, ns = function(x)x)
-# targets_dta <- make_vis_targets_for_dt(nested_dta)
-# 
+format_inp_DT <- function(nested_dta, targets_dta, width = 450, height = 400) {
+  
+  nested_dta %>% 
+    datatable( 
+      width = width,
+      height = height,
+      escape = FALSE, 
+      selection = 'none',
+      fillContainer = F,
+      rownames = NULL,
+      colnames = NULL,
+      # extensions = c('Scroller'),
+      plugins = c('scrollResize'),
+      options = list(
+        dom = 'ft',
+        bPaginate = FALSE,
+        columnDefs = targets_dta$columnDefs,
+        ordering = FALSE,
+        autoWidth = F,
+        
+        # scrollResize potions
+        paging = FALSE,
+        scrollResize = TRUE, 
+        scrollY =  100,
+        scrollCollapse = TRUE,
+        
+        headerCallback = JS(
+          "function(thead, data, start, end, display){
+          $('th', thead).css('display', 'none');
+          }"
+        )
+        #   paging = TRUE,
+        #   
+        #   columnDefs = targets_dta$columnDefs,
+        #   # deferRender = TRUE,
+        #   scrollY = scrollY,
+        #   # scrollX = FALSE,
+        #   scroller = TRUE,
+        #   # scrollCollapse = TRUE
+      ),
+      callback = JS("table.rows().every(function(i, tab, row) {
+        var $this = $(this.node());
+        $this.attr('id', this.data()[0]);
+        $this.addClass('shiny-input-container');
+      });
+      Shiny.unbindAll(table.table().node());
+      Shiny.bindAll(table.table().node());")
+    ) %>% 
+    formatStyle(
+      'type',
+      target = 'row',
+      backgroundColor = styleEqual("pillar", c('lightgray')),
+      fontWeight = styleEqual("pillar", c('bold')),
+    ) 
+  
+}
+
+# This is a little problematic.
+devtools::load_all()
+ind_list <- imp_dta %>% get_indicators_list()
+nested_dta <- prep_input_data(ind_list, ns = function(x)x)
+targets_dta <- make_vis_targets_for_dt(nested_dta)
+
+format_inp_DT(nested_dta, targets_dta)
+ns = function(x)x
+out_tbl <- 
+nested_dta %>% 
+  format_inp_DT( targets_dta)
+
+
+# library(shiny)
+library(shinyBS)
+# library(DT)
+# library(formatR)
+
+
+ui <- fluidPage(
+  fluidRow(
+    bsButton('tbutton', 'Lift Titanic'),
+    br(),
+    bsTooltip('tbutton', 'This button will inflate a balloon'),
+    width = 2
+  ),
+  mainPanel(
+    div(dataTableOutput('titanic', height = "300px")))
+)
+
+
+
+server <- function(input, output) {
+  output$titanic <- DT::renderDataTable({
+    out_tbl
+  })
+  
+}
+
+
+shinyApp(ui = ui, server = server)
+
+
+
+  # 
 # 
 # # Tailoring the WT page layout ===========================================
 # options(golem.app.prod = TRUE)

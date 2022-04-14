@@ -330,7 +330,7 @@ mod_wt_save_newsrv <- function(id, edited_ws, curr_wt, curr_wt_name) {
             actionButton(
               ns("weights.save"),
               "Modify weights",
-              icon = icon("warning"),
+              icon = icon("warning", lib = "glyphicon"),
               class = "btn-warning btn-xs",
               width = "63%"
             ) %>%
@@ -342,7 +342,7 @@ mod_wt_save_newsrv <- function(id, edited_ws, curr_wt, curr_wt_name) {
               actionButton(
                 ns("weights.save"),
                 label = "Provide a name",
-                icon = icon("warning"),
+                icon = icon("warning", lib = "glyphicon"),
                 class = "btn-warning btn-xs",
                 width = "63%"
               ) %>%
@@ -378,7 +378,7 @@ mod_wt_save_newsrv <- function(id, edited_ws, curr_wt, curr_wt_name) {
           actionButton(
             ns("weights.save"),
             "Modify weights",
-            icon = icon("warning"),
+            icon = icon("warning", lib = "glyphicon"),
             class = "btn-warning btn-xs",
             width = "63%"
           ) %>%
@@ -393,7 +393,7 @@ mod_wt_save_newsrv <- function(id, edited_ws, curr_wt, curr_wt_name) {
               actionButton(
                 ns("weights.save"),
                 "No changes to save",
-                icon = icon("warning"),
+                icon = icon("warning", lib = "glyphicon"),
                 class = "btn-info btn-xs",
                 width = "63%"
               ) %>%

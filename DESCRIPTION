@@ -48,7 +48,8 @@ Imports:
     curl (>= 4.3.2),
     ggplot2 (>= 3.3.5),
     DT (>= 0.20),
-    htmlwidgets (>= 1.5.4)
+    htmlwidgets (>= 1.5.4),
+    shinyBS (>= 0.61)
 Suggests: 
     rgdal (>= 1.5-1.6),
     profvis (>= 0.3.6),
