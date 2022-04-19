@@ -204,8 +204,8 @@ prep_input_data <- function(ind_list, ns) {
             ttip <-
               shinyBS::tipify(
                 actionLink(
-                  str_c(ns("inp-inf-"), ..3), "(info)",
-                  icon = icon("info-circle", style = "color:blue;")
+                  str_c(ns("inp-inf-"), ..3), " ",
+                  icon = shiny::icon("info-circle", style = "color:blue;")
                 ),
                 title =  ..2,
                 # content = ..2,

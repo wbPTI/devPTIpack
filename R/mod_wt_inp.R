@@ -95,7 +95,7 @@ full_wt_inp_ui <- function(ns) {
         actionButton(
           ns("weights.delete"),
           "Delete PTI",
-          icon = icon("remove"),
+          icon = shiny::icon("remove", lib = "glyphicon"),
           class = "btn-danger",
           width = "100%"
         )
@@ -112,7 +112,7 @@ full_wt_inp_ui <- function(ns) {
       downloadButton(
         ns("weights.download"),
         "Download PTIs",
-        icon = icon("download"),
+        icon = shiny::icon("download"),
         class = "btn-primary",
         style = "width: 100%"
       ) %>%
@@ -121,7 +121,7 @@ full_wt_inp_ui <- function(ns) {
       downloadButton(
         ns("dwnld_data"),
         "Download PTI data",
-        icon = icon("download"),
+        icon = shiny::icon("download"),
         class = "btn-primary",
         style = "width: 100%"
       ), 
@@ -330,7 +330,7 @@ mod_wt_save_newsrv <- function(id, edited_ws, curr_wt, curr_wt_name) {
             actionButton(
               ns("weights.save"),
               "Modify weights",
-              icon = icon("warning", lib = "glyphicon"),
+              icon = shiny::icon("warning", lib = "glyphicon"),
               class = "btn-warning btn-xs",
               width = "63%"
             ) %>%
@@ -342,7 +342,7 @@ mod_wt_save_newsrv <- function(id, edited_ws, curr_wt, curr_wt_name) {
               actionButton(
                 ns("weights.save"),
                 label = "Provide a name",
-                icon = icon("warning", lib = "glyphicon"),
+                icon = shiny::icon("warning", lib = "glyphicon"),
                 class = "btn-warning btn-xs",
                 width = "63%"
               ) %>%
@@ -352,7 +352,7 @@ mod_wt_save_newsrv <- function(id, edited_ws, curr_wt, curr_wt_name) {
               actionButton(
                 ns("weights.save"),
                 "Save and plot PTI",
-                icon = icon("save"),
+                icon = shiny::icon("save"),
                 class = "btn-success btn-xs",
                 width = "63%"
               ) %>%
@@ -378,7 +378,7 @@ mod_wt_save_newsrv <- function(id, edited_ws, curr_wt, curr_wt_name) {
           actionButton(
             ns("weights.save"),
             "Modify weights",
-            icon = icon("warning", lib = "glyphicon"),
+            icon = shiny::icon("warning", lib = "glyphicon"),
             class = "btn-warning btn-xs",
             width = "63%"
           ) %>%
@@ -393,7 +393,7 @@ mod_wt_save_newsrv <- function(id, edited_ws, curr_wt, curr_wt_name) {
               actionButton(
                 ns("weights.save"),
                 "No changes to save",
-                icon = icon("warning", lib = "glyphicon"),
+                icon = shiny::icon("warning", lib = "glyphicon"),
                 class = "btn-info btn-xs",
                 width = "63%"
               ) %>%
@@ -403,7 +403,7 @@ mod_wt_save_newsrv <- function(id, edited_ws, curr_wt, curr_wt_name) {
               actionButton(
                 ns("weights.save"),
                 "Save changes and plot PTI",
-                icon = icon("save"),
+                icon = shiny::icon("save"),
                 class = "btn-success btn-xs",
                 width = "63%"
               ) %>%
@@ -413,7 +413,7 @@ mod_wt_save_newsrv <- function(id, edited_ws, curr_wt, curr_wt_name) {
             actionButton(
               ns("weights.save"),
               "Save and plot new PTI",
-              icon = icon("save"),
+              icon = shiny::icon("save"),
               class = "btn-success btn-xs",
               width = "63%"
             ) %>%
@@ -445,7 +445,7 @@ mod_wt_delete_ui <- function(id = NULL,inputId = "weights.reset", label = "Reset
   actionButton(
     inputId = ns(inputId), 
     label = label,
-    icon = icon("remove"),
+    icon = shiny::icon("remove", lib = "glyphicon"),
     class = "btn-danger btn-xs",
     width = "35%"
   )

@@ -59,7 +59,7 @@ mod_infotab_server <-
                 ns("tour"),
                 "Tour me around!",
                 class = "btn-success",
-                icon = icon(name = "arrow-circle-right")
+                icon = shiny::icon(name = "arrow-circle-right")
               )
             )
           ) %>%

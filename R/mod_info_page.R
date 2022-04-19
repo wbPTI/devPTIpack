@@ -64,7 +64,7 @@ mod_info_page_server <-
                   "tour",
                   "Tour me around!",
                   class = "btn-success",
-                  icon = icon(name = "arrow-circle-right")#,
+                  icon = shiny::icon(name = "arrow-circle-right")#,
                   # class = "disabled"
                 )
               )

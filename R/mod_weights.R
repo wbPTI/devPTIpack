@@ -705,7 +705,7 @@ mod_wt_save_srv <- function(id, pti_indicators, after_delete_ws, current_ws_name
           actionButton(
             ns("weights.save"),
             "Provide name for your PTIs",
-            icon = icon("exclamation-triangle"),
+            icon = shiny::icon("exclamation-triangle"),
             class = "btn-warning",
             width = "100%"
           ) %>%
@@ -715,7 +715,7 @@ mod_wt_save_srv <- function(id, pti_indicators, after_delete_ws, current_ws_name
           actionButton(
             ns("weights.save"),
             "Save and plot your PTI",
-            icon = icon("save"),
+            icon = shiny::icon("save"),
             # class = "btn-success",
             width = "100%"
           ) %>%
@@ -749,7 +749,7 @@ mod_wt_save_srv <- function(id, pti_indicators, after_delete_ws, current_ws_name
             actionButton(
               ns("weights.save"),
               "Save changes and plot existing PTI",
-              icon = icon("save"),
+              icon = shiny::icon("save"),
               class = "btn-success",
               width = "100%"
             ) %>%
@@ -760,7 +760,7 @@ mod_wt_save_srv <- function(id, pti_indicators, after_delete_ws, current_ws_name
           actionButton(
             ns("weights.save"),
             "Save and plot new PTI",
-            icon = icon("save"),
+            icon = shiny::icon("save"),
             class = "btn-success",
             width = "100%"
           ) %>%
@@ -782,7 +782,7 @@ mod_wt_save_srv <- function(id, pti_indicators, after_delete_ws, current_ws_name
         actionButton(
           ns("weights.save"),
           "Save and plot PTI",
-          icon = icon("save"),
+          icon = shiny::icon("save"),
           class = "btn-success",
           width = "100%"
         ) %>% 
