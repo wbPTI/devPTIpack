@@ -154,6 +154,39 @@ full_wt_inp_ui <- function(ns) {
 #'        If NULL or blank, no data download options are available., 
 short_wt_inp_ui <- function(ns, dwnld_options = c("data", "weights", "shapes", "metadata")) {
   
+  if (length(dwnld_options) > 0) {
+    dwnld_text <-
+      list(
+        c("data", "weights", "shapes", "metadata"),
+        c("dta.download", "weights.download", "shp.files", "mtdt.files"),
+        c("data", "scores", "shapes", "metadata")
+      ) %>%
+      pmap( ~ {
+        if (..1 %in% dwnld_options)
+        {
+          mod_dwnld_dta_link_ui(NULL, ns(..2), ..3, prefix = NULL, suffix = NULL)
+        }
+        else
+          NULL
+      }) %>%
+      purrr::keep(function(x) !is.null(x))
+    
+    if (length(dwnld_text) >= 2) {
+      dwnld_text <- 
+        c(rep(", ", max(length(dwnld_text) - 2, 0)), " and ", "") %>%
+        map2(dwnld_text, ~ tagList(.y, .x))
+    }
+      
+    dwnld_text <- 
+      dwnld_text %>%
+      tagList("Download PTI ", ., ".") %>% 
+      tags$i() %>% 
+      tags$p(style = "font-size: 12px;", 
+             style = "text-align: right; margin: 0 0 0px !important;")
+  } else {
+    dwnld_text <- tagList()
+  }
+  
   tagList(
     
     textInput(
@@ -174,18 +207,7 @@ short_wt_inp_ui <- function(ns, dwnld_options = c("data", "weights", "shapes", "
       div(id = "step_234_controls3"),
     
     tagList(
-      tags$p(
-        style = "font-size: 12px;",
-        tags$i(
-          "Download PTI ",
-          if ("data" %in% dwnld_options) mod_dwnld_dta_link_ui(NULL, ns("dta.download"), "data"), 
-          if ("weights" %in% dwnld_options) mod_dwnld_dta_link_ui(NULL, ns("weights.download"), "scores", prefix = ", "),
-          if ("shapes" %in% dwnld_options) mod_dwnld_dta_link_ui(NULL, ns("shp.files"), "shapes", prefix = ", "), 
-          if ("metadata" %in% dwnld_options) mod_dwnld_dta_link_ui(NULL, ns("mtdt.files"), "metadata pdf", prefix = " or "),
-          "."
-        ),
-        style = "text-align: right; margin: 0 0 0px !important;"
-      )
+      dwnld_text
     ) %>%
       div(id = "step_5_downalod_upload1") %>%
       div(id = "step_5_downalod_upload2")

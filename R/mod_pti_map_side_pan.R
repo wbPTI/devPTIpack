@@ -249,31 +249,36 @@ mod_get_admin_levels_srv <- function(id,
 mod_map_dwnld_ui <- function(id, map_dwnld_options = c("shapes", "metadata")) {
   ns <- NS(id)
   
-  download_data_ui <- tagList(
-    if (is.null(map_dwnld_options)) {
-      ""
-    } else {
-      # tags$p(style = "font-size: 12px; text-align: right; margin: 0 0 0px !important;",
-      #        tags$i(
-      #          mod_dwnld_local_file_ui(ns("map_metadata"), "Download metadata"),
-      #          " or ",
-      #          mod_dwnld_local_file_ui(ns("map_shapes"), "shape files.")
-      #        ))
-      tags$p(
-        style = "font-size: 12px;",
-        tags$i(
-          "Download ",
-          if ("data" %in% map_dwnld_options) mod_dwnld_dta_link_ui(NULL, ns("dta.download.side"), "data"), 
-          if ("weights" %in% map_dwnld_options) mod_dwnld_dta_link_ui(NULL, ns("weights.download.side"), "scores", prefix = " "),
-          if ("shapes" %in% map_dwnld_options) mod_dwnld_dta_link_ui(NULL, ns("shp.files.side"), "shapes", prefix = " "), 
-          if ("metadata" %in% map_dwnld_options) mod_dwnld_dta_link_ui(NULL, ns("mtdt.files.side"), "metadata pdf", prefix = " or "),
-          "."
-        ),
-        style = "text-align: right; margin: 0 0 0px !important;"
-      )
+  if (length(map_dwnld_options) > 0) {
+    dwnld_text <-
+      list(
+        c("data", "weights", "shapes", "metadata"),
+        c("dta.download.side", "weights.download.side", "shp.files.side", "mtdt.files.side"),
+        c("data", "scores", "shapes", "metadata")
+      ) %>%
+      pmap( ~ {
+        if (..1 %in% dwnld_options)
+          mod_dwnld_dta_link_ui(NULL, ns(..2), ..3, prefix = NULL, suffix = NULL)
+        else
+          NULL
+      }) %>%
+      purrr::keep(function(x) !is.null(x))
+    
+    if (length(dwnld_text) >= 2) {
+      dwnld_text <- 
+        c(rep(", ", max(length(dwnld_text) - 2, 0)), " and ", "") %>%
+        map2(dwnld_text, ~ tagList(.y, .x))
     }
     
-  )
+    dwnld_text <- 
+      dwnld_text %>%
+      tagList("Download ", ., ".") %>% 
+      tags$i() %>% 
+      tags$p(style = "font-size: 12px;", 
+             style = "text-align: right; margin: 0 0 0px !important;")
+  } else {
+    dwnld_text <- tagList()
+  }
   
   tags$p(
     style = "font-size: 12px; ; text-align: right; margin: 0 0 0px !important;",
@@ -286,17 +291,7 @@ mod_map_dwnld_ui <- function(id, map_dwnld_options = c("shapes", "metadata")) {
     ),
     style = "text-align: right; margin: 0 0 0px !important;"
   ) %>%
-    tagList(
-      download_data_ui
-     # tags$p(
-     #   style = "font-size: 12px; text-align: right; margin: 0 0 0px !important;",
-     #   tags$i(
-     #     mod_dwnld_local_file_ui(ns("map_metadata"), "Download metadata"),
-     #     " or ", 
-     #     mod_dwnld_local_file_ui(ns("map_shapes"), "shape files.")
-     #     )
-     #   )
-    )
+    tagList(dwnld_text)
   }
 
 
