@@ -78,9 +78,9 @@ mod_waiter_newsrv <- function(id,
 #' 
 #' @importFrom waiter spin_chasing_dots
 make_spinner <- function(spin_text = "") {
-  tagList(
+  shiny::tagList(
     waiter::spin_chasing_dots(),
-    br(),
-    spin_text %>% span(style = "color:white;")
+    tags$br(),
+    spin_text %>% tags$span(style = "color:white;")
   )
 }

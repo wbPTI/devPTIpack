@@ -88,7 +88,7 @@ full_wt_inp_ui <- function(ns) {
         shinyjs::hidden() %>%
         div(id = "step_2_select_existing")
       ,
-      uiOutput(ns("save_btn")) %>%
+      shiny::uiOutput(ns("save_btn")) %>%
         div(id = "step_3_save")
       ,
       {
@@ -199,8 +199,8 @@ short_wt_inp_ui <- function(ns, dwnld_options = c("data", "weights", "shapes", "
       div(id = "step_1_name"), 
     
     tagList(
-      uiOutput(ns("save_btn"), inline = TRUE) %>% span(id = "step_3_save"),
-      mod_wt_delete_ui(NULL, ns("weights.reset")) %>% span(id = "step_4_delete")
+      shiny::uiOutput(ns("save_btn"), inline = TRUE) %>% tags$span(id = "step_3_save"),
+      mod_wt_delete_ui(NULL, ns("weights.reset")) %>% tags$span(id = "step_4_delete")
     ) %>%
       div(id = "step_234_controls1") %>%
       div(id = "step_234_controls2") %>%

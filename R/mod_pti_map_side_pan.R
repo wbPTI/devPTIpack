@@ -257,7 +257,7 @@ mod_map_dwnld_ui <- function(id, map_dwnld_options = c("shapes", "metadata")) {
         c("data", "scores", "shapes", "metadata")
       ) %>%
       pmap( ~ {
-        if (..1 %in% dwnld_options)
+        if (..1 %in% map_dwnld_options)
           mod_dwnld_dta_link_ui(NULL, ns(..2), ..3, prefix = NULL, suffix = NULL)
         else
           NULL
