@@ -47,9 +47,12 @@ mod_DT_inputs_server <- function(id, ind_list, update_dta = reactive(NULL)){
     
     # Step 3. Render the table and debugging data ======================
     output$wghts_dt <- DT::renderDataTable(
-      ind_DT(),
+      ind_DT()$dt_out,
       server = FALSE
     )
+    
+    # Step 3.1 Observing info popups ====================================
+    mod_throw_tooltip(NULL, ind_DT)
     
     # Step 4. make update buttons work ==================================
     mod_wt_btns_srv(NULL, ind_list,  dtn_id = "_set_zero", to_value = 0)
@@ -197,45 +200,56 @@ prep_input_data <- function(ind_list, ns) {
       ) 
     ) %>%
     mutate(#
+      ttip_id =  str_c("inp-inf-", row_number()),
+      ttip_var_name = var_name, 
       var_name =
         pmap_chr(#
-          list(var_name, var_description, row_number()),
+          list(var_name, var_description, row_number(), ttip_id),
           ~ {
+            
+            # ttip <-
+            #   shinyBS::tipify(
+            #     actionLink(
+            #       str_c(ns("inp-inf-"), ..3), " ",
+            #       icon = shiny::icon("question-sign", lib = "glyphicon", style = "color:blue;")
+            #     ),
+            #     title =  ..2,
+            #     # content = ..2,
+            #     placement = "right",
+            #     trigger = "focus"
+            #   ) 
+            
+            # ttip <-
+            #   tippy::tippy(
+            #     # '<i class="fa fa-info-circle"></i>',
+            #     # actionLink(
+            #     #   str_c(ns("inp-inf-"), "..3"), " ",
+            #     #   icon = shiny::icon("question-sign", lib = "glyphicon", style = "color:blue;")
+            #     # ),
+            #     str_c(ns("inp-inf-"), "..3"),
+            #     tooltip =  "THIS IS A MESSAGE",
+            #     theme = "light-border",
+            #     arrow = "round",
+            #     animation = "shift-away",
+            #     interactive = TRUE#,
+            #     # allowHTML = TRUE,
+            #     # triger = "focus"
+            #     ) 
+            
             ttip <-
-              shinyBS::tipify(
-                actionLink(
-                  str_c(ns("inp-inf-"), ..3), " ",
-                  icon = shiny::icon("info-circle", style = "color:blue;")
-                ),
-                title =  ..2,
-                # content = ..2,
-                placement = "right",
-                trigger = "focus"
-              ) %>%
+              actionLink(inputId = ns(..4), 
+                         label = "",
+                         icon = shiny::icon("info-sign", lib = "glyphicon", style = "color:blue;")
+                         )
+            
+            ttip <- 
+              ttip %>%
+              shiny::tags$sup() %>% 
               as.character() %>%
               str_replace_all("[\n|\r]", "")
+            
             str_c(..1, " ", ttip)
           })) 
-  # %>% 
-  #   mutate(
-  #     var_name = 
-  #       map2(var_description, var_name,                   
-  #            ~{
-  #              tagList(
-  #                .y,  
-  #                tippy::tippy(
-  #                  '<i class="fa fa-info-circle"></i>',
-  #                  tooltip = .x %>% htmltools::HTML(.),
-  #                  placement = "top",
-  #                  theme = "light-border",
-  #                  arrow = "round",
-  #                  animation = "shift-away",
-  #                  interactive = TRUE,
-  #                  allowHTML = TRUE
-  #                ) 
-  #              )
-  #            })
-  #   )
 }
 
 
@@ -306,8 +320,8 @@ make_input_DT <- function(ind_list, ns = function(x) x, width = "100%", height =
   
   nested_dta <- prep_input_data(ind_list, ns = ns)
   targets_dta <- make_vis_targets_for_dt(nested_dta)
-  
-  nested_dta %>% 
+  dt_out <- 
+    nested_dta %>% 
     datatable( 
       width = width,
       height = height,
@@ -367,4 +381,57 @@ make_input_DT <- function(ind_list, ns = function(x) x, width = "100%", height =
   #       style = "display: flex;flex-direction: column;
   #       height: 100%;width: 100%;padding: 16px;")
   # 
+  list(dt_out = dt_out, nested_dta = nested_dta)
+}
+
+
+#' @noRd
+mod_throw_tooltip <- 
+  function(id, ind_DT = reactive(NULL)){
+    moduleServer(id, function(input, output, session){
+      
+      last_info <- reactiveVal()
+      curr_info <- reactive({
+        ind_DT()$nested_dta %>%
+          pmap( ~ {
+            input[[rlang::dots_list(...)$ttip_id]]
+          })
+      })
+      
+      observeEvent(#
+        curr_info(), {
+          if (!isTruthy(last_info())) {
+            curr_info() %>% last_info()
+          }
+        }, ignoreInit = TRUE, ignoreNULL = TRUE)
+      
+      observeEvent(#
+        curr_info(),
+        {
+          req(last_info())
+          req(all(isTruthy(unlist(last_info()))))
+          pwalk(
+            #
+            list(
+              last_info(),
+              curr_info(),
+              id = ind_DT()$nested_dta$ttip_id,
+              descr = ind_DT()$nested_dta$var_description,
+              var_name = ind_DT()$nested_dta$ttip_var_name
+            ),
+            ~ {
+              if (..1 != ..2) {
+                shiny::showModal(shiny::modalDialog(
+                  HTML(..4),
+                  title = HTML(..5),
+                  size = "m",
+                  easyClose = TRUE,
+                  fade = TRUE
+                ))
+              }
+            }
+          )
+          curr_info() %>% last_info()
+        })
+    })
 }

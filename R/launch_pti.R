@@ -65,7 +65,8 @@ launch_pti_onepage <-
               dt_style = dt_style , 
               ...
         ) 
-      )
+      ) %>% 
+      tagList(golem_add_external_resources())
     
     # server
     server_here <- function(input, output, session) {
