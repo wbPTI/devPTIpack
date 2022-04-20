@@ -16,7 +16,7 @@ mod_waiter_ui <- function(ui, id = NULL, show_waiter = FALSE, ...){
   spinner <-
     golem::get_golem_options("pti.name") %>%
     as.character() %>%
-    str_c(., " Loading PTI module...") %>% 
+    str_c(., " Loading...") %>% 
     make_spinner( )
   
   div(
