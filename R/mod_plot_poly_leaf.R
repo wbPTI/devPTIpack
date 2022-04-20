@@ -154,7 +154,7 @@ mod_plot_leaf_export <-
             preplot_dta = preplot_dta(), 
             selected_layer = selected_layer(),
             show_interval = str_detect(ns(""), "explor"),
-            shp_dta = shp_dta
+            shp_dta = shp_dta()
            ) %>% 
             leaf_out()
           
@@ -264,8 +264,9 @@ make_ggmap_2 <- function(preplot_dta, selected_layer, show_interval = FALSE, shp
     preplot_dta %>%
     purrr::keep(function(.x) {
       str_c(.x$pti_codes, " (", .x$admin_level, ")") %in% selected_layer[[1]]
-    }) %>%
-    `[[`(1)
+    }) 
+  
+  map_to_plot <- map_to_plot[[1]]
   
   layer_id <-
     str_c(map_to_plot$pti_codes, " (", map_to_plot$admin_level, ")")
@@ -300,8 +301,8 @@ make_ggmap_2 <- function(preplot_dta, selected_layer, show_interval = FALSE, shp
       shp_dta[[1]] %>% 
       select(contains("Name")) %>% 
       pull(1) %>% 
-      unique() %>% 
-      `[[`(1)
+      unique() 
+    main_lable <- main_lable[[1]]
   } else {
     main_lable = NULL
   }
