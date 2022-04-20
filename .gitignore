@@ -9,3 +9,5 @@
 data-raw/
 docs
 inst/doc
+*.Rd
+*.dcf
