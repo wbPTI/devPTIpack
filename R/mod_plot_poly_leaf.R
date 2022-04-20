@@ -228,7 +228,7 @@ make_ggmap <- function(preplot_dta, selected_layer, show_interval = FALSE, ...) 
     ggplot2::aes(fill = pti_score_category) +
     # ggspatial::annotation_map_tile(zoomin = 0, progress = "none", interpolate = FALSE) +
     ggplot2::geom_sf() +
-    ggplot2::coord_sf(crs = sf::st_crs(plt_dta), datum = sf::st_crs(plt_dta)) +
+    # ggplot2::coord_sf(crs = sf::st_crs(plt_dta), datum = sf::st_crs(plt_dta)) +
     ggplot2::scale_fill_manual(values = col_list) +
     ggplot2::labs(fill = layer_id) +
     ggplot2::theme_bw()
@@ -301,7 +301,7 @@ make_gg_line_map <- function(shp_dta, ...) {
     ggplot2::aes(group = line, linetype = line, colour = line, size = width) +
     # ggspatial::annotation_map_tile(zoomin = 0, progress = "none", interpolate = TRUE) +
     ggplot2::geom_sf(fill = NA) +
-    ggplot2::coord_sf(crs = sf::st_crs(dta), datum = sf::st_crs(dta)) +
+    # ggplot2::coord_sf(crs = sf::st_crs(dta), datum = sf::st_crs(dta)) +
     ggplot2::scale_colour_brewer(palette = "Dark2") + 
     ggplot2::scale_size_continuous(range = c(0.15, 1.25)) +
     ggplot2::theme_bw()  + 

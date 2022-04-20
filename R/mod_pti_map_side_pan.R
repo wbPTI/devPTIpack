@@ -427,11 +427,13 @@ mod_map_dwnld_srv <- function(id, plotting_map, metadata_path = NULL, shapes_pat
               
               if (plot_dta$poly) {
                 print(
-                  do.call(make_spplot, args = plot_dta)
+                  # do.call(make_spplot, args = plot_dta)
+                  do.call(make_ggmap, args = plot_dta)
                 )
               } else {
                 print(
-                  do.call(make_sp_line_map, args = plot_dta)
+                  # do.call(make_sp_line_map, args = plot_dta)
+                  do.call(make_gg_line_map, args = plot_dta)
                 )
               }
               
