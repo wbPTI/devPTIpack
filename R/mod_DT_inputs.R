@@ -130,7 +130,6 @@ add_two_action_btn <- function(id, ns) {
 #' 
 #' @noRd
 #' @importFrom glue glue
-#' @importFrom shinyBS tipify
 prep_input_data <- function(ind_list, ns) {
   ind_list %>% 
     mutate(

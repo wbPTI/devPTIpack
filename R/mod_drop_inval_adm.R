@@ -38,7 +38,7 @@ mod_drop_inval_adm <- function(id, dta, wt_dta){
           
           shiny::showNotification(
             str_c(
-              "Admin levels ommited as there are no data: ",
+              "Some admin levels are ommited because there are no data. These are: ",
               str_c(ws_dropped, collapse = "")
             ),
             id = "dropped-admin-levels",

@@ -186,7 +186,7 @@ mod_plot_leaf_export <-
 #' 
 #' @import ggplot2 sf
 #' @export
-make_ggmap <- function(preplot_dta, selected_layer, show_interval = FALSE) {
+make_ggmap <- function(preplot_dta, selected_layer, show_interval = FALSE, ...) {
   
   map_to_plot <-
     preplot_dta %>%
@@ -222,10 +222,11 @@ make_ggmap <- function(preplot_dta, selected_layer, show_interval = FALSE) {
       map_to_plot$leg$our_labels_category
     )
   }
-  
+  # browser()
   plt_dta %>%
     ggplot2::ggplot() +
     ggplot2::aes(fill = pti_score_category) +
+    # ggspatial::annotation_map_tile(zoomin = 0, progress = "none", interpolate = FALSE) +
     ggplot2::geom_sf() +
     ggplot2::coord_sf(crs = sf::st_crs(plt_dta), datum = sf::st_crs(plt_dta)) +
     ggplot2::scale_fill_manual(values = col_list) +
@@ -288,7 +289,8 @@ make_spplot <- function(preplot_dta, selected_layer, show_interval = FALSE, ...)
 #' @describeIn mod_plot_poly_leaf_server Plot the map of country using GG and knowing the layer to plot.  
 #' @import ggplot2 sf
 #' @export
-make_gg_line_map <- function(shp_dta) {
+make_gg_line_map <- function(shp_dta, ...) {
+  # browser()
   dta <- 
     shp_dta %>%
     `[`(-length(.)) %>% 
@@ -297,6 +299,7 @@ make_gg_line_map <- function(shp_dta) {
   dta %>% 
     ggplot2::ggplot() +
     ggplot2::aes(group = line, linetype = line, colour = line, size = width) +
+    # ggspatial::annotation_map_tile(zoomin = 0, progress = "none", interpolate = TRUE) +
     ggplot2::geom_sf(fill = NA) +
     ggplot2::coord_sf(crs = sf::st_crs(dta), datum = sf::st_crs(dta)) +
     ggplot2::scale_colour_brewer(palette = "Dark2") + 
