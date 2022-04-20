@@ -153,7 +153,8 @@ mod_plot_leaf_export <-
             poly = TRUE,
             preplot_dta = preplot_dta(), 
             selected_layer = selected_layer(),
-            show_interval = str_detect(ns(""), "explor")
+            show_interval = str_detect(ns(""), "explor"),
+            shp_dta = shp_dta
            ) %>% 
             leaf_out()
           
@@ -325,9 +326,8 @@ make_ggmap_2 <- function(preplot_dta, selected_layer, show_interval = FALSE, shp
     
     ggplot2::ggplot() +
     ggplot2::aes(x = long, y = lat, group = id, fill = pti_score_category) +
-    ggplot2::geom_polygon() +
-    ggplot2::coord_fixed(1.618) + 
-    
+    ggplot2::geom_polygon() + 
+    ggplot2::coord_quickmap() +
     ggplot2::scale_fill_manual(values = col_list) +
     ggplot2::labs(fill = layer_id) +
     ggplot2::theme_bw() +
@@ -479,7 +479,7 @@ make_gg_line_map_2 <- function(shp_dta, ...) {
     ggplot2::aes(x = long, y = lat, group = id, linetype = line, colour = line, 
                  size = width) +
     ggplot2::geom_polygon(fill = NA) +
-    ggplot2::coord_fixed(1.618) +
+    ggplot2::coord_quickmap() +
     ggplot2::scale_colour_brewer(palette = "Dark2") +
     ggplot2::scale_size_continuous(range = c(0.15, 1.25)) +
     ggplot2::theme_bw()  +

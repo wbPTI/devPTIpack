@@ -208,7 +208,8 @@ make_gg_line_map(shp_dta)
 
 ### ggplot2 polilines without sf ---------------------------------------------
 
-make_gg_line_map_2(shp_dta)
+make_gg_line_map_2(shp_dta) + 
+  ggplot2::coord_map()
 
 
 
