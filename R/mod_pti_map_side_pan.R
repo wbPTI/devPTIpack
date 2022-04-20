@@ -335,8 +335,9 @@ mod_map_dwnld_srv <- function(id, plotting_map, metadata_path = NULL, shapes_pat
             
             if (plot_dta$poly) {
               print(
-                do.call(make_spplot, args = plot_dta)
+                # do.call(make_spplot, args = plot_dta)
                 # do.call(make_ggmap, args = plot_dta)
+                do.call(make_ggmap_2, args = plot_dta)
               )
             } else  {
               print(
@@ -428,8 +429,9 @@ mod_map_dwnld_srv <- function(id, plotting_map, metadata_path = NULL, shapes_pat
               
               if (plot_dta$poly) {
                 print(
-                  do.call(make_spplot, args = plot_dta)
+                  # do.call(make_spplot, args = plot_dta)
                   # do.call(make_ggmap, args = plot_dta)
+                  do.call(make_ggmap_2, args = plot_dta)
                 )
               } else {
                 print(

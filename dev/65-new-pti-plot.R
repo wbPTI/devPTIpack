@@ -202,7 +202,7 @@ dta_plot %>%
 
 
 #' Plot the map of country using GG and knowing the layer to plot.
-pkgload::load_all()  
+# pkgload::load_all()  
 make_gg_line_map(shp_dta)
 
 
@@ -215,7 +215,7 @@ make_gg_line_map_2(shp_dta)
 ## Second ggplot2 function ---------------------------------------------------
 #' Plot the map of country using GG and knowing the layer to plot.  
 
-pkgload::load_all()
+# pkgload::load_all()
 make_ggmap(preplot_dta, selected_layer, show_interval = FALSE)
 make_ggmap(preplot_dta, selected_layer, show_interval = FALSE, shp_dta)
   
@@ -227,8 +227,12 @@ make_ggmap(preplot_dta, selected_layer, show_interval = FALSE, shp_dta)
 # 
 # library(ggspatial)
 
-## Makinf the same without SF package ----------------------------------------
+## Making the same without SF package ----------------------------------------
 
+make_ggmap_2(preplot_dta, selected_layer, show_interval = FALSE)
+make_ggmap_2(preplot_dta, selected_layer, show_interval = FALSE, shp_dta)
+make_ggmap_2(preplot_dta, selected_layer, show_interval = TRUE)
+make_ggmap_2(preplot_dta, selected_layer, show_interval = TRUE, shp_dta)
 
 
 # Using lattice for the same plots -----------------------------------------

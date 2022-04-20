@@ -251,6 +251,92 @@ make_ggmap <- function(preplot_dta, selected_layer, show_interval = FALSE, shp_d
 
 
 
+#' @describeIn mod_plot_poly_leaf_server Plot the map of country using GG and knowing the layer to plot.  
+#' 
+#' @import ggplot2 sf sp
+#' @importFrom tidyr nest unnest
+#' @export
+make_ggmap_2 <- function(preplot_dta, selected_layer, show_interval = FALSE, shp_dta = NULL, ...) {
+  
+  
+  map_to_plot <-
+    preplot_dta %>%
+    purrr::keep(function(.x) {
+      str_c(.x$pti_codes, " (", .x$admin_level, ")") %in% selected_layer[[1]]
+    }) %>%
+    `[[`(1)
+  
+  layer_id <-
+    str_c(map_to_plot$pti_codes, " (", map_to_plot$admin_level, ")")
+  
+  if (show_interval) {
+    # browser()
+    plt_dta <- 
+      map_to_plot$pti_dta %>%
+      mutate(
+        pti_score_category = map_to_plot$leg$recode_function_intervals(pti_score),
+        pti_score_category = factor(pti_score_category, 
+                                    levels = map_to_plot$leg$recode_function_intervals(map_to_plot$leg$our_values))
+      )
+    
+    col_list <- map_to_plot$leg$pal(map_to_plot$leg$our_values)
+  } else {
+    plt_dta <- 
+      map_to_plot$pti_dta %>%
+      mutate(
+        pti_score_category = map_to_plot$leg$recode_function(pti_score),
+        pti_score_category = factor(pti_score_category, 
+                                    levels = map_to_plot$leg$our_labels_category)
+      ) 
+    col_list <- set_names(
+      map_to_plot$leg$pal(map_to_plot$leg$our_values),
+      map_to_plot$leg$our_labels_category
+    )
+  }
+  
+  if (isTruthy(shp_dta)) {
+    main_lable <-
+      shp_dta[[1]] %>% 
+      select(contains("Name")) %>% 
+      pull(1) %>% 
+      unique() %>% 
+      `[[`(1)
+  } else {
+    main_lable = NULL
+  }
+  
+  metadta <- 
+    plt_dta %>%
+    dplyr::mutate(id = row_number()) %>%
+    sf::st_drop_geometry() %>% 
+    dplyr::mutate(
+      dplyr::across(where(is.character), ~ as.factor(.)),
+      id = as.character(id)
+    ) 
+  
+  plt_dta %>%
+    dplyr::mutate(id = row_number()) %>%
+    sf::st_as_sf() %>%
+    sf::as_Spatial(IDs = "id") %>% 
+    ggplot2::fortify(region = "id") %>%
+    dplyr::as_tibble() %>%
+    dplyr::left_join(metadta, "id") %>% 
+    
+    
+    ggplot2::ggplot() +
+    ggplot2::aes(x = long, y = lat, group = id, fill = pti_score_category) +
+    ggplot2::geom_polygon() +
+    ggplot2::coord_fixed(1.618) + 
+    
+    ggplot2::scale_fill_manual(values = col_list) +
+    ggplot2::labs(fill = layer_id) +
+    ggplot2::theme_bw() +
+    ggplot2::labs(title = main_lable, subtitle = layer_id)
+  
+  
+}
+
+
 #' @describeIn mod_plot_poly_leaf_server Plot the map using SP pacakge
 #' 
 #' @import ggplot2 sf sp
@@ -397,7 +483,8 @@ make_gg_line_map_2 <- function(shp_dta, ...) {
     ggplot2::scale_colour_brewer(palette = "Dark2") +
     ggplot2::scale_size_continuous(range = c(0.15, 1.25)) +
     ggplot2::theme_bw()  +
-    ggplot2::theme(legend.position = "none")  +
+    ggplot2::theme(legend.position = "none", 
+                   axis.title = element_blank())  +
     ggplot2::labs(title = main_lable)
   
 }
