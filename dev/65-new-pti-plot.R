@@ -116,6 +116,9 @@ existing_shapes <- shp_dta %>% clean_geoms()
 mt <- shp_dta %>% get_mt()
 adm_lvls <- mt %>% get_adm_levels()
 
+
+pkgload::load_all()
+
 calc_wght <- 
   imp_dta$weights_clean %>%
   get_weighted_data(long_vars, indicators_list = imp_dta$indicators_list) %>% 
@@ -150,7 +153,8 @@ adm_to_filter <-
   get_indicators_list() %>% 
   get_vars_un_avbil(names(get_current_levels(preplot_dta0))) %>% 
   get_min_admin_wght(imp_dta$weights_clean)
-debug(legend_map_satelite)
+
+# debug(legend_map_satelite)
 
 preplot_dta <-
   preplot_dta0 %>% 
@@ -168,7 +172,7 @@ preplot_dta %>%
   get_current_levels() 
 
 
-# Making a ggplot function to plot a map ----------------------------------
+## Making a ggplot function to plot a map ----------------------------------
 
 preplot_dta %>% 
   map(~{ str_c(.x$pti_codes, " (", .x$admin_level, ")") })
@@ -176,11 +180,14 @@ preplot_dta %>%
 # Filter selected layer
 selected_layer <-  "wt_admi4_1 (Rayon)"
 
+
+### Pollines with SF ========================================================
 dta_plot <- 
   shp_dta %>%
   `[`(-length(.)) %>% 
   list(.x = ., .y = names(.), .z = rev(seq_along(.)) / max(seq_along(.))) %>% 
-  pmap_dfr(function(...) {..1 %>% mutate(line = ..2, width = ..3)}) 
+  pmap_dfr(function(...) {..1 %>% mutate(line = ..2, width = ..3)}) %>% 
+  mutate(line = factor(line))
 
 
 dta_plot %>% 
@@ -193,54 +200,25 @@ dta_plot %>%
   theme_bw()  + 
   theme(legend.position="none")
 
+
+#' Plot the map of country using GG and knowing the layer to plot.
+pkgload::load_all()  
+make_gg_line_map(shp_dta)
+
+
+### ggplot2 polilines without sf ---------------------------------------------
+
+make_gg_line_map_2(shp_dta)
+
+
+
+## Second ggplot2 function ---------------------------------------------------
 #' Plot the map of country using GG and knowing the layer to plot.  
-make_gg_line_map <- function(shp_dta) {
-  shp_dta %>%
-    `[`(-length(.)) %>% 
-    list(.x = ., .y = names(.), .z = rev(seq_along(.)) / max(seq_along(.))) %>% 
-    pmap_dfr(function(...) {..1 %>% mutate(line = ..2, width = ..3)}) %>% 
-    ggplot() +
-    aes(group = line, linetype = line, colour = line, size = width) +
-    geom_sf(fill = NA) +
-    scale_colour_brewer(palette = "Dark2") + 
-    scale_size_continuous(range = c(0.15, 1.25)) +
-    theme_bw()  + 
-    theme(legend.position="none")
-  
-}
 
-
-
-#' Plot the map of country using GG and knowing the layer to plot.  
-make_ggmap <- function(preplot_dta, selected_layer) {
-  map_to_plot <-
-    preplot_dta %>%
-    purrr::keep(function(.x) {
-      str_c(.x$pti_codes, " (", .x$admin_level, ")") %in% selected_layer
-    }) %>%
-    `[[`(1)
+pkgload::load_all()
+make_ggmap(preplot_dta, selected_layer, show_interval = FALSE)
+make_ggmap(preplot_dta, selected_layer, show_interval = FALSE, shp_dta)
   
-  layer_id <-
-    str_c(map_to_plot$pti_codes, " (", map_to_plot$admin_level, ")")
-  
-  map_to_plot$leg$our_labels_category
-  
-  map_to_plot$pti_dta %>%
-    mutate(
-      pti_score_category = map_to_plot$leg$recode_function(pti_score),
-      pti_score_category = factor(pti_score_category, levels = map_to_plot$leg$our_labels_category)
-    ) %>%
-    ggplot() +
-    aes(fill = pti_score_category) +
-    geom_sf() +
-    scale_fill_manual(values = set_names(
-      map_to_plot$leg$pal(map_to_plot$leg$our_values),
-      map_to_plot$leg$our_labels_category
-    )) +
-    labs(fill = layer_id) +
-    theme_bw()
-  
-}
 # +
 #   annotation_scale(location = "bl", width_hint = 0.5) +
 #   annotation_north_arrow(location = "bl", which_north = "true", 
@@ -248,6 +226,89 @@ make_ggmap <- function(preplot_dta, selected_layer) {
 #                          style = north_arrow_fancy_orienteering) 
 # 
 # library(ggspatial)
+
+## Makinf the same without SF package ----------------------------------------
+
+
+
+# Using lattice for the same plots -----------------------------------------
+cols <- c("#e41a1c",
+          "#377eb8",
+          "#4daf4a",
+          "#984ea3",
+          "#ff7f00",
+          "#ffff33",
+          "#a65628")
+
+out_plt <- 
+  shp_dta %>%
+  `[`(-length(.)) %>% 
+  `[[`(length(.)) %>% 
+  sf::st_geometry() %>%
+  sf::st_as_sf() %>%
+  mutate(ID = row_number()) %>%
+  # plot()
+  # sf::st_cast("MULTILINESTRING") %>%
+  sf::as_Spatial() %>%
+  sp::spplot(fill = NULL, col = cols[[2]], border = cols[[2]])
+
+dta_plot_sp <- 
+  # dta_plot <- 
+  shp_dta %>%
+  `[`(-length(.)) %>% 
+  list(.x = ., .y = names(.), .z = rev(seq_along(.)) / max(seq_along(.))) %>% 
+  pmap_dfr(function(...) {..1 %>% mutate(line = ..2, width = ..3)}) %>% 
+  mutate(line2 = factor(line)) %>%
+  group_by(line) %>% 
+  nest() %>% 
+  mutate(data = map(data, ~{
+    metadta <- 
+      .x %>%
+      mutate(ID = row_number()) %>% 
+      st_drop_geometry() %>% 
+      select(id = ID, contains("admin0"), width, line2) %>% 
+      mutate(across(everything(), ~ as.factor(.)))
+    # spatial_dta <- 
+    .x %>% 
+      sf::st_as_sf() %>%
+      mutate(ID = row_number()) %>%
+      sf::as_Spatial() %>% 
+      fortify(region = "ID") %>% 
+      as_tibble() %>% 
+      left_join(metadta, "id")
+  }))
+  
+
+
+# dta_plot_sp$line <- as.integer(dta_plot_sp$line)
+
+list(ggplot()) %>% 
+  append(rev(dta_plot_sp$data)) %>% 
+  reduce(.f = function(x, y) {
+    # browser()
+    x + 
+      geom_polygon(
+        data = y, 
+        aes(x = long, y = lat, group = id, linetype = line2, colour = line2),
+        fill = NA, 
+        size = as.numeric(unique(y$width))
+        )
+  }) +
+  coord_fixed(1.618)
+
+  # %>% 
+  # ggplot() +
+  # aes(x = long, y = lat, group = id) + 
+  # geom_polygon(colour='black', fill='white')
+  # # aes(group = line, linetype = line, colour = line, size = width) +
+  # geom_sf(fill = NA) 
+
+
+
+out_plt$legend <- NULL
+out_plt
+
+
 # Visualizing the data on leaflet map. ------------------------------------
 
 library(leaflet)

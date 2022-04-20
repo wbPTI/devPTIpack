@@ -186,7 +186,7 @@ mod_plot_leaf_export <-
 #' 
 #' @import ggplot2 sf
 #' @export
-make_ggmap <- function(preplot_dta, selected_layer, show_interval = FALSE, ...) {
+make_ggmap <- function(preplot_dta, selected_layer, show_interval = FALSE, shp_dta = NULL, ...) {
   
   map_to_plot <-
     preplot_dta %>%
@@ -222,6 +222,17 @@ make_ggmap <- function(preplot_dta, selected_layer, show_interval = FALSE, ...) 
       map_to_plot$leg$our_labels_category
     )
   }
+  
+  if (isTruthy(shp_dta)) {
+    main_lable <-
+      shp_dta[[1]] %>% 
+      select(contains("Name")) %>% 
+      pull(1) %>% 
+      unique() %>% 
+      `[[`(1)
+  } else {
+    main_lable = NULL
+  }
   # browser()
   plt_dta %>%
     ggplot2::ggplot() +
@@ -231,7 +242,9 @@ make_ggmap <- function(preplot_dta, selected_layer, show_interval = FALSE, ...) 
     # ggplot2::coord_sf(crs = sf::st_crs(plt_dta), datum = sf::st_crs(plt_dta)) +
     ggplot2::scale_fill_manual(values = col_list) +
     ggplot2::labs(fill = layer_id) +
-    ggplot2::theme_bw()
+    ggplot2::theme_bw() + 
+    ggplot2::labs(title = main_lable, 
+                  subtitle = layer_id)
   
 }
 
@@ -291,6 +304,13 @@ make_spplot <- function(preplot_dta, selected_layer, show_interval = FALSE, ...)
 #' @export
 make_gg_line_map <- function(shp_dta, ...) {
   # browser()
+  main_lable <-
+    shp_dta[[1]] %>% 
+    select(contains("Name")) %>% 
+    pull(1) %>% 
+    unique() %>% 
+    `[[`(1)
+  
   dta <- 
     shp_dta %>%
     `[`(-length(.)) %>% 
@@ -305,7 +325,80 @@ make_gg_line_map <- function(shp_dta, ...) {
     ggplot2::scale_colour_brewer(palette = "Dark2") + 
     ggplot2::scale_size_continuous(range = c(0.15, 1.25)) +
     ggplot2::theme_bw()  + 
-    ggplot2::theme(legend.position="none")
+    ggplot2::theme(legend.position="none") +
+    ggplot2::labs(title = main_lable)
+  
+}
+
+#' @describeIn mod_plot_poly_leaf_server Plot the map of country using GG and knowing the layer to plot.  
+#' @import ggplot2 sf sp
+#' @importFrom tidyr nest unnest
+#' @export
+make_gg_line_map_2 <- function(shp_dta, ...) {
+  
+  main_lable <-
+    shp_dta[[1]] %>% 
+    dplyr::select(dplyr::contains("Name")) %>% 
+    dplyr::pull(1) %>% 
+    unique() %>% 
+    `[[`(1)
+  
+  dta_plot_sp <- 
+    shp_dta %>%
+    `[`(-length(.)) %>% 
+    list(
+      .x = ., 
+      .y = names(.), 
+      .z = rev(seq_along(.)) / max(seq_along(.))
+    ) %>% 
+    purrr::pmap_dfr(
+      function(...) {
+        ..1 %>% 
+          mutate(line = ..2, width = ..3)
+      }
+    ) %>% 
+    dplyr::mutate(line2 = factor(line)) %>%
+    mutate(id = row_number()) %>% 
+    dplyr::group_by(line2) %>% 
+    tidyr::nest() %>% 
+    dplyr::mutate(data = map(data, ~{
+      
+      metadta <- 
+        .x %>%
+        # dplyr::mutate(ID = row_number()) %>% 
+        sf::st_drop_geometry() %>% 
+        dplyr::select(id, dplyr::contains("admin0"), width, line) %>% 
+        dplyr::mutate(dplyr::across(dplyr::contains("admin"), ~ as.factor(.))) %>% 
+        dplyr::mutate(dplyr::across(dplyr::contains("line"), ~ as.factor(.))) %>% 
+        dplyr::mutate(dplyr::across(id, ~ as.character(.)))
+      
+      .x %>% 
+        sf::st_as_sf() %>%
+        # dplyr::mutate(ID = dplyr::row_number()) %>%
+        sf::as_Spatial(IDs = "id") %>% 
+        ggplot2::fortify(region = "id") %>%
+        dplyr::as_tibble() %>% 
+        dplyr::left_join(metadta, "id")
+    })) 
+  
+  
+  dta_plot_sp %>% 
+    tidyr::unnest(cols = c(data)) %>%
+    ungroup() %>% 
+    filter(piece == 1) %>%
+    filter(!hole) %>% 
+    arrange(id) %>% 
+    
+    ggplot2::ggplot() + 
+    ggplot2::aes(x = long, y = lat, group = id, linetype = line, colour = line, 
+                 size = width) +
+    ggplot2::geom_polygon(fill = NA) +
+    ggplot2::coord_fixed(1.618) +
+    ggplot2::scale_colour_brewer(palette = "Dark2") +
+    ggplot2::scale_size_continuous(range = c(0.15, 1.25)) +
+    ggplot2::theme_bw()  +
+    ggplot2::theme(legend.position = "none")  +
+    ggplot2::labs(title = main_lable)
   
 }
 

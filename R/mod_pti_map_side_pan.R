@@ -340,8 +340,9 @@ mod_map_dwnld_srv <- function(id, plotting_map, metadata_path = NULL, shapes_pat
               )
             } else  {
               print(
-                do.call(make_sp_line_map, args = plot_dta)
+                # do.call(make_sp_line_map, args = plot_dta)
                 # do.call(make_gg_line_map, args = plot_dta)
+                do.call(make_gg_line_map_2, args = plot_dta)
               )
             }
         
@@ -432,8 +433,9 @@ mod_map_dwnld_srv <- function(id, plotting_map, metadata_path = NULL, shapes_pat
                 )
               } else {
                 print(
-                  do.call(make_sp_line_map, args = plot_dta)
+                  # do.call(make_sp_line_map, args = plot_dta)
                   # do.call(make_gg_line_map, args = plot_dta)
+                  do.call(make_gg_line_map_2, args = plot_dta)
                 )
               }
               
