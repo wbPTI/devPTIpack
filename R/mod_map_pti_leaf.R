@@ -171,6 +171,7 @@ mod_init_leaf_pti_srv <- function(id, shape_data) {
         leaflet::leaflet() %>%
           leaflet::addTiles()
       })
+      outputOptions(output, "leaf_id", suspendWhenHidden = FALSE, priority = 1000)
     })
 }
 

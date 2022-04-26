@@ -26,6 +26,8 @@ mod_plot_init_leaf_server <- function(id, shp_dta, ...){
       leaf_to_init()
     })
     
+    outputOptions(output, "leaf_id", suspendWhenHidden = FALSE, priority = 1000)
+    
     leaf_to_init
   })
 }

@@ -10,7 +10,11 @@ mod_dta_explorer2_server <-
            active_tab, 
            target_tabs, 
            mtdtpdf_path = NULL,  
-           shapes_path = NULL, ...) {
+           shapes_path = NULL,
+           data_path = NULL,
+           expl_show_adm_levels = NULL,
+           expl_default_adm_level = NULL,
+           ...) {
     
     # Check if the tab is opened at first
     first_open <- mod_first_open_count_server(id, active_tab, target_tabs)
@@ -33,11 +37,17 @@ mod_dta_explorer2_server <-
     # N bins, selected admin levels and choose variables modules
     pre_map_dta_2 <- mod_fltr_sel_var2_srv(id, pre_map_dta_1, var_choices, first_open)
     
-    sel_adm_levels <- mod_get_admin_levels_srv(id, 
-                                               reactive(get_current_levels(pre_map_dta_2())),
-                                               def_adm_opt = "explorer_default_adm",
-                                               show_adm_opt = "explorer_show_adm",
-                                               choose_adm_opt = "explorer_choose_adm")
+    sel_adm_levels <- 
+      mod_get_admin_levels_srv(
+        id, 
+        reactive(get_current_levels(pre_map_dta_2())),
+        show_adm_levels = expl_show_adm_levels,
+        default_adm_level = expl_default_adm_level,
+        def_adm_opt = "explorer_default_adm",
+        show_adm_opt = "explorer_show_adm",
+        choose_adm_opt = "explorer_choose_adm"
+        )
+    
     n_bins <- mod_get_nbins_srv(id)
     
     # Computing legend based on
@@ -62,7 +72,8 @@ mod_dta_explorer2_server <-
     mod_map_dwnld_srv(id, out_leaf, metadata_path = mtdtpdf_path, shapes_path = shapes_path)
     mod_dwnld_file_server(id, "mtdt.files.side", filepath = mtdtpdf_path)
     mod_dwnld_file_server(id, "shp.files.side", filepath = shapes_path)
-    
+    mod_dwnld_file_server(id, "dta.download.side", filepath = data_path)
+        
     # Data download 
     reactive({
       list(pre_map_dta = pre_map_dta_3, init_leaf = init_leaf)
@@ -74,11 +85,22 @@ mod_dta_explorer2_server <-
 #'
 #' @importFrom shiny fluidRow tags
 #' @importFrom leaflet leafletOutput
-mod_dta_explorer2_ui <- function(id, multi_choice, ...){
+#' @export
+mod_dta_explorer2_ui <- function(
+    id, 
+    multi_choice, 
+    max_choice = 3, 
+    map_dwnld_options = c("shapes", "metadata"), 
+    ...){
   ns <- NS(id)
   tagList(
     leafletOutput(ns("leaf_id"), width = "100%", ...),
-    mod_dta_explorer2_side_ui(id, multi_choice)
+    mod_dta_explorer2_side_ui(
+      id,
+      multi_choice = multi_choice,
+      max_choice = max_choice,
+      map_dwnld_options = map_dwnld_options
+    )
   ) %>%
     tags$div(style = "position:relative;") %>% 
     tags$div(id = "explorer_1") %>% 
@@ -95,11 +117,18 @@ mod_dta_explorer2_ui <- function(id, multi_choice, ...){
 #' @describeIn mod_dta_explorer2_server panel with the N bins selector
 #'
 #' @importFrom shiny absolutePanel
-mod_dta_explorer2_side_ui <- function(id, multi_choice, ...){
+#' @export
+mod_dta_explorer2_side_ui <- 
+  function(id,
+           multi_choice,
+           max_choice = 3,
+           map_dwnld_options = c("shapes", "metadata"),
+           ...) {
+    
   ns <- NS(id)
   
   absolutePanel(
-    id = "nbins_panel", 
+    id = ("nbins_panel"), 
     fixed = FALSE,
     draggable = FALSE, 
     left = "auto", bottom = "auto",
@@ -107,10 +136,10 @@ mod_dta_explorer2_side_ui <- function(id, multi_choice, ...){
     height = "auto",
     top = 10, right = 10,
     
-    mod_select_var_ui(id, multi_choice),
+    div(mod_select_var_ui(id, multi_choice, max_choice), id = ns("var_choice")),
     mod_get_admin_levels_ui(id),
-    mod_get_nbins_ui(id, "Number of bins"),
-    mod_map_dwnld_ui(id)
+    div(mod_get_nbins_ui(id, "Number of bins"), id = ns("bins_choice")),
+    div(mod_map_dwnld_ui(id, map_dwnld_options), id = ns("map_dwnload"))
   )
 }
 
@@ -119,7 +148,8 @@ mod_dta_explorer2_side_ui <- function(id, multi_choice, ...){
 #' 
 #' @importFrom shiny tagList
 #' @importFrom shinyWidgets pickerInput pickerOptions
-mod_select_var_ui <- function(id, multi_choice = NULL) {
+#' @export
+mod_select_var_ui <- function(id, multi_choice = NULL, max_choice = 3, ...) {
   ns <- NS(id)
   
   explorer_multiple_var <- golem::get_golem_options("explorer_multiple_var")
@@ -135,7 +165,7 @@ mod_select_var_ui <- function(id, multi_choice = NULL) {
       width = "100%",
       options = shinyWidgets::pickerOptions(dropdownAlignRight  = TRUE,
                                             liveSearch = TRUE,
-                                            maxOptions = 3)
+                                            maxOptions = max_choice)
     ) 
   )
   
@@ -146,6 +176,7 @@ mod_select_var_ui <- function(id, multi_choice = NULL) {
 #' 
 #' @importFrom shiny observeEvent reactive debounce eventReactive
 #' @importFrom shinyWidgets pickerInput pickerOptions updatePickerInput
+#' @export
 mod_fltr_sel_var2_srv <- function(id, preplot_dta, choices, first_open, ...) {
   
   moduleServer(#
