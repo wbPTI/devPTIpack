@@ -68,6 +68,24 @@ bounds <-bond_path %>% read_rds()
 
 ```
 
+```{r eval=FALSE}
+# Saving shape files in a Zip archive
+shp_fldr <- bond_path %>% str_replace_all("\\.rds", "_shapes")
+shp_path <- str_c(shp_fldr, ".zip")
+if (!file.exists(shp_path) ||
+    file.info(bond_path)$mtime > file.info(shp_path)$mtime) {
+  dir.create(shp_fldr, recursive = T, showWarnings = F)
+  bounds %>%
+    iwalk( ~ {
+      file <- shp_fldr %>% file.path(.y)
+      sf::st_write(.x,
+                   file,
+                   driver = "ESRI Shapefile",
+                   append = FALSE,
+                   quiet = TRUE)
+    })
+}
+```
 
 ```{r, results='asis'}
 # meta_line <- slice(metadata_current, 5)
@@ -75,8 +93,10 @@ one_section <-
   function(meta_line,
            plot_data) {
     cat("\n\n\n### ", meta_line$var_name, "\n\n\n")
-    
-    if (!identical(meta_line$var_description, character(0)) &&
+
+    if (
+      !is.na(meta_line$var_description) &&
+      !identical(meta_line$var_description, character(0)) &&
         nchar(meta_line$var_description) > 10)
       cat("**Description:** ", meta_line$var_description, "\n\n\n")
     

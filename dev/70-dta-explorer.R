@@ -63,7 +63,7 @@ preplot_dta %>%
 
 
 # Visualizing the data on leaflet map. ------------------------------------
-library(leaflet)
+# library(leaflet)
 # 
 # leaflet() %>% 
 #   plot_leaf_line_map2(shp_dta, show_adm_levels = NULL) %>% 
@@ -127,9 +127,11 @@ pre_map_dta_2 <-
 
 # Step 2 Variable filter
 choices <- indicators_list %>% get_var_choices()
-selected <- sample(choices$Needs, 2)
+selected <- sample(choices[[2]], 2)
 
-pre_map_dta_2 <- pre_map_dta_1 %>% filter_var_explorer(unlist(unname(choices)) %>% `[`(str_detect(., "poverty")) %>% names())
+pre_map_dta_2 <- 
+  pre_map_dta_1 %>% 
+  filter_var_explorer(selected)
 # unlist(unname(choices)) %>% str_detect(., "poverty")
   
 # Step 3 Admin level and legends

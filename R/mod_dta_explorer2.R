@@ -14,6 +14,7 @@ mod_dta_explorer2_server <-
            data_path = NULL,
            expl_show_adm_levels = NULL,
            expl_default_adm_level = NULL,
+           add_selected = reactive(NULL),
            ...) {
     
     # Check if the tab is opened at first
@@ -35,7 +36,8 @@ mod_dta_explorer2_server <-
     var_choices <- reactive({req(indicators_list()) %>% get_var_choices()})
     
     # N bins, selected admin levels and choose variables modules
-    pre_map_dta_2 <- mod_fltr_sel_var2_srv(id, pre_map_dta_1, var_choices, first_open)
+    pre_map_dta_2 <- mod_fltr_sel_var2_srv(id, pre_map_dta_1, var_choices, first_open, 
+                                           add_selected = add_selected)
     
     sel_adm_levels <- 
       mod_get_admin_levels_srv(
@@ -177,7 +179,8 @@ mod_select_var_ui <- function(id, multi_choice = NULL, max_choice = 3, ...) {
 #' @importFrom shiny observeEvent reactive debounce eventReactive
 #' @importFrom shinyWidgets pickerInput pickerOptions updatePickerInput
 #' @export
-mod_fltr_sel_var2_srv <- function(id, preplot_dta, choices, first_open, ...) {
+mod_fltr_sel_var2_srv <- function(id, preplot_dta, choices, first_open, 
+                                  add_selected = reactive(NULL), ...) {
   
   moduleServer(#
     id, #
@@ -201,16 +204,37 @@ mod_fltr_sel_var2_srv <- function(id, preplot_dta, choices, first_open, ...) {
         first_open(),
         {
           req(first_open())
-          shinyWidgets::updatePickerInput(session, inputId = "indicators",
-                                          selected = choices() %>% map(~.x %>% names()) %>% unlist() %>% `[[`(1)
+          shinyWidgets::updatePickerInput(
+            session, 
+            inputId = "indicators",
+            selected = choices() %>% map(~.x %>% names()) %>% unlist() %>% `[[`(1)
           )
         },
         ignoreNULL = TRUE,
         ignoreInit = TRUE)
       
-      selected_var <- 
-        reactive({input$indicators}) %>% 
-        debounce(500)
+      observeEvent(#
+        add_selected(),
+        {
+          req(add_selected())
+          # browser()
+          selected_now <- selected_var()
+          selected_add <- add_selected()
+          shinyWidgets::updatePickerInput(
+            session, 
+            inputId = "indicators",
+            selected = 
+              choices() %>%
+              `[`(purrr::map_lgl(.,  ~ {
+                .x %in% c(selected_add, selected_now) | 
+                  .x %in% names(c(selected_add, selected_now))
+              }))
+          )
+        },
+        ignoreNULL = TRUE,
+        ignoreInit = TRUE)
+      
+      selected_var <- reactive({input$indicators}) %>% debounce(500)
       
       eventReactive(#
         selected_var(), {
