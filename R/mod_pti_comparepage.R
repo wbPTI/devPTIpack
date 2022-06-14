@@ -46,6 +46,7 @@ mod_pti_comparepage_newsrv <-
            target_tabs,
            mtdtpdf_path = ".",
            shapes_path = ".",
+           show_adm_levels = NULL,
            ...){
     
   moduleServer( id, function(input, output, session){
@@ -59,6 +60,7 @@ mod_pti_comparepage_newsrv <-
                       target_tabs = target_tabs,
                       metadata_path = mtdtpdf_path, 
                       shapes_path = shapes_path,
+                      show_adm_levels =  show_adm_levels,
                       ...)
     
     mod_plot_pti2_srv("second_leaf",
@@ -69,6 +71,7 @@ mod_pti_comparepage_newsrv <-
                       target_tabs = target_tabs,
                       metadata_path = mtdtpdf_path,
                       shapes_path = shapes_path,
+                      show_adm_levels =  show_adm_levels,
                       ...)
   })
 }

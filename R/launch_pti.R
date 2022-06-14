@@ -197,6 +197,7 @@ launch_pti <-
                                  shp_dta = reactive(shp_dta),
                                  map_dta = plt_dta$map_dta,
                                  wt_dta = plt_dta$wt_dta,
+                                 show_adm_levels =  show_adm_levels,
                                  active_tab = active_tab,
                                  target_tabs = "PTI comparison",
                                  mtdtpdf_path = normalizePath(mtdtpdf_path),
