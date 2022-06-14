@@ -201,6 +201,7 @@ prep_input_data <- function(ind_list, ns) {
     mutate(#
       ttip_id =  str_c("inp-inf-", row_number()),
       ttip_var_name = var_name, 
+      ttip_id = ifelse(var_name == "" | is.na(var_name), NA_character_, var_name),
       var_name =
         pmap_chr(#
           list(var_name, var_description, row_number(), ttip_id),
@@ -247,7 +248,13 @@ prep_input_data <- function(ind_list, ns) {
               as.character() %>%
               str_replace_all("[\n|\r]", "")
             
-            str_c(..1, " ", ttip)
+            if (!is.na(..1) && ..1 != "") {
+              str_c(..1, " ", ttip)
+            } else{
+              # browser()
+              str_c(..1, " <span> </span>")
+            }
+          
           })) 
 }
 
@@ -390,8 +397,10 @@ mod_throw_tooltip <-
     moduleServer(id, function(input, output, session){
       
       last_info <- reactiveVal()
+      
+      tippy_DT <- reactive({ind_DT()$nested_dta %>% filter(!is.na(ttip_id))})
       curr_info <- reactive({
-        ind_DT()$nested_dta %>%
+        tippy_DT() %>% 
           pmap( ~ {
             input[[rlang::dots_list(...)$ttip_id]]
           })
@@ -414,9 +423,9 @@ mod_throw_tooltip <-
             list(
               last_info(),
               curr_info(),
-              id = ind_DT()$nested_dta$ttip_id,
-              descr = ind_DT()$nested_dta$var_description,
-              var_name = ind_DT()$nested_dta$ttip_var_name
+              id = tippy_DT()$ttip_id,
+              descr = tippy_DT()$var_description,
+              var_name = tippy_DT()$ttip_var_name
             ),
             ~ {
               if (..1 != ..2) {

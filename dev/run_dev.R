@@ -8,9 +8,9 @@ pkgload::load_all(export_all = FALSE, helpers = FALSE, attach_testthat = FALSE)
 
 options( "golem.app.prod" = FALSE)
 launch_pti(
-  shp_dta = readRDS("../../cameroon/cmrPTIapp/app-data/Cameroon.rds"),
-  inp_dta = devPTIpack::fct_template_reader("../../cameroon/cmrPTIapp/app-data/Cameroon-mtdt-2022-06-14-07-29-10.xlsx"),
-  app_name = "Cameroon", 
+  shp_dta = ukr_shp,
+  inp_dta = ukr_mtdt_full,
+  app_name = "Country", 
   show_waiter = FALSE, 
   show_adm_levels = NULL,            # c("admin1", "admin2")
   shapes_path = ".", 
