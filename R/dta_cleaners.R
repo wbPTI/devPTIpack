@@ -9,7 +9,11 @@ get_indicators_list <- function(dta, fltr_var = "fltr_exclude_pti") {
     dta$metadata  %>%
     filter(magrittr::not(!!sym(fltr_var))) %>%
     select(-contains("fltr")) %>%
-    arrange(pillar_group, var_order)
+    arrange(pillar_group, var_order) %>% 
+    mutate(
+      across(contains("pillar_group"), ~ifelse(is.na(.), 9999, .)),
+      across(contains("pillar"), ~ifelse(is.na(.), "", .))
+    )
   
   element_names <- dta %>% names()
   
@@ -21,7 +25,7 @@ get_indicators_list <- function(dta, fltr_var = "fltr_exclude_pti") {
     filter(row_number() == 1) %>%
     ungroup() %>%
     arrange(pillar_group)
-  
+
   spatial_levels_names <-
     element_names %>%
     magrittr::extract(str_detect(., "\\D{1,}\\d{1}_")) %>%

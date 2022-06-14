@@ -300,7 +300,8 @@ reshaped_explorer_dta <- function(long_dta, ind_list) {
 #' @importFrom tidyr nest
 #' @importFrom dplyr arrange group_by
 get_var_choices <- function(indicators_list) {
-  indicators_list %>%
+  out <- 
+    indicators_list %>%
     dplyr::arrange(pillar_group, var_order) %>%
     dplyr::group_by(pillar_name) %>%
     tidyr::nest() %>%
@@ -311,6 +312,19 @@ get_var_choices <- function(indicators_list) {
       }
     ) %>%
     unlist(recursive = F)
+  if (all(is.na(names(out))) || all(names(out) == "")) {
+    
+    if (length(names(out)) > 1) {
+      names(out) <- str_c("Indicators ", seq_along(names(out)))
+    } else {
+      names(out) <- "Indicators"
+    }
+  }
+  
+  if (any(is.na(names(out))) || any(names(out) == "")) {
+    names(out)[is.na(names(out))] <- seq_along(names(out))[is.na(names(out))]
+  }
+  out
 }
 
 
