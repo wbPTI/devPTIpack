@@ -5,9 +5,6 @@ output:
   pdf_document:
     fig_width: 16
     fig_height: 9
-  bookdown::pdf_document2:
-    fig_width: 16
-    fig_height: 9
   html_document: 
     fig_width: 16
     fig_height: 9
