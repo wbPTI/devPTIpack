@@ -8,7 +8,7 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 
 The goal of the `devPTIpack` is to be a platform that contains key
 instruments for creating PTI (Project Targeting Index) dashboards as well as embedding PTI modules
-in to the existing shiny apps. The PTI offers an evidence-based approach to inform spatial targeting of projects based on country strategies and objectives. See more details on the PTI and PTI dashboards in [Finn and Masaki (2022)](https://img.shields.io/badge/lifecycle-experimental-orange.svg).
+in to the existing shiny apps. The PTI offers an evidence-based approach to inform spatial targeting of projects based on country strategies and objectives. See more details on the PTI and PTI dashboards in [Finn and Masaki (2022)](https://openknowledge.worldbank.org/handle/10986/34311).
 
 ## Installation:
 
