@@ -201,7 +201,7 @@ prep_input_data <- function(ind_list, ns) {
     mutate(#
       ttip_id =  str_c("inp-inf-", row_number()),
       ttip_var_name = var_name, 
-      ttip_id = ifelse(var_name == "" | is.na(var_name), NA_character_, var_name),
+      ttip_id = ifelse(var_name == "" | is.na(var_name), NA_character_, ttip_id),
       var_name =
         pmap_chr(#
           list(var_name, var_description, row_number(), ttip_id),
