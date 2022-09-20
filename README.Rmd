@@ -18,15 +18,15 @@ The goal of the `devPTIpack` is to be a platform that contains key instruments f
 
 ```r
 # Install development version from GitHub
-remotes::install_github("EBukin/devPTIpack")
+remotes::install_github("wbPTI/devPTIpack")
 ```
 
 ```r
 # Install specific version from GitHub
-remotes::install_github("EBukin/devPTIpack@v0.0.9")
+remotes::install_github("wbPTI/devPTIpack@v0.0.9")
 ```
 
-We add `@v0.0.9` to be able to refer to a specific tag. Check the [tags' tree](https://github.com/EBukin/devPTIpack/tags) on github for existing tags. 
+We add `@v0.0.9` to be able to refer to a specific tag. Check the [tags' tree](https://github.com/wbPTI/devPTIpack/tags) on github for existing tags. 
 
 
 ## Usage

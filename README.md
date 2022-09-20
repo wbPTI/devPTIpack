@@ -7,19 +7,19 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 <!-- badges: end -->
 
 The goal of the `devPTIpack` is to be a platform that contains key
-instruments for creating PTI (Project Targeting Index) dashboards as well as embedding PTI modules
-in to the existing shiny apps. The PTI offers an evidence-based approach to inform spatial targeting of projects based on country strategies and objectives. See more details on the PTI and PTI dashboards in [Finn and Masaki (2022)](https://openknowledge.worldbank.org/handle/10986/34311).
+instruments for creating PTI dashboards as well as embedding PTI modules
+in to the existing shiny apps.
 
 ## Installation:
 
     # Install development version from GitHub
-    remotes::install_github("EBukin/devPTIpack")
+    remotes::install_github("wbPTI/devPTIpack")
 
     # Install specific version from GitHub
-    remotes::install_github("EBukin/devPTIpack@v0.0.9")
+    remotes::install_github("wbPTI/devPTIpack@v0.0.9")
 
 We add `@v0.0.9` to be able to refer to a specific tag. Check the [tags’
-tree](https://github.com/EBukin/devPTIpack/tags) on github for existing
+tree](https://github.com/wbPTI/devPTIpack/tags) on github for existing
 tags.
 
 ## Usage
