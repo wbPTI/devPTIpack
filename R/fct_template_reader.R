@@ -65,17 +65,12 @@ fct_template_reader <- function(...) {
     
     tmplt$metadata <- 
       tmplt$metadata %>% 
-      mutate(
-        across(
-          any_of(c("fltr_exclude_pti", "fltr_exclude_explorer", "fltr_overlay_pti",
-                   "fltr_overlay_explorer", "legend_revert_colours")), 
-                 ~ as.logical(.),
-        ),
+      dplyr::mutate(across(c(fltr_exclude_pti, fltr_exclude_explorer, fltr_overlay_pti,
+                   fltr_overlay_explorer, legend_revert_colours), ~ as.logical(.)
+        )) %>%
         
-        across(
-          any_of(c("fltr_exclude_pti", "fltr_exclude_explorer", "fltr_overlay_pti",
-                   "fltr_overlay_explorer", "legend_revert_colours")), 
-                 ~ ifelse(is.na(.), FALSE, .)
+      dplyr::mutate(across(c(fltr_exclude_pti, fltr_exclude_explorer, fltr_overlay_pti,
+                             fltr_overlay_explorer, legend_revert_colours), ~ ifelse(is.na(.), FALSE, .)
         )
       )
     

@@ -735,7 +735,7 @@ mod_wt_save_srv <- function(id, pti_indicators, after_delete_ws, current_ws_name
         
         if (current_ws_name() %in% names(after_delete_ws()$weights_clean)) {
           existing_values <- after_delete_ws()$weights_clean[[current_ws_name()]]
-          if (isTRUE(all_equal(existing_values, current_ws_values(), convert = TRUE))) {
+          if (isTRUE(all.equal(existing_values, current_ws_values(), convert = TRUE))) {
             actionButton(
               ns("weights.save"),
               "No changes to save",

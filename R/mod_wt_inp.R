@@ -411,7 +411,7 @@ mod_wt_save_newsrv <- function(id, edited_ws, curr_wt, curr_wt_name) {
           if (curr_wt_name() %in% names(edited_ws$weights_clean())) {
             existing_values <- edited_ws$weights_clean()[[curr_wt_name()]]
             
-            if (isTRUE(all_equal(existing_values, curr_wt(), convert = TRUE))) {
+            if (isTRUE(all.equal(existing_values, curr_wt(), convert = TRUE))) {
               actionButton(
                 ns("weights.save"),
                 "No changes to save",
