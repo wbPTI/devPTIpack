@@ -303,7 +303,7 @@ mod_map_dwnld_ui <- function(id, map_dwnld_options = c("shapes", "metadata")) {
 #'
 #' @importFrom shiny debounce reactive moduleServer isTruthy downloadHandler
 #'
-#' @importFrom curl curl_version
+
 #' @import ggplot2
 #' 
 mod_map_dwnld_srv <- function(id, plotting_map, metadata_path = NULL, shapes_path = NULL) {

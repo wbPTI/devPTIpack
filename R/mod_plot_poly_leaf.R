@@ -254,7 +254,7 @@ make_ggmap <- function(preplot_dta, selected_layer, show_interval = FALSE, shp_d
 
 #' @describeIn mod_plot_poly_leaf_server Plot the map of country using GG and knowing the layer to plot.  
 #' 
-#' @import ggplot2 sf sp
+#' @import ggplot2 sf
 #' @importFrom tidyr nest unnest
 #' @export
 make_ggmap_2 <- function(preplot_dta, selected_layer, show_interval = FALSE, shp_dta = NULL, ...) {
@@ -340,49 +340,49 @@ make_ggmap_2 <- function(preplot_dta, selected_layer, show_interval = FALSE, shp
 
 #' @describeIn mod_plot_poly_leaf_server Plot the map using SP pacakge
 #' 
-#' @import ggplot2 sf sp
+#' @import ggplot2 sf
 #' @export
 make_spplot <- function(preplot_dta, selected_layer, show_interval = FALSE, ...) {
-  
+
   map_to_plot <-
     preplot_dta %>%
     purrr::keep(function(.x) {
       str_c(.x$pti_codes, " (", .x$admin_level, ")") %in% selected_layer[[1]]
     }) %>%
     `[[`(1)
-  
+
   layer_id <-
     str_c(map_to_plot$pti_codes, " (", map_to_plot$admin_level, ")")
-  
+
   if (show_interval) {
     # browser()
-    plt_dta <- 
+    plt_dta <-
       map_to_plot$pti_dta %>%
       mutate(
         pti_score_category = map_to_plot$leg$recode_function_intervals(pti_score),
-        pti_score_category = factor(pti_score_category, 
+        pti_score_category = factor(pti_score_category,
                                     levels = map_to_plot$leg$recode_function_intervals(map_to_plot$leg$our_values))
       )
-    
+
     col_list <- map_to_plot$leg$pal(map_to_plot$leg$our_values)
   } else {
-    plt_dta <- 
+    plt_dta <-
       map_to_plot$pti_dta %>%
       mutate(
         pti_score_category = map_to_plot$leg$recode_function(pti_score),
-        pti_score_category = factor(pti_score_category, 
+        pti_score_category = factor(pti_score_category,
                                     levels = map_to_plot$leg$our_labels_category)
-      ) 
+      )
     col_list <- set_names(
       map_to_plot$leg$pal(map_to_plot$leg$our_values),
       map_to_plot$leg$our_labels_category
     )
   }
-  
-  plt_dta %>%
-    select(pti_score_category) %>%
-    sf::as_Spatial() %>%
-    sp::spplot(col.regions = map_to_plot$leg$pal(map_to_plot$leg$our_values))
+
+  # plt_dta %>%
+  #   select(pti_score_category) %>%
+  #   sf::as_Spatial() %>%
+  #   sp::spplot(col.regions = map_to_plot$leg$pal(map_to_plot$leg$our_values))
 }
 
 
@@ -418,7 +418,7 @@ make_gg_line_map <- function(shp_dta, ...) {
 }
 
 #' @describeIn mod_plot_poly_leaf_server Plot the map of country using GG and knowing the layer to plot.  
-#' @import ggplot2 sf sp
+#' @import ggplot2 sf
 #' @importFrom tidyr nest unnest
 #' @export
 make_gg_line_map_2 <- function(shp_dta, ...) {
@@ -492,7 +492,7 @@ make_gg_line_map_2 <- function(shp_dta, ...) {
 
 #' @describeIn mod_plot_poly_leaf_server Plot the line of the map using SP pacakge
 #' 
-#' @import ggplot2 sf sp
+#' @import ggplot2 sf
 #' @export
 make_sp_line_map <- function(shp_dta, ...) {
   cols <- c("#e41a1c",
@@ -502,20 +502,20 @@ make_sp_line_map <- function(shp_dta, ...) {
             "#ff7f00",
             "#ffff33",
             "#a65628")
-  out_plt <- 
-    shp_dta %>%
-    `[`(-length(.)) %>% 
-    `[[`(length(.)) %>% 
-    sf::st_geometry() %>%
-    sf::st_as_sf() %>%
-    mutate(ID = row_number()) %>%
-    # plot()
-    # sf::st_cast("MULTILINESTRING") %>%
-    sf::as_Spatial() %>%
-    sp::spplot(fill = NULL, col = cols[[2]], border = cols[[2]])
-  
-  out_plt$legend <- NULL
-  out_plt
+  # out_plt <- 
+  #   shp_dta %>%
+  #   `[`(-length(.)) %>% 
+  #   `[[`(length(.)) %>% 
+  #   sf::st_geometry() %>%
+  #   sf::st_as_sf() %>%
+  #   mutate(ID = row_number()) %>%
+  #   # plot()
+  #   # sf::st_cast("MULTILINESTRING") %>%
+  #   sf::as_Spatial() %>%
+  #   sp::spplot(fill = NULL, col = cols[[2]], border = cols[[2]])
+  # 
+  # out_plt$legend <- NULL
+  # out_plt
   
 }
 
