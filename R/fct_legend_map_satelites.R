@@ -57,30 +57,30 @@ legend_map_satelite <-
         quantile(leg_vals, seq(0, 1, 1 / (n_breaks)), na.rm = TRUE) %>%
         unique()
       
-      ## Step 1.3 quantiles with increased breaks number ====================
-      # If this does not work, we will do another round creating breaks based on the unique values only.
-      if (length(our_breaks) <= n_breaks & length(our_breaks) != 1 & 
-          length(our_breaks) < length(unique(leg_vals)) ) {
-        try({
-          n_breaks <- n_breaks + 1
-          our_breaks <-
-            quantile(leg_vals, seq(0, 1, 1 / (n_breaks)), na.rm = TRUE) %>% 
-            unique()
-        }, silent = TRUE
-        )
-      }
-      
-      ## Step 1.3 If does not work, quantiles on unique values =============
-      if (length(our_breaks) <= n_breaks & length(our_breaks) != 1  & 
-          length(our_breaks) < length(unique(leg_vals))) {
-        try({
-          n_breaks <- n_breaks + 1
-          our_breaks <-
-            quantile(x_uni, seq(0, 1, 1 / (n_breaks)), na.rm = TRUE) %>% 
-            unique()
-        }, silent = TRUE
-        )
-      }
+      # ## Step 1.3 quantiles with increased breaks number ====================
+      # # If this does not work, we will do another round creating breaks based on the unique values only.
+      # if (length(our_breaks) <= n_breaks & length(our_breaks) != 1 & 
+      #     length(our_breaks) < length(unique(leg_vals)) ) {
+      #   try({
+      #     n_breaks <- n_breaks + 1
+      #     our_breaks <-
+      #       quantile(leg_vals, seq(0, 1, 1 / (n_breaks)), na.rm = TRUE) %>% 
+      #       unique()
+      #   }, silent = TRUE
+      #   )
+      # }
+      # 
+      # ## Step 1.3 If does not work, quantiles on unique values =============
+      # if (length(our_breaks) <= n_breaks & length(our_breaks) != 1  & 
+      #     length(our_breaks) < length(unique(leg_vals))) {
+      #   try({
+      #     n_breaks <- n_breaks + 1
+      #     our_breaks <-
+      #       quantile(x_uni, seq(0, 1, 1 / (n_breaks)), na.rm = TRUE) %>% 
+      #       unique()
+      #   }, silent = TRUE
+      #   )
+      # }
       
       ## Step 2. When there are more than one unique value in data (including NA) =============
       if (length(x_uni) > 1) {
@@ -131,6 +131,7 @@ legend_map_satelite <-
             lab_function <- scales::label_number(0.000001, big.mark = " ")
           }
           
+          # browser()
           # Generic case
           our_labels <-
             map2_chr(#
