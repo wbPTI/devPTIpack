@@ -1,6 +1,6 @@
 Package: devPTIpack
 Title: Development environment for Precise Index Targeting analysis
-Version: 0.0.0.9940
+Version: 0.0.0.9941
 Authors@R: 
   person('Takaaki', 'Masaki', email = 'tmasaki@worldbank.org', role = c('aut'))
   person('Arden', 'Finn', email = 'afinn1@worldbank.org', role = c('aut'))
@@ -46,7 +46,8 @@ Imports:
     rstudioapi (>= 0.13),
     ggplot2 (>= 3.3.5),
     DT (>= 0.20),
-    htmlwidgets (>= 1.5.4)
+    htmlwidgets (>= 1.5.4),
+    maptools (>= 1.1-6)
 Suggests: 
     progress (>= 1.2),
     knitr (>= 1.33)
