@@ -405,12 +405,12 @@ make_gg_line_map <- function(shp_dta, ...) {
     pmap_dfr(function(...) {..1 %>% mutate(line = ..2, width = ..3)}) 
   dta %>% 
     ggplot2::ggplot() +
-    ggplot2::aes(group = line, linetype = line, colour = line, size = width) +
+    ggplot2::aes(group = line, linetype = line, colour = line, linewidth  = width) +
     # ggspatial::annotation_map_tile(zoomin = 0, progress = "none", interpolate = TRUE) +
     ggplot2::geom_sf(fill = NA) +
     # ggplot2::coord_sf(crs = sf::st_crs(dta), datum = sf::st_crs(dta)) +
     ggplot2::scale_colour_brewer(palette = "Dark2") + 
-    ggplot2::scale_size_continuous(range = c(0.15, 1.25)) +
+    ggplot2::scale_linewidth_continuous(range = c(0.55, 2)) +
     ggplot2::theme_bw()  + 
     ggplot2::theme(legend.position="none") +
     ggplot2::labs(title = main_lable)

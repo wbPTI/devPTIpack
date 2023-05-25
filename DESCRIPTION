@@ -46,8 +46,7 @@ Imports:
     rstudioapi (>= 0.13),
     ggplot2 (>= 3.3.5),
     DT (>= 0.20),
-    htmlwidgets (>= 1.5.4),
-    maptools (>= 1.1-6)
+    htmlwidgets (>= 1.5.4)
 Suggests: 
     progress (>= 1.2),
     knitr (>= 1.33)
