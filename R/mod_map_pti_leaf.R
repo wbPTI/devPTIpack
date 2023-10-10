@@ -12,7 +12,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-#' @importFrom leaflet leafletOutput
+#' @importFrom leaflet leafletOutput 
 mod_map_pti_leaf_ui <- function(id, side_width = 350, side_ui = NULL, 
                                 map_dwnld_options = c("shapes", "metadata"),
                                 ...){
@@ -169,7 +169,7 @@ mod_init_leaf_pti_srv <- function(id, shape_data) {
       ns <- session$ns
       output[["leaf_id"]] <- leaflet::renderLeaflet({
         leaflet::leaflet() %>%
-          leaflet::addTiles()
+          leaflet::addTiles(urlTemplate = "https://api.mapbox.com/styles/v1/gsdpm/civtteddj000z2jodf6dv7vw4/tiles/256/{z}/{x}}/{y}@2x?access_token=pk.eyJ1IjoiZ3NkcG0iLCJhIjoiY2toZjFvZ3gwMG1qODJ4cnpwaDdvenpzMiJ9.01pv2kccL9cXhxO6B-Naiw")
       })
       outputOptions(output, "leaf_id", suspendWhenHidden = FALSE, priority = 1000)
     })
@@ -182,7 +182,7 @@ mod_init_leaf_pti_srv <- function(id, shape_data) {
 #' Fly to observer and reactivity for the map
 #' @noRd 
 #' @import  leaflet
-#' 
+#'
 mod_flyto_leaf_srv <-
   function(id, shape_data, active_tab, target_tabs, plotting_map) {
     moduleServer(#
@@ -217,7 +217,7 @@ mod_flyto_leaf_srv <-
 
           leafletProxy("leaf_id") %>%
             fitBounds(bounds[[1]], bounds[[2]], bounds[[3]], bounds[[4]]) %>%
-            addProviderTiles(provider = providers$CartoDB.Voyager) %>%
+            addTiles(urlTemplate = "https://api.mapbox.com/styles/v1/gsdpm/civtteddj000z2jodf6dv7vw4/tiles/256/{z}/{x}}/{y}@2x?access_token=pk.eyJ1IjoiZ3NkcG0iLCJhIjoiY2toZjFvZ3gwMG1qODJ4cnpwaDdvenpzMiJ9.01pv2kccL9cXhxO6B-Naiw") %>%
             addMapPane("liene1", zIndex = 401) %>%
             addMapPane("polygons", zIndex = 410) %>%
             addMapPane("bubles", zIndex = 430)  %>%
@@ -239,8 +239,7 @@ mod_flyto_leaf_srv <-
           isolate({
             leaflet() %>%
               fitBounds(bounds[[1]], bounds[[2]], bounds[[3]], bounds[[4]]) %>% 
-              addTiles() %>%
-              addProviderTiles(provider = providers$CartoDB.Voyager) %>%
+              addTiles(urlTemplate = "https://api.mapbox.com/styles/v1/gsdpm/cjrc1z9u53oci2tqxvbhhnf7r/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiZ3NkcG0iLCJhIjoiY2toZjFvZ3gwMG1qODJ4cnpwaDdvenpzMiJ9.01pv2kccL9cXhxO6B-Naiw") %>% 
               addMapPane("liene1", zIndex = 401) %>%
               addMapPane("polygons", zIndex = 410) %>%
               addMapPane("bubles", zIndex = 430)  %>%
