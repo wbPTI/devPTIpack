@@ -225,8 +225,8 @@ add_pti_poly_controls <- function(leaf_map, poly_dta, old_grps = NULL) {
     leaf_map %>% 
     leaflet::removeLayersControl() %>%
     leaflet::addLayersControl(
-      baseGroups = grps,
-      # overlayGroups = NULL,
+      # baseGroups = NULL,
+      overlayGroups = grps,
       position = "bottomright",
       options = leaflet::layersControlOptions(collapsed = FALSE)
     )
@@ -261,7 +261,7 @@ add_pti_poly_controls <- function(leaf_map, poly_dta, old_grps = NULL) {
 #' @describeIn plot_pti_polygons Cleans controls for non-overlaying polygons in leaflet proxy or simple object
 #' 
 #' @export
-#' @importFrom leaflet hideGroup removeLayersControl
+#' @importFrom leaflet hideGroup removeLayersControl 
 #' @importFrom purrr map_chr
 clean_pti_poly_controls <- function(leaf_map, poly_dta) {
   
@@ -273,7 +273,7 @@ clean_pti_poly_controls <- function(leaf_map, poly_dta) {
   leaf_map <- 
     leaf_map %>% 
     leaflet::hideGroup(grps) %>% 
-    leaflet::removeLayersControl() 
+    leaflet::removeLayersControl()
   
   leaf_map
 }
@@ -317,4 +317,103 @@ check_existing_groups <- function(cur_grps, old_grps, priority_group) {
   }
   
   list(out_show = out_show, out_hide = out_hide)
+}
+
+#' @describeIn plot_pti_polygons Add panel with controls over layers to select on the map.
+#' 
+#' @export
+#' @import leaflet
+#' @importFrom leaflet addCircles highlightOptions bringToFront
+#' @importFrom dplyr case_when
+add_user_shapefile <- function(map, shp_data, col_values, col_name, zoom, group = "user_shapefile") {
+  pal <- if (is.factor(col_values)) {
+    colorFactor(palette = "viridis", domain = col_values)
+  } else if (is.numeric(col_values)) {
+    colorBin(palette = "viridis", domain = col_values, bins = 7)
+  } else {
+    stop("The selected column for coloring must be either a factor or numeric.")
+  }
+
+  geometry_type <- sf::st_geometry_type(shp_data, by_geometry = FALSE)
+
+  # Function to calculate radius based on zoom level
+  calculate_radius <- function(zoom, max_radius = 100000, min_radius = 10, min_zoom = 1, max_zoom = 15) {
+    # Exponential decay function for radius with a steeper curve
+    exp_decay <- function(z, z0, z1, r0, r1) {
+      r1 + (r0 - r1) * ((z1 - z) / (z1 - z0))^4
+    }
+    zoom <- as.numeric(zoom)
+    if (zoom < min_zoom) zoom <- min_zoom
+    if (zoom > max_zoom) zoom <- max_zoom
+    exp_decay(zoom, min_zoom, max_zoom, max_radius, min_radius)
+  }
+
+  if (geometry_type %in% c("POINT", "MULTIPOINT")) {
+    map <- map %>% 
+      addCircles(
+        data = shp_data,
+        fillColor = ~pal(col_values),
+        color = "#BDBDC3",
+        weight = 1,
+        opacity = 1,
+        fillOpacity = 0.7,
+        radius = ~calculate_radius(zoom),
+        highlight = highlightOptions(
+          weight = 2,
+          color = "#666",
+          fillOpacity = 0.7,
+          bringToFront = TRUE
+        ),
+        label = ~paste(col_name, ": ", col_values),
+        group = group,
+        options = pathOptions(pane = group)
+      )
+  } else if (geometry_type %in% c("LINESTRING", "MULTILINESTRING")) {
+    map <- map %>% 
+      addPolylines(
+        data = shp_data,
+        color = ~pal(col_values),
+        weight = 2,
+        opacity = 1,
+        highlight = highlightOptions(
+          weight = 3,
+          color = "#666",
+          bringToFront = TRUE
+        ),
+        label = ~paste(col_name, ": ", col_values),
+        group = group,
+        options = pathOptions(pane = group)
+      )
+  } else if (geometry_type %in% c("POLYGON", "MULTIPOLYGON")) {
+    map <- map %>% 
+      addPolygons(
+        data = shp_data,
+        fillColor = ~pal(col_values),
+        color = "#BDBDC3",
+        weight = 1,
+        opacity = 1,
+        fillOpacity = 0.7,
+        highlight = highlightOptions(
+          weight = 2,
+          color = "#666",
+          fillOpacity = 0.7,
+          bringToFront = TRUE
+        ),
+        label = ~paste(col_name, ": ", col_values),
+        group = group,
+        options = pathOptions(pane = group)
+      )
+  } else {
+    showNotification("Unsupported geometry type.", type = "error")
+  }
+  
+  map %>%
+    addLegend(
+      position = "bottomright",
+      pal = pal,
+      values = col_values,
+      title = col_name,
+      opacity = 1,
+      group = group
+    )
 }

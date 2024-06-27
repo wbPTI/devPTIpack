@@ -100,7 +100,7 @@ launch_pti <-
            inp_dta, 
            ui_type = c("twocol", "box"),
            app_name = "Some app", 
-           tabs = c("info", "compare", "explorer"),
+           tabs = c("info", "compare", "explorer", "upload"),
            show_waiter = TRUE, 
            show_adm_levels = NULL,
            wt_dwnld_options = c("data", "weights", "shapes", "metadata"),
@@ -158,7 +158,10 @@ launch_pti <-
                                       multi_choice = FALSE, 
                                       height = "calc(100vh - 60px)")
         ),
-        if ("how" %in% tabs) tabPanel("How it works?")
+        if ("how" %in% tabs) tabPanel("How it works?"),
+        if ("upload" %in% tabs) tabPanel("Upload shapefile",
+                 mod_shape_upload_ui("shape_upload")
+        )
       ) %>% 
       tagList(golem_add_external_resources(), use_cicerone())
     
@@ -211,6 +214,16 @@ launch_pti <-
                                target_tabs = "Data explorer",
                                mtdtpdf_path = normalizePath(mtdtpdf_path),
                                shapes_path = normalizePath(shapes_path))
+      # shapefile upload
+      mod_shape_upload_server("shape_upload",
+                              shp_dta = reactive(shp_dta),
+                              map_dta = plt_dta$map_dta,
+                              wt_dta = plt_dta$wt_dta,
+                              active_tab = active_tab,
+                              target_tabs = "Upload shapefile",
+                              mtdtpdf_path = normalizePath(mtdtpdf_path),
+                              shapes_path = normalizePath(shapes_path),
+                              show_adm_levels =  show_adm_levels)
     }
     
     with_golem_options(
