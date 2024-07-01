@@ -323,7 +323,7 @@ check_existing_groups <- function(cur_grps, old_grps, priority_group) {
 #' 
 #' @export
 #' @import leaflet
-#' @importFrom leaflet addCircles highlightOptions bringToFront
+#' @importFrom leaflet addCircles highlightOptions
 #' @importFrom dplyr case_when
 add_user_shapefile <- function(map, shp_data, col_values, col_name, zoom, group = "user_shapefile") {
   pal <- if (is.factor(col_values)) {
