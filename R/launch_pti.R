@@ -118,7 +118,7 @@ launch_pti <-
     if (rlang::is_missing(inp_dta)) {
       stop("'inp_dta' is missing. Provide a valid list with metadata!")
     }
-    
+
     ui_fn <- 
       switch(ui_type[[1]],
              twocol = mod_ptipage_twocol_ui,
@@ -168,7 +168,10 @@ launch_pti <-
     
     # server
     server_here <- function(input, output, session) {
-      
+      # Initialize global layer management
+      global_layers <<- reactiveValues(
+        layer_info = list()
+        )
       # Checking what tab is open.
       active_tab <- reactive(input$tabpan)
       # observe(cat("tab: ", active_tab(), "\n"))

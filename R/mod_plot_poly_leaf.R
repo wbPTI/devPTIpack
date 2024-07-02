@@ -100,7 +100,7 @@ mod_plot_poly_leaf_server <- function(id, preplot_dta, shp_dta, leg_type = "valu
             clean_pti_polygons(remove_old_poly()) %>% 
             plot_pti_polygons(add_new_poly()) %>%  
             clean_pti_poly_controls(remove_old_poly()) %>% 
-            add_pti_poly_controls(preplot_dta(), selected_layer()) 
+            add_pti_poly_controls(preplot_dta(), selected_layer(), global_layers) 
           remove_old_poly(NULL)
           add_new_poly(NULL)
           previous_plot(preplot_dta())

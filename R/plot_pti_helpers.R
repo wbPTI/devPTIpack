@@ -213,30 +213,40 @@ clean_pti_polygons <- function(leaf_map, poly_dta) {
 #' @importFrom leaflet hideGroup removeLayersControl
 #' @importFrom purrr map_chr
 #' @importFrom stringr str_c
-add_pti_poly_controls <- function(leaf_map, poly_dta, old_grps = NULL) {
+add_pti_poly_controls <- function(leaf_map, poly_dta, old_grps = NULL, global_layers = NULL) {
   
+  # Generate group names based on the polygon data
   grps <- poly_dta %>%
-    purrr::map_chr(~{ stringr::str_c(.x$pti_codes, " (", .x$admin_level, ")")}) %>%
+    purrr::map_chr(~ stringr::str_c(.x$pti_codes, " (", .x$admin_level, ")")) %>%
     unname()
   
+  # Update global_layers with metadata about the groups
+  for (grp in grps) {
+    global_layers$layer_info[[grp]] <- list(source = "pti_poly")
+  }
+  # Filter to show only relevant layers
+  relevant_layers <- names(global_layers$layer_info)[sapply(global_layers$layer_info, function(l) l$source == "pti_poly")]
+
+  # Get the administrative level option for controlling visibility
   adm_level <- get_golem_options("default_adm_level")
   
+  # Remove existing layers control and add a new one with updated groups
   leaf_map <- 
     leaf_map %>% 
     leaflet::removeLayersControl() %>%
     leaflet::addLayersControl(
-      # baseGroups = NULL,
-      overlayGroups = grps,
+      overlayGroups = relevant_layers,
       position = "bottomright",
       options = leaflet::layersControlOptions(collapsed = FALSE)
     )
   
-  if (!isTruthy(old_grps) && isTruthy(adm_level) ) {
-    grps_in <- poly_dta %>% purrr::map("admin_level") %>%  unname() %>% as_vector()
+  # Control visibility based on administrative level
+  if (!isTruthy(old_grps) && isTruthy(adm_level)) {
+    grps_in <- poly_dta %>% purrr::map("admin_level") %>% unname() %>% as_vector()
     out_show <- 
       grps %>% 
-      `[`(str_detect(grps_in, regex(adm_level, ignore_case = T))|
-            str_detect(names(grps_in), regex(adm_level, ignore_case = T)))
+      `[`(str_detect(grps_in, regex(adm_level, ignore_case = TRUE))|
+            str_detect(names(grps_in), regex(adm_level, ignore_case = TRUE)))
     if (isTruthy(out_show)) {
       leaf_map <- 
         leaf_map %>%
@@ -245,6 +255,7 @@ add_pti_poly_controls <- function(leaf_map, poly_dta, old_grps = NULL) {
     }
   }
   
+  # Handle group visibility when there are old groups
   if (isTruthy(old_grps)) {
     grps2 <- check_existing_groups(grps, old_grps[[length(old_grps)]], adm_level)
     leaf_map <- 
@@ -253,8 +264,7 @@ add_pti_poly_controls <- function(leaf_map, poly_dta, old_grps = NULL) {
       leaflet::showGroup(grps2$out_show[[1]])
   }
   
-  leaf_map
-  
+  return(leaf_map)
 }
 
 
@@ -326,28 +336,33 @@ check_existing_groups <- function(cur_grps, old_grps, priority_group) {
 #' @importFrom leaflet addCircles highlightOptions
 #' @importFrom dplyr case_when
 add_user_shapefile <- function(map, shp_data, col_values, col_name, zoom, group = "user_shapefile") {
-  pal <- if (is.factor(col_values)) {
+    pal <- if (is.factor(col_values)) {
     colorFactor(palette = "viridis", domain = col_values)
   } else if (is.numeric(col_values)) {
     colorBin(palette = "viridis", domain = col_values, bins = 7)
   } else {
     stop("The selected column for coloring must be either a factor or numeric.")
   }
-
+  
   geometry_type <- sf::st_geometry_type(shp_data, by_geometry = FALSE)
-
-  # Function to calculate radius based on zoom level
-  calculate_radius <- function(zoom, max_radius = 100000, min_radius = 10, min_zoom = 1, max_zoom = 15) {
-    # Exponential decay function for radius with a steeper curve
+  
+  # Function to calculate size based on zoom level
+  calculate_size <- function(zoom, max_size = 50000, min_size = 10, min_zoom = 1, max_zoom = 15) {
     exp_decay <- function(z, z0, z1, r0, r1) {
       r1 + (r0 - r1) * ((z1 - z) / (z1 - z0))^4
     }
     zoom <- as.numeric(zoom)
     if (zoom < min_zoom) zoom <- min_zoom
     if (zoom > max_zoom) zoom <- max_zoom
-    exp_decay(zoom, min_zoom, max_zoom, max_radius, min_radius)
+    exp_decay(zoom, min_zoom, max_zoom, max_size, min_size)
   }
-
+  
+  # Clear the existing group before adding new features
+  map <- map %>% clearGroup(group)
+  
+  # Create a unique ID for this layer
+  layer_id <- paste0("layer_", group)
+  
   if (geometry_type %in% c("POINT", "MULTIPOINT")) {
     map <- map %>% 
       addCircles(
@@ -357,7 +372,7 @@ add_user_shapefile <- function(map, shp_data, col_values, col_name, zoom, group 
         weight = 1,
         opacity = 1,
         fillOpacity = 0.7,
-        radius = ~calculate_radius(zoom),
+        radius = ~calculate_size(zoom),  # Initial radius, will be updated dynamically
         highlight = highlightOptions(
           weight = 2,
           color = "#666",
@@ -366,14 +381,15 @@ add_user_shapefile <- function(map, shp_data, col_values, col_name, zoom, group 
         ),
         label = ~paste(col_name, ": ", col_values),
         group = group,
-        options = pathOptions(pane = group)
+        # layerId = layer_id,
+        options = pathOptions(pane = "user_shapefile")
       )
   } else if (geometry_type %in% c("LINESTRING", "MULTILINESTRING")) {
     map <- map %>% 
       addPolylines(
         data = shp_data,
         color = ~pal(col_values),
-        weight = 2,
+        weight = ~calculate_size(zoom, max_size = 50, min_size = 1),
         opacity = 1,
         highlight = highlightOptions(
           weight = 3,
@@ -382,7 +398,8 @@ add_user_shapefile <- function(map, shp_data, col_values, col_name, zoom, group 
         ),
         label = ~paste(col_name, ": ", col_values),
         group = group,
-        options = pathOptions(pane = group)
+        # layerId = layer_id,
+        options = pathOptions(pane = "user_shapefile")
       )
   } else if (geometry_type %in% c("POLYGON", "MULTIPOLYGON")) {
     map <- map %>% 
@@ -390,7 +407,7 @@ add_user_shapefile <- function(map, shp_data, col_values, col_name, zoom, group 
         data = shp_data,
         fillColor = ~pal(col_values),
         color = "#BDBDC3",
-        weight = 1,
+        weight = ~calculate_size(zoom, max_size = 50, min_size = 1),
         opacity = 1,
         fillOpacity = 0.7,
         highlight = highlightOptions(
@@ -401,12 +418,13 @@ add_user_shapefile <- function(map, shp_data, col_values, col_name, zoom, group 
         ),
         label = ~paste(col_name, ": ", col_values),
         group = group,
-        options = pathOptions(pane = group)
+        # layerId = layer_id,
+        options = pathOptions(pane = "user_shapefile")
       )
   } else {
     showNotification("Unsupported geometry type.", type = "error")
   }
-  
+    
   map %>%
     addLegend(
       position = "bottomright",
