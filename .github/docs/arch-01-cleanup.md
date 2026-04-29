@@ -5,6 +5,246 @@
 
 ---
 
+## Permanent Functions — Export & Documentation Audit
+
+> Only functions that **will persist** after all cleanup batches. Legacy/dead code excluded.
+>
+> **Visibility key:** EXPORTED = user-facing API for developers building PTI apps. INTERNAL = package implementation detail.
+>
+> **Doc quality key:** none / minimal / partial / complete — assessed against [/.claude/rules/roxygen-documentation.md](../../.claude/rules/roxygen-documentation.md).
+
+### Entry Points & App Scaffolding
+
+| Function                       | Visibility | Doc Quality | Rationale                                                    |
+| ------------------------------ | :--------: | :---------: | ------------------------------------------------------------ |
+| `launch_pti`                   |  EXPORTED  |   minimal   | Primary entry point for multi-tab PTI apps                   |
+| `launch_pti_onepage`           |  EXPORTED  |   partial   | Primary entry point for single-page PTI apps                 |
+| `create_new_pti`               |  EXPORTED  |   partial   | Scaffolds a new PTI app directory from template              |
+| `app_sys`                      |  EXPORTED  |   minimal   | Developers need this to locate package resource files        |
+| `golem_add_external_resources` |  EXPORTED  |   partial   | Developers building custom UIs must call this to load CSS/JS |
+
+### Data I/O & Validation
+
+| Function                      | Visibility | Doc Quality | Rationale                                                   |
+| ----------------------------- | :--------: | :---------: | ----------------------------------------------------------- |
+| `ukr_shp`                     |  EXPORTED  |   partial   | Sample reference data showing required geometry structure   |
+| `ukr_mtdt_full`               |  EXPORTED  |   minimal   | Sample reference data showing required metadata structure   |
+| `fct_template_reader`         |  EXPORTED  |   minimal   | Primary function to read metadata Excel into package format |
+| `validate_metadata`           |  EXPORTED  |   partial   | Validates shapes + metadata can produce valid PTI scores    |
+| `validate_read_shp`           |  EXPORTED  |   minimal   | Validates a shape file independently                        |
+| `validate_read_metadata`      |  EXPORTED  |   minimal   | Validates a metadata file independently                     |
+| `validate_geometries`         |  EXPORTED  |   minimal   | Validates all geometries conform to expected structure      |
+| `get_shape`                   |  EXPORTED  |    none     | Loads shape files for a PTI app                             |
+| `fct_convert_weight_to_clean` |  INTERNAL  |   minimal   | Conversion utility called within `fct_template_reader`      |
+| `validate_single_geom`        |  INTERNAL  |   minimal   | Low-level helper called by `validate_geometries`            |
+| `get_indicators_list`         |  INTERNAL  |   minimal   | Extracts indicator list from metadata within pipeline       |
+
+### Core Calculation Pipeline
+
+| Function                     | Visibility | Doc Quality | Rationale                                               |
+| ---------------------------- | :--------: | :---------: | ------------------------------------------------------- |
+| `get_mt`                     |  INTERNAL  |   minimal   | Internal step extracting metadata components            |
+| `get_adm_levels`             |  INTERNAL  |   minimal   | Internal utility extracting admin level IDs             |
+| `pivot_pti_dta`              |  INTERNAL  |   minimal   | Internal data reshaping for calculation engine          |
+| `clean_geoms`                |  INTERNAL  |   minimal   | Internal helper stripping geometry columns              |
+| `get_weighted_data`          |  INTERNAL  |   minimal   | Internal step applying weights to data                  |
+| `get_scores_data`            |  INTERNAL  |   minimal   | Internal z-score normalisation step                     |
+| `expand_adm_levels`          |  INTERNAL  |   minimal   | Internal extrapolation across admin levels              |
+| `merge_expandedn_adm_levels` |  INTERNAL  |   minimal   | Internal join of expanded results                       |
+| `agg_pti_scores`             |  INTERNAL  |   minimal   | Internal aggregation of PTI scores                      |
+| `structure_pti_data`         |  INTERNAL  |   minimal   | Internal restructuring for mapping module               |
+| `label_generic_pti`          |  EXPORTED  |   minimal   | Users may call this to apply/customise PTI popup labels |
+| `generic_pti_glue`           |  EXPORTED  |   minimal   | Provides default glue template users can override       |
+
+### Visualisation Helpers
+
+| Function                    | Visibility | Doc Quality | Rationale                                                   |
+| --------------------------- | :--------: | :---------: | ----------------------------------------------------------- |
+| `preplot_reshape_wghtd_dta` |  INTERNAL  |   partial   | Data reshaping within internal plotting pipeline            |
+| `get_current_levels`        |  INTERNAL  |   minimal   | Extracts admin levels within module logic                   |
+| `filter_admin_levels`       |  INTERNAL  |   minimal   | Filtering helper within plotting pipeline                   |
+| `add_legend_paras`          |  INTERNAL  |   minimal   | Adds legend parameters to plot data                         |
+| `complete_pti_labels`       |  INTERNAL  |   minimal   | Label formatting step in pipeline                           |
+| `plot_pti_polygons`         |  INTERNAL  |   partial   | Leaflet polygon rendering helper                            |
+| `clean_pti_polygons`        |  INTERNAL  |   minimal   | Polygon cleanup helper                                      |
+| `add_pti_poly_controls`     |  INTERNAL  |   minimal   | Layer control helper                                        |
+| `clean_pti_poly_controls`   |  INTERNAL  |   minimal   | Control cleanup helper                                      |
+| `check_existing_groups`     |  INTERNAL  |   minimal   | Layer group selection utility                               |
+| `legend_map_satelite`       |  INTERNAL  |   minimal   | Legend/palette generator for leaflet                        |
+| `recode_val_base`           |  INTERNAL  |   minimal   | Label-recoding closure for map legends                      |
+| `plot_leaf_line_map2`       |  INTERNAL  |   minimal   | Draws admin boundary lines on leaflet                       |
+| `plot_pti_legend`           |  INTERNAL  |   minimal   | Legend-adding helper                                        |
+| `remove_pti_legend`         |  INTERNAL  |   minimal   | Legend-removal helper                                       |
+| `make_ggmap`                |  INTERNAL  |   minimal   | ggplot2 map renderer for download                           |
+| `make_gg_line_map`          |  INTERNAL  |   minimal   | ggplot2 boundary-line renderer for download                 |
+| `gg_admin_list`             |  EXPORTED  |    none     | Produces ggplot list of admin-level variables for reporting |
+
+### Page-level Modules
+
+| Function                     | Visibility | Doc Quality | Rationale                                                   |
+| ---------------------------- | :--------: | :---------: | ----------------------------------------------------------- |
+| `mod_ptipage_twocol_ui`      |  EXPORTED  |   partial   | Developers place this in their app for two-column PTI pages |
+| `mod_ptipage_box_ui`         |  EXPORTED  |   minimal   | Developers place this in their app for box-style PTI pages  |
+| `mod_ptipage_newsrv`         |  EXPORTED  |   partial   | Server module to wire up PTI logic in custom apps           |
+| `mod_pti_comparepage_ui`     |  EXPORTED  |   minimal   | Developers add this for a PTI comparison tab                |
+| `mod_pti_comparepage_newsrv` |  EXPORTED  |   partial   | Server to power the comparison page                         |
+| `mod_dta_explorer2_ui`       |  EXPORTED  |   minimal   | UI for the data explorer page                               |
+| `mod_dta_explorer2_server`   |  EXPORTED  |   minimal   | Server for data explorer functionality                      |
+| `mod_explrr_onepage_ui`      |  EXPORTED  |   minimal   | Standalone data-explorer-only app UI                        |
+| `mod_explrr_onepage_server`  |  EXPORTED  |   minimal   | Standalone data-explorer-only app server                    |
+| `mod_plot_pti2_srv`          |  EXPORTED  |   minimal   | Main PTI map orchestration module                           |
+| `mod_leaf_side_panel_ui`     |  EXPORTED  |   minimal   | Map side panel UI developers include in layouts             |
+| `mod_tab_open_first_newserv` |  EXPORTED  |   partial   | Tab-opening invalidator for custom PTI page layouts         |
+
+### Internal Sub-modules & Helpers
+
+| Function                      | Visibility | Doc Quality | Rationale                                               |
+| ----------------------------- | :--------: | :---------: | ------------------------------------------------------- |
+| `mod_calc_pti2_ui`            |  INTERNAL  |   minimal   | Empty placeholder UI; called by `mod_ptipage_newsrv`    |
+| `mod_calc_pti2_server`        |  INTERNAL  |   minimal   | Calculation engine invoked within `mod_ptipage_newsrv`  |
+| `mod_plot_poly_leaf_server`   |  INTERNAL  |   partial   | Polygon sub-module called by `mod_plot_pti2_srv`        |
+| `mod_plot_leaf_export`        |  INTERNAL  |   minimal   | Export sub-module within polygon server                 |
+| `mod_plot_poly_legend_server` |  INTERNAL  |   minimal   | Legend sub-module called by polygon server              |
+| `mod_plot_init_leaf_server`   |  INTERNAL  |   minimal   | Leaflet initialisation sub-module                       |
+| `mod_map_pti_leaf_ui`         |  EXPORTED  |   minimal   | Map container UI used by page modules (to be extracted) |
+| `mod_get_nbins_ui`            |  INTERNAL  |   minimal   | N-bins widget embedded in side panel                    |
+| `mod_get_nbins_srv`           |  INTERNAL  |   minimal   | N-bins server                                           |
+| `mod_get_admin_levels_ui`     |  INTERNAL  |   minimal   | Admin-level selector widget                             |
+| `mod_get_admin_levels_srv`    |  INTERNAL  |   partial   | Admin-level selector server                             |
+| `mod_map_dwnld_ui`            |  INTERNAL  |   minimal   | Download links sub-UI                                   |
+| `mod_map_dwnld_srv`           |  INTERNAL  |   minimal   | Download handler sub-server                             |
+| `mod_dta_explorer2_side_ui`   |  INTERNAL  |   minimal   | Explorer side panel component                           |
+| `mod_select_var_ui`           |  INTERNAL  |   minimal   | Variable selection widget                               |
+| `mod_fltr_sel_var2_srv`       |  INTERNAL  |   minimal   | Filter/selection server logic                           |
+| `reshaped_explorer_dta`       |  INTERNAL  |   minimal   | Data reshaping for explorer                             |
+| `get_var_choices`             |  INTERNAL  |   minimal   | Indicator choice extraction                             |
+| `filter_var_explorer`         |  INTERNAL  |   minimal   | Pre-plot data filtering                                 |
+
+### Weights Input (all INTERNAL)
+
+| Function                  | Visibility | Doc Quality | Rationale                                    |
+| ------------------------- | :--------: | :---------: | -------------------------------------------- |
+| `mod_wt_inp_ui`           |  INTERNAL  |   partial   | UI for weights input; called by page modules |
+| `mod_wt_inp_server`       |  INTERNAL  |   minimal   | Server for weights input                     |
+| `full_wt_inp_ui`          |  INTERNAL  |   minimal   | Sub-UI helper                                |
+| `short_wt_inp_ui`         |  INTERNAL  |   partial   | Sub-UI helper                                |
+| `mod_wt_name_newsrv`      |  INTERNAL  |   minimal   | Weight name reactivity                       |
+| `mod_wt_save_newsrv`      |  INTERNAL  |   minimal   | Save button logic                            |
+| `mod_wt_delete_ui`        |  INTERNAL  |   minimal   | Delete button UI                             |
+| `mod_wt_delete_newsrv`    |  INTERNAL  |   minimal   | Delete/reset logic                           |
+| `mod_wt_select_newsrv`    |  INTERNAL  |   minimal   | Weight-set selection                         |
+| `mod_wt_upd_newsrv`       |  INTERNAL  |   minimal   | Weight value updates                         |
+| `mod_wt_dwnload_newsrv`   |  INTERNAL  |   partial   | Download sub-module                          |
+| `prepare_export_data`     |  INTERNAL  |   partial   | Reactive export data helper                  |
+| `mod_wt_uplod_newsrv`     |  INTERNAL  |   minimal   | Upload sub-module                            |
+| `mod_wt_inp_test_ui`      |  INTERNAL  |   minimal   | Debug-only UI                                |
+| `mod_DT_inputs_ui`        |  INTERNAL  |   partial   | DT widget UI                                 |
+| `mod_DT_inputs_server`    |  INTERNAL  |   minimal   | DT widget server                             |
+| `add_two_action_btn`      |  INTERNAL  |    none     | Tiny button helper                           |
+| `prep_input_data`         |  INTERNAL  |    none     | DT data transformation                       |
+| `make_vis_targets_for_dt` |  INTERNAL  |    none     | DT column visibility                         |
+| `make_input_DT`           |  INTERNAL  |   partial   | Constructs DT widget                         |
+| `mod_throw_tooltip`       |  INTERNAL  |    none     | Tooltip popup handler                        |
+| `mod_wt_btns_srv`         |  INTERNAL  |   minimal   | Weight action buttons (to be extracted)      |
+| `mod_collect_wt_srv`      |  INTERNAL  |   minimal   | Weight collection logic (to be extracted)    |
+| `mod_weights_rand_ui`     |  INTERNAL  |   partial   | Dev/debug UI for random weights              |
+
+### Export, Download & Reporting
+
+| Function                      | Visibility | Doc Quality | Rationale                                    |
+| ----------------------------- | :--------: | :---------: | -------------------------------------------- |
+| `get_pti_scores_export`       |  EXPORTED  |   minimal   | Extracts PTI scores into exportable tibbles  |
+| `get_pti_weights_export`      |  EXPORTED  |   minimal   | Formats weights for export/reporting         |
+| `get_rand_weights`            |  EXPORTED  |   minimal   | Generates random weights for testing configs |
+| `get_all_weights_combs`       |  EXPORTED  |   minimal   | All weight combinations for batch analysis   |
+| `render_metadata`             |  EXPORTED  |    none     | Generates metadata PDF for PTI deployment    |
+| `mod_export_pti_data_server`  |  INTERNAL  |   minimal   | Internal module wiring export reactives      |
+| `mod_dwnld_dta_link_ui`       |  INTERNAL  |    none     | Download link UI helper                      |
+| `mod_dwnld_dta_xlsx_server`   |  INTERNAL  |    none     | Generic xlsx download server                 |
+| `mod_dwnld_file_server`       |  INTERNAL  |    none     | Generic file download server                 |
+| `mod_dwnld_local_file_server` |  INTERNAL  |    none     | Local file download server                   |
+| `fct_inp_for_exp`             |  INTERNAL  |   minimal   | Internal formatting for export module        |
+| `fct_internal_wt_to_exp`      |  INTERNAL  |   minimal   | Internal weight conversion for export        |
+
+### Supporting Utilities (all INTERNAL)
+
+| Function                      | Visibility | Doc Quality | Rationale                                           |
+| ----------------------------- | :--------: | :---------: | --------------------------------------------------- |
+| `add_logo`                    |  INTERNAL  |   minimal   | Injects logo into Shiny navbar                      |
+| `guide_launch_pti`            |  INTERNAL  |   minimal   | Cicerone guided-tour builder                        |
+| `mod_infotab_server`          |  INTERNAL  |    none     | Manages landing/info tab and tour                   |
+| `mod_fetch_data_srv`          |  INTERNAL  |    none     | Reads xlsx data at app startup                      |
+| `mod_waiter_ui`               |  INTERNAL  |   partial   | Waiter/spinner UI wrapper                           |
+| `mod_waiter_newsrv`           |  INTERNAL  |   partial   | Waiter show/hide server                             |
+| `make_spinner`                |  INTERNAL  |   minimal   | Builds a spinner tag                                |
+| `mod_first_open_count_server` |  INTERNAL  |   partial   | Tab-open invalidator                                |
+| `mod_get_shape_srv`           |  INTERNAL  |    none     | Thin module wrapper around `get_shape`              |
+| `mod_drop_inval_adm`          |  EXPORTED  |   minimal   | Filters invalid admin levels from plots             |
+| `get_vars_un_avbil`           |  EXPORTED  |   partial   | Determines which admin levels lack data             |
+| `get_min_admin_wght`          |  EXPORTED  |   partial   | Identifies admin levels to exclude per weighting    |
+| `drop_inval_adm`              |  EXPORTED  |   partial   | Removes unavailable admin levels from pre-plot data |
+
+---
+
+### Summary
+
+|                               | Count |
+| ----------------------------- | :---: |
+| **Total permanent functions** |  ~95  |
+| **EXPORTED**                  |  39   |
+| **INTERNAL**                  |  ~56  |
+| **Doc quality: complete**     |   0   |
+| **Doc quality: partial**      |  ~22  |
+| **Doc quality: minimal**      |  ~58  |
+| **Doc quality: none**         |  ~15  |
+
+---
+
+## Legacy vs Modern Architecture — What to Keep, What to Remove
+
+The package contains **two parallel stacks** that accomplish the same thing.
+Only the modern stack is maintained and used by the public API (`launch_pti`,
+`launch_pti_onepage`). The legacy stack is dead weight that complicates
+reading, testing, and documentation.
+
+### End-State Goal
+
+> After cleanup, **only the modern pipeline** remains.  
+> Entry points: `launch_pti()`, `launch_pti_onepage()`, `create_new_pti()`.  
+> All Shiny modules use the `moduleServer()` / `NS(id)` pattern.  
+> `R/app_server.R`, `R/app_ui.R`, and all `run_*()` wrappers are gone.
+
+### Side-by-Side Comparison
+
+| Concern                  | Legacy (remove)                                                                                                      | Modern (keep)                                                                                                |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Entry points**         | `run_pti()`, `run_new_pti()`, `run_dev_map_pti()`, `run_dev_pti_plot()`, `run_onepage_pti()` in `run_app.R`          | `launch_pti()`, `launch_pti_onepage()` in `launch_pti.R`                                                     |
+| **Server wiring**        | `app_server()`, `app_server_input_simple()`, `app_server_sample_pti_vis()`, `app_new_pti_server()` in `app_server.R` | Inline server assembled by `launch_pti()` — calls `mod_ptipage_newsrv()` directly                            |
+| **UI shell**             | `app_ui()`, `app_new_pti_ui()`, `app_server_sample_pti_vis_ui()` in `app_ui.R`                                       | UI built inside `launch_pti()` / `launch_pti_onepage()` using `mod_ptipage_twocol_ui` / `mod_ptipage_box_ui` |
+| **PTI calculation**      | `mod_calc_pti_server()` — old `callModule` pattern, contains `extrapo_one_weight()`                                  | `mod_calc_pti2_server()` — `moduleServer()`, composable pipeline                                             |
+| **Weights input**        | `mod_weights_server()` + 12 sub-functions (numericInput per indicator) in `mod_weights.R`                            | `mod_wt_inp_server()` + DT-based sub-modules in `mod_wt_inp.R` / `mod_DT_inputs.R`                           |
+| **Data explorer**        | `mod_explorer_server()` in `mod_explorer.R`                                                                          | `mod_dta_explorer2_server()` in `mod_dta_explorer2.R`                                                        |
+| **Info/landing page**    | `mod_info_page_server()` in `mod_info_page.R`                                                                        | `mod_infotab_server()` in `mod_infotab.R`                                                                    |
+| **Export helpers**       | `fct_export_data.R` (DT wrapping)                                                                                    | `mod_export_pti_data_server()` + `prepare_export_data()`                                                     |
+| **Plotting (static)**    | `make_ggmap_2()`, `make_gg_line_map_2()`, `make_spplot()`, `make_sp_line_map()`                                      | `make_ggmap()`, `make_gg_line_map()`                                                                         |
+| **One-page variant**     | `mod_pti_onepage_ui/server()` called from `run_onepage_pti()`                                                        | `launch_pti_onepage()` which uses `mod_ptipage_newsrv()`                                                     |
+| **Shape loading**        | `mod_load_shapes_server()` — old callModule wrapper                                                                  | `mod_get_shape_srv()`                                                                                        |
+| **Random weights (dev)** | `mod_weights_rand_server()` in `mod_weights_rand.R`                                                                  | `get_rand_weights()` / `get_all_weights_combs()` (pure functions, no module)                                 |
+
+### Cleanup Strategy
+
+1. **Batch 1** — Delete functions with literally zero active callers (dead code, stubs,
+   commented-out-only references). No runtime behaviour changes.
+2. **Batch 2** — Delete the legacy `run_*()` entry points and the `app_server` / `app_ui`
+   functions they depend on. After this, `R/run_app.R`, `R/app_server.R`, and
+   `R/app_ui.R` are either empty or contain only `golem_add_external_resources()`.
+3. **Batch 3** (future) — Delete the old `mod_weights.R` system, `mod_new_weights.R`,
+   and `mod_pti_onepage.R` once Batch 2 removes their only remaining callers.
+4. **Final pass** — Remove NAMESPACE exports for deleted functions, regenerate docs,
+   verify `devtools::check()` passes.
+
+---
+
 ## Removal Batches
 
 ### Batch 1 — Immediate (zero callers, pure dead code)

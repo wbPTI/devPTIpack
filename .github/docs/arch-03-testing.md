@@ -69,111 +69,13 @@ Additional fixtures needed (create in `tests/testthat/fixtures/`):
 
 ### 1.1 Calculation Pipeline — `test-calc-pipeline.R`
 
-Tests the full chain: `pivot → weight → score → expand → merge → aggregate → label → structure`
-
-#### `get_mt(country_shapes)`
-
-| Test Case                  | Input                                    | Expected                                                                        |
-| -------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------- |
-| Normal 3-level shapes      | `ukr_shp`                                | Tibble with `admin0Pcod`, `admin1Pcod`, `admin2Pcod`; nrow = nrow(admin2 layer) |
-| Single admin level         | List with 1 sf                           | Single-column tibble                                                            |
-| Mismatched Pcods (orphans) | Modified shapes with extra Pcod in child | Orphan rows excluded                                                            |
-| Output class               | Any                                      | `tbl_df`                                                                        |
-| No duplicates              | Any                                      | All `admin{X}Pcod` × row combos unique                                          |
-
-#### `get_adm_levels(dta)`
-
-| Test Case            | Input             | Expected                          |
-| -------------------- | ----------------- | --------------------------------- |
-| Normal mapping table | `get_mt(ukr_shp)` | `c("admin0", "admin1", "admin2")` |
-| No admin columns     | `tibble(x = 1)`   | `character(0)`                    |
-| Names match values   | Any               | `names(result) == result`         |
-
-#### `clean_geoms(country_shapes)`
-
-| Test Case              | Input     | Expected                                |
-| ---------------------- | --------- | --------------------------------------- |
-| Drops geometry         | `ukr_shp` | All elements are plain tibbles (not sf) |
-| Names shortened        | Any       | Names match `admin\d+` pattern          |
-| Preserves Pcod columns | Any       | Each element has `admin{X}Pcod` column  |
-
-#### `pivot_pti_dta(input_dta, indicators_list)`
-
-| Test Case                | Input                           | Expected                                             |
-| ------------------------ | ------------------------------- | ---------------------------------------------------- |
-| Normal pivot             | `ukr_mtdt_full`, its indicators | Non-empty list of long tibbles                       |
-| Output columns           | Any                             | Each tibble has `var_code`, `value`, admin Pcod cols |
-| NA rows dropped          | Data with NA values             | No NA in `value` column                              |
-| Missing var_code in data | indicators_list with extra var  | Those vars absent from output                        |
-| Empty indicators_list    | `tibble()`                      | Empty list                                           |
-
-#### `get_weighted_data(wt_list, vars_dta_list, indicators_list)`
-
-| Test Case            | Input                          | Expected                                                    |
-| -------------------- | ------------------------------ | ----------------------------------------------------------- |
-| Normal weighting     | Default weights + pivoted data | Nested list; inner tibbles have `value` = original × weight |
-| All weights = 0      | Zero-weights list              | Returns data with value × 0 (all zeros), no rows filtered   |
-| All weights = NA     | NA-weights list                | Treated as 0                                                |
-| var_code mismatch    | Weights for non-existent vars  | Inner join → empty tibbles                                  |
-| Negative weights     | Weights with -1                | `value` sign flipped                                        |
-| Single weight scheme | 1-element wt_list              | 1-element outer list                                        |
-
-#### `get_scores_data(wt_dta_list)`
-
-| Test Case                 | Input                | Expected                       |
-| ------------------------- | -------------------- | ------------------------------ |
-| Z-score correct           | Known values [1,2,3] | Expected z-scores              |
-| Single observation        | 1-row group          | `value = 0` (sd=0, NaN→0)      |
-| All identical values      | Constant column      | `value = 0`                    |
-| Empty tibble              | 0-row element        | Returned unchanged             |
-| Groups by year × var_code | Multi-year data      | Independent z-scores per group |
-
-#### `expand_adm_levels(wtd_scrd_dta, mt)`
-
-| Test Case              | Input                         | Expected                                 |
-| ---------------------- | ----------------------------- | ---------------------------------------- |
-| Upward expansion       | Data at admin1, target admin2 | admin2 rows get parent admin1 values     |
-| Downward aggregation   | Data at admin2, target admin1 | admin1 rows get mean of children         |
-| Same level             | Data at admin1, target admin1 | Identity                                 |
-| Single admin           | 1-level data                  | Single entry with no expansion           |
-| Missing Pcods in mt    | Orphan regions                | NAs for unmatched                        |
-| Variable suffix format | Any                           | Foreign vars get `._._. admin{X}` suffix |
-
-#### `merge_expandedn_adm_levels(dta)`
-
-| Test Case              | Input                                | Expected                                  |
-| ---------------------- | ------------------------------------ | ----------------------------------------- |
-| Normal merge           | Output of `expand_adm_levels`        | List of wide tibbles (1 per target admin) |
-| All-NA columns removed | Data with fully-missing foreign vars | Those columns absent                      |
-| NULL elements handled  | List with NULLs                      | Skipped gracefully                        |
-
-#### `agg_pti_scores(extrap_dta, adm_ids, na_rm_pti2)`
-
-| Test Case                    | Input                         | Expected                                        |
-| ---------------------------- | ----------------------------- | ----------------------------------------------- |
-| Normal aggregation           | Full pipeline output          | `pti_score` = rowSums                           |
-| `na_rm = FALSE` (default)    | Data with NAs                 | `pti_score` = NA where any input NA             |
-| `na_rm = TRUE`               | Data with NAs                 | `pti_score` computed, NAs ignored               |
-| All scores NA + `na_rm=TRUE` | All NA row                    | `pti_score = 0`                                 |
-| Duplicate foreign vars       | Same base name from 2 sources | Keeps highest admin level only                  |
-| Output columns               | Any                           | `pti_score`, `pti_name`, `spatial_name` present |
-
-#### `label_generic_pti(dta)`
-
-| Test Case          | Input                       | Expected                           |
-| ------------------ | --------------------------- | ---------------------------------- |
-| Normal labeling    | Data with scores            | `pti_label` column added with HTML |
-| NA pti_score       | Row with NA score           | Label contains "NA" or "No data"   |
-| Special characters | `spatial_name = "Luhans'k"` | Properly escaped in output         |
-
-#### `structure_pti_data(dta, shp_dta)`
-
-| Test Case                           | Input                   | Expected                                                       |
-| ----------------------------------- | ----------------------- | -------------------------------------------------------------- |
-| Normal structuring                  | Scored data + shapes    | Named list with `$pti_data` (sf), `$pti_codes`, `$admin_level` |
-| Admin unit in shapes but not scores | Extra polygon           | Gets "No data" label                                           |
-| Output is sf                        | Any                     | `$pti_data` inherits "sf"                                      |
-| Wide format                         | Multiple weight schemes | `pti_score..pti_ind_N` columns                                 |
+> **Moved to dedicated document:** See [`arch-02.01-testing-calc-pipeline.md`](arch-02.01-testing-calc-pipeline.md)
+>
+> Covers ~71 test cases across three levels:
+> - **Level A:** Unit tests for all 11 pipeline functions
+> - **Level B:** Integration tests for adjacent function pairs
+> - **Level C:** End-to-end tests via `run_pti_pipeline()` orchestrator
+> - **Edge cases:** Single admin, negative weights, overflow, determinism
 
 ---
 
@@ -592,6 +494,7 @@ test_that("launch_pti renders without error", {
 ### Phase 1: Fixtures & Tier 1.1–1.2 (calc pipeline + indicators)
 
 Priority: **Highest**. These are the core logic functions.
+See [`arch-02.01-testing-calc-pipeline.md`](arch-02.01-testing-calc-pipeline.md) for full calc pipeline spec.
 
 ```
 tests/testthat/
@@ -600,7 +503,7 @@ tests/testthat/
 │   ├── single_admin_shapes.rds
 │   ├── empty_weights.rds
 │   └── all_na_data.rds
-├── test-calc-pipeline.R      # get_mt, get_adm_levels, clean_geoms, pivot, weight, score, expand, merge, agg, label, structure
+├── test-calc-pipeline.R      # ~71 tests: unit + integration + e2e (see arch-02.01)
 ├── test-indicators-list.R    # get_indicators_list edge cases
 ```
 
