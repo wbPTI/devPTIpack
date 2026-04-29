@@ -213,7 +213,7 @@ Extracts the indicator list from metadata; determines which admin levels carry d
 | ----------------------- | -------------------------------------------------------- | ------- | ------ |
 | `get_indicators_list()` | Active: `mod_wt_inp`, `mod_weights`, `mod_dta_explorer2` | partial | 85     |
 
-> **Note**: `get_indicators_list()` is **defined identically** in both `dta_cleaners.R` and `supporting-goe-prep.R`. This is dead duplication.
+> **Note**: `get_indicators_list()` is defined only in `dta_cleaners.R`. No duplication exists.
 
 ---
 
@@ -598,7 +598,7 @@ Exports PTI scores and weights to a download-ready list of tibbles.
 | ------------------------------ | ----------------------------------------------------------- | ---- | ------ |
 | `mod_export_pti_data_server()` | Active: `app_server_sample_pti_vis`, `app_new_pti_server`   | poor | 30     |
 | `get_pti_scores_export()`      | Active: `prepare_export_data`, `mod_export_pti_data_server` | no   | 30     |
-| `get_pti_weights_export()`     | Legacy: defined but unused                                  | no   | 15     |
+| `get_pti_weights_export()`     | Active: called by `mod_export_pti_data_server`              | no   | 15     |
 
 ---
 
@@ -699,7 +699,7 @@ Dev-only ggplot helpers for rendering admin-level maps in metadata PDFs and prof
 
 1. **Two-generation duplication**: Legacy modules (`mod_weights`, `mod_calc_pti`, `mod_map_pti_leaf`, `mod_explorer`, `mod_info_page`) coexist with modern replacements (`mod_wt_inp`, `mod_calc_pti2`, `mod_plot_pti2`, `mod_dta_explorer2`, `mod_infotab`). The legacy modules add ~1500 lines of unused code.
 
-2. **Duplicated function definitions**: `get_indicators_list()` is defined identically in both `dta_cleaners.R` and `supporting-goe-prep.R`.
+2. ~~**Duplicated function definitions**~~: _Verified 2026-04-29_ — `get_indicators_list()` is defined only in `dta_cleaners.R`. No duplication exists.
 
 3. **Documentation is generally poor**: Most internal modules use `@noRd` with no parameter or return documentation. Only `launch_pti()`, `launch_pti_onepage()`, `create_new_pti()`, and dataset docs approach completeness.
 
