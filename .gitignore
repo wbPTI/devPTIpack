@@ -7,7 +7,8 @@
 *_files
 
 data-raw/
-docs
+docs/
+!.github/docs/
 inst/doc
 *.Rd
 *.dcf
