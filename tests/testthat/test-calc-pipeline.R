@@ -453,6 +453,196 @@ test_that("agg_pti_scores: drops rows whose admin Pcod is NA", {
 })
 
 # ---------------------------------------------------------------------------
+# Level A.10 — label_generic_pti(dta)  +  generic_pti_glue()
+# ---------------------------------------------------------------------------
+
+test_that("generic_pti_glue: contains the documented field placeholders", {
+  tmpl <- generic_pti_glue()
+  expect_type(tmpl, "character")
+  expect_length(tmpl, 1)
+  expect_match(tmpl, "{spatial_name}", fixed = TRUE)
+  expect_match(tmpl, "{ifelse(is.na(pti_name)", fixed = TRUE)
+  expect_match(tmpl, "{ifelse(is.na(pti_score)", fixed = TRUE)
+  expect_match(tmpl, "<strong>")
+  expect_match(tmpl, "<br/>")
+})
+
+test_that("label_generic_pti: appends a glue-class pti_label column", {
+  out <- label_generic_pti(test_aggregated)
+  expect_setequal(names(out), names(test_aggregated))
+  for (x in out) {
+    expect_true("pti_label" %in% names(x))
+    expect_s3_class(x$pti_label, "glue")
+  }
+})
+
+test_that("label_generic_pti: every label is HTML with strong + br tags", {
+  out <- label_generic_pti(test_aggregated)
+  labels <- out$admin1$pti_label
+  expect_true(all(grepl("<strong>", labels, fixed = TRUE)))
+  expect_true(all(grepl("<br/>", labels, fixed = TRUE)))
+})
+
+test_that("label_generic_pti: NA pti_score renders as 'No data'", {
+  one <- list(admin0 = tibble::tibble(
+    admin0Pcod   = c("A", "B"),
+    spatial_name = c("Alpha", "Beta"),
+    pti_name     = c("scheme1", "scheme1"),
+    pti_score    = c(NA_real_, 1.5)
+  ))
+  out <- label_generic_pti(one)$admin0
+  expect_match(out$pti_label[1], "No data", fixed = TRUE)
+  expect_no_match(out$pti_label[2], "No data", fixed = TRUE)
+})
+
+test_that("label_generic_pti: scores are formatted to 5 decimal places", {
+  one <- list(admin0 = tibble::tibble(
+    admin0Pcod   = "A",
+    spatial_name = "Alpha",
+    pti_name     = "scheme1",
+    pti_score    = 1.23456789
+  ))
+  out <- label_generic_pti(one)$admin0
+  expect_match(out$pti_label, "1.23457", fixed = TRUE)
+})
+
+test_that("label_generic_pti: list structure and row counts are preserved", {
+  out <- label_generic_pti(test_aggregated)
+  expect_equal(length(out), length(test_aggregated))
+  for (lvl in names(out)) {
+    expect_equal(nrow(out[[lvl]]), nrow(test_aggregated[[lvl]]))
+  }
+})
+
+# ---------------------------------------------------------------------------
+# Level A.11 — structure_pti_data(dta, shp_dta)
+# ---------------------------------------------------------------------------
+
+test_that("structure_pti_data: each entry has pti_data/pti_codes/admin_level", {
+  labelled <- label_generic_pti(test_aggregated)
+  structured <- structure_pti_data(labelled, ukr_shp)
+  expect_setequal(names(structured), names(labelled))
+  for (x in structured) {
+    expect_setequal(names(x), c("pti_data", "pti_codes", "admin_level"))
+    expect_s3_class(x$pti_data, "sf")
+  }
+})
+
+test_that("structure_pti_data: pti_codes maps pti_ind_N -> scheme name", {
+  labelled <- label_generic_pti(test_aggregated)
+  structured <- structure_pti_data(labelled, ukr_shp)
+  for (x in structured) {
+    expect_named(
+      x$pti_codes,
+      paste0("pti_ind_", seq_along(test_weights_clean))
+    )
+    expect_setequal(unname(x$pti_codes), names(test_weights_clean))
+  }
+})
+
+test_that("structure_pti_data: pivots score and label cols wide by pti_ind_N", {
+  labelled <- label_generic_pti(test_aggregated)
+  structured <- structure_pti_data(labelled, ukr_shp)
+  cols <- names(structured$admin1$pti_data)
+  for (i in seq_along(test_weights_clean)) {
+    expect_true(paste0("pti_score..pti_ind_", i) %in% cols)
+    expect_true(paste0("pti_label..pti_ind_", i) %in% cols)
+  }
+})
+
+test_that("structure_pti_data: nrow(pti_data) equals shape-layer row count", {
+  labelled <- label_generic_pti(test_aggregated)
+  structured <- structure_pti_data(labelled, ukr_shp)
+  for (lvl in names(structured)) {
+    layer <- ukr_shp[grepl(paste0("^", lvl, "_"), names(ukr_shp))][[1]]
+    expect_equal(nrow(structured[[lvl]]$pti_data), nrow(layer))
+  }
+})
+
+test_that("structure_pti_data: missing (Pcod, scheme) combos get 'No data'", {
+  # arch-02.01 §A.11: structure_pti_data uses tidyr::expand to ensure every
+  # Pcod x scheme combo exists, then fills missing pti_label values with a
+  # "No data" string. Construct a labelled input where Pcod "B" has data
+  # only for scheme1, and confirm pti_label..pti_ind_2 (scheme2) for "B"
+  # ends up as the "No data" filler.
+  labelled <- list(admin0 = tibble::tibble(
+    admin0Pcod   = c("A", "B", "A"),
+    spatial_name = c("Alpha", "Beta", "Alpha"),
+    pti_name     = c("scheme1", "scheme1", "scheme2"),
+    pti_score    = c(1.5, 2.5, 0.5),
+    pti_label    = c("normal-A1", "normal-B1", "normal-A2")
+  ))
+  shp_dta <- list(admin0_Country = sf::st_sf(
+    admin0Pcod = c("A", "B"),
+    admin0Name = c("Alpha", "Beta"),
+    geometry   = sf::st_sfc(
+      sf::st_point(c(0, 0)), sf::st_point(c(1, 1)),
+      crs = 4326
+    )
+  ))
+  structured <- structure_pti_data(labelled, shp_dta)
+  out <- structured$admin0$pti_data
+  b_row <- out[out$admin0Pcod == "B", ]
+  expect_match(
+    b_row[["pti_label..pti_ind_2"]], "No data",
+    fixed = TRUE
+  )
+})
+
+test_that("structure_pti_data: admin_level mirrors the shape list suffix", {
+  labelled <- label_generic_pti(test_aggregated)
+  structured <- structure_pti_data(labelled, ukr_shp)
+  expect_equal(structured$admin1$admin_level, c(admin1 = "Oblast"))
+  expect_equal(structured$admin2$admin_level, c(admin2 = "Rayon"))
+  expect_equal(structured$admin4$admin_level, c(admin4 = "Hexagon"))
+})
+
+# ---------------------------------------------------------------------------
+# Level B — Integration: each stage feeds the next
+# ---------------------------------------------------------------------------
+
+test_that("Level B: pivot_pti_dta -> get_weighted_data composes", {
+  out <- get_weighted_data(test_weights_clean, test_pivoted, test_indicators)
+  expect_equal(length(out), length(test_weights_clean))
+  for (scheme in out) expect_equal(length(scheme), length(test_pivoted))
+})
+
+test_that("Level B: get_weighted_data -> get_scores_data composes", {
+  out <- get_scores_data(test_weighted)
+  expect_equal(length(out), length(test_weighted))
+})
+
+test_that("Level B: get_scores_data -> expand_adm_levels composes", {
+  out <- expand_adm_levels(test_scored[["all_ones"]], test_mt)
+  expect_setequal(names(out), unname(test_adm_levels))
+})
+
+test_that("Level B: expand_adm_levels -> merge_expandedn_adm_levels composes", {
+  out <- merge_expandedn_adm_levels(test_expanded)
+  for (lvl in names(out)) {
+    expect_true(paste0(lvl, "Pcod") %in% names(out[[lvl]]))
+  }
+})
+
+test_that("Level B: merge -> agg_pti_scores composes", {
+  out <- agg_pti_scores(test_extrap, test_clean_geoms)
+  for (x in out) {
+    expect_true(all(c("pti_score", "pti_name") %in% names(x)))
+  }
+})
+
+test_that("Level B: agg_pti_scores -> label_generic_pti composes", {
+  out <- label_generic_pti(test_aggregated)
+  for (x in out) expect_true("pti_label" %in% names(x))
+})
+
+test_that("Level B: label_generic_pti -> structure_pti_data composes", {
+  labelled <- label_generic_pti(test_aggregated)
+  out <- structure_pti_data(labelled, ukr_shp)
+  for (x in out) expect_s3_class(x$pti_data, "sf")
+})
+
+# ---------------------------------------------------------------------------
 # Level C — End-to-end via run_pti_pipeline()
 # ---------------------------------------------------------------------------
 

@@ -40,3 +40,6 @@
 | Tests   | Added Level A.7 + A.8 cases to `test-calc-pipeline.R` covering `expand_adm_levels` and `merge_expandedn_adm_levels`; pins the >1-element-match short-circuit and the missing-`year` error per arch-02.01 |
 | Tests   | Extended `helper-test-data.R` with `test_extrap` (multi-scheme expand+merge) and `test_aggregated` so A.10/A.11 don't each rebuild the chain  |
 | Tests   | Added Level A.9 cases to `test-calc-pipeline.R` covering `agg_pti_scores` — output shape, scheme row-binding, spatial_name lookup, NA propagation under both `na_rm_pti2 = FALSE/TRUE`, all-NA-row zero-sum behaviour, and NA-Pcod row dropping |
+| Tests   | Added Level A.10 cases (`label_generic_pti` + `generic_pti_glue`) covering glue-class output, HTML structure, NA -> "No data" rendering, 5-decimal score formatting, and list-shape preservation |
+| Tests   | Added Level A.11 cases (`structure_pti_data`) covering output slots, `pti_codes` mapping, wide pivot to `pti_score..pti_ind_N`, row-count-preserving geometry join, the synthetic "No data" filler for missing (Pcod, scheme) combos, and admin_level extraction from shape list names |
+| Tests   | Added Level B integration tests — one per adjacent-stage pair (pivot->weight->score->expand->merge->agg->label->structure) so contracts between stages are pinned in addition to the orchestrator-level checks |
