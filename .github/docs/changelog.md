@@ -32,3 +32,7 @@
 | Tooling | Updated `.claude/CLAUDE.md` to document the new integration branch (`koichi-arch-redesign`), the skills/sub-agent table, and the hook behaviour |
 | Config  | Added `.claude/` and `PLAN.md` to `.Rbuildignore` so they don't ship with the package build                                                     |
 | Config  | Added `.claude/settings.local.json` to `.gitignore` so machine-local permissions stay out of the repo                                           |
+| Code    | Added `R/run_pti_pipeline.R` exporting `run_pti_pipeline()` — Shiny-free orchestrator for the seven-step calc pipeline (issue #10 deliverable 1) |
+| Tests   | Added `tests/testthat/helper-test-data.R` providing bundled data plus deterministic pipeline intermediates for Tier-1 tests                     |
+| Tests   | Added `tests/testthat/test-calc-pipeline.R` — first batch of Tier-1 cases for `get_mt`/`get_adm_levels`/`clean_geoms`/`pivot_pti_dta`/`get_weighted_data`/`get_scores_data` plus end-to-end via `run_pti_pipeline()`, pinning the lexicographic-sort and 1-row-NA quirks per arch-03 |
+| Config  | Regenerated `NAMESPACE` to export `run_pti_pipeline`; bumped `RoxygenNote` to 7.3.3 as a side-effect of `roxygen2::roxygenise()`                |
