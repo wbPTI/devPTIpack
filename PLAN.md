@@ -43,7 +43,9 @@ Phase 0  Setup & shared workflow ───────────────�
 Phase 1  Test baseline for permanent functions     (#10)       │  in progress
    ├─ 1a   `run_pti_pipeline()` orchestrator             ✓ #15 │
    ├─ 1b   Tier-1 calc-pipeline tests                    ✓ #15-#18
-   └─ 1e   Tier-1 tests for the remaining files               ◀ next
+   ├─ 1e   Tier-1 tests for the remaining files         ✓ #20-#29
+   ├─ 1f   CI guard (devtools::test() < 2 min on Actions)      ◀ next
+   └─ 1g   Tier 2 (shiny::testServer for 7 modules)            
             ▼                                                  │
 Phase 2  Cleanup legacy code in batches            (#8)        │ Tests
    ├─ Batch 1  Dead files & functions                          │ guard
@@ -117,7 +119,7 @@ also draft its roxygen at the same time. Phase 3 then sweeps only what's missed.
       (7 pairs), Level C end-to-end (PRs #15→#16→#17→#18). Suite total: 398
       expectations passing. Synthetic `.rds` fixtures (`fx_shp_*`) deferred —
       added when a test cannot be expressed inline.
-- [ ] **1e — Tier 1 remaining files** (arch-03 §1.2–1.11):
+- [x] **1e — Tier 1 remaining files** (arch-03 §1.2–1.11): **all 10 files done**, suite total 725 expectations.
       - [x] [`test-validators.R`](tests/testthat/test-validators.R) — `validate_geometries`, `validate_single_geom`, `validate_metadata`, `validate_read_shp`, `validate_read_metadata` (PR #20; 12 blocks / 52 expectations; pinned the empty-pattern str_detect bug in `validate_read_shp`)
       - [x] [`test-template-reader.R`](tests/testthat/test-template-reader.R) — `fct_template_reader`, `fct_convert_weight_to_clean`, `get_shape`, `create_new_pti` (PR #21; 11 blocks / 28 expectations)
       - [x] [`test-indicators-list.R`](tests/testthat/test-indicators-list.R) — `get_indicators_list` (PR #22; 7 blocks / 29 expectations; replaces the placeholder `test-get_indicators_list.R`)
@@ -127,7 +129,7 @@ also draft its roxygen at the same time. Phase 3 then sweeps only what's missed.
       - [x] [`test-export.R`](tests/testthat/test-export.R) — `get_pti_scores_export`, `get_pti_weights_export`, `fct_inp_for_exp`, `fct_internal_wt_to_exp` (PR #26; 14 blocks / 58 expectations; pinned `fct_internal_wt_to_exp(list())` left-join error)
       - [x] [`test-explorer-helpers.R`](tests/testthat/test-explorer-helpers.R) — `reshaped_explorer_dta`, `get_var_choices`, `filter_var_explorer` (PR #27; 11 blocks / 27 expectations; pinned `get_var_choices` empty-tibble error and the actual nested-by-pillar return shape)
       - [x] [`test-map-render.R`](tests/testthat/test-map-render.R) — `make_ggmap`, `make_gg_line_map`, `plot_leaf_line_map2` (PR #28; 7 blocks / 8 expectations; class-only assertions for ggplot/leaflet renderers)
-      - [ ] [`test-dt-construction.R`](tests/testthat/) — `prep_input_data`, `make_vis_targets_for_dt`, `make_input_DT`
+      - [x] [`test-dt-construction.R`](tests/testthat/test-dt-construction.R) — `prep_input_data`, `make_vis_targets_for_dt`, `make_input_DT` (PR #29; 8 blocks / 17 expectations; pinned arch-03 §1.11 spec correction — pillar rows interleaved with variable rows)
 - [ ] **1f — CI guard.** Confirm `devtools::test()` finishes < 2 min and run it
       via GitHub Actions on push.
 - [ ] **1g — Tier 2 (after Tier 1 green).** Module-server tests via
@@ -249,8 +251,14 @@ Lifted from arch-00 §"End-State Goals":
 | [#26](https://github.com/worldbank/devPTIpack/pull/26) | 2026-05-01 | 1e (export) | Tier-1 tests for `get_pti_scores_export`, `get_pti_weights_export`, `fct_inp_for_exp`, `fct_internal_wt_to_exp`; pinned `fct_internal_wt_to_exp(list())` failure (see §12) |
 | [#27](https://github.com/worldbank/devPTIpack/pull/27) | 2026-05-01 | 1e (explorer-helpers) | Tier-1 tests for `reshaped_explorer_dta`, `get_var_choices`, `filter_var_explorer`; pinned `get_var_choices(empty)` NULL-attribute error (see §12) |
 | [#28](https://github.com/worldbank/devPTIpack/pull/28) | 2026-05-01 | 1e (map-render) | Tier-1 class-assertion tests for `make_ggmap`, `make_gg_line_map`, `plot_leaf_line_map2` |
+| [#29](https://github.com/worldbank/devPTIpack/pull/29) | 2026-05-01 | **1e complete** (dt-construction) | Tier-1 tests for `prep_input_data`, `make_vis_targets_for_dt`, `make_input_DT`; pinned arch-03 §1.11 spec correction — pillar rows interleaved with variable rows |
 
-Suite total after merged PRs: **708 expectations / 0 failures / 0 errors / 1 skip**.
+Suite total after merged PRs: **725 expectations / 0 failures / 0 errors / 1 skip**.
+
+> **Phase 1e milestone reached** with PR #29: all 10 Tier-1 test files
+> from arch-03 §1.2–§1.11 are now in place. 7 bugs / spec
+> corrections pinned along the way (see §12). Next: 1f (CI guard) and
+> 1g (Tier 2 module-server tests).
 
 ---
 
