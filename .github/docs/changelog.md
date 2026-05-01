@@ -38,3 +38,5 @@
 | Config  | Regenerated `NAMESPACE` to export `run_pti_pipeline`; bumped `RoxygenNote` to 7.3.3 as a side-effect of `roxygen2::roxygenise()`                |
 | Tests   | Extended `helper-test-data.R` with `test_expanded` and `test_merged` so downstream Tier-1 tests don't each rebuild the expand/merge pipeline    |
 | Tests   | Added Level A.7 + A.8 cases to `test-calc-pipeline.R` covering `expand_adm_levels` and `merge_expandedn_adm_levels`; pins the >1-element-match short-circuit and the missing-`year` error per arch-02.01 |
+| Tests   | Extended `helper-test-data.R` with `test_extrap` (multi-scheme expand+merge) and `test_aggregated` so A.10/A.11 don't each rebuild the chain  |
+| Tests   | Added Level A.9 cases to `test-calc-pipeline.R` covering `agg_pti_scores` — output shape, scheme row-binding, spatial_name lookup, NA propagation under both `na_rm_pti2 = FALSE/TRUE`, all-NA-row zero-sum behaviour, and NA-Pcod row dropping |
