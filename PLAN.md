@@ -119,7 +119,7 @@ also draft its roxygen at the same time. Phase 3 then sweeps only what's missed.
       added when a test cannot be expressed inline.
 - [ ] **1e — Tier 1 remaining files** (arch-03 §1.2–1.11):
       - [x] [`test-validators.R`](tests/testthat/test-validators.R) — `validate_geometries`, `validate_single_geom`, `validate_metadata`, `validate_read_shp`, `validate_read_metadata` (PR #20; 12 blocks / 52 expectations; pinned the empty-pattern str_detect bug in `validate_read_shp`)
-      - [ ] [`test-template-reader.R`](tests/testthat/) — `fct_template_reader`, `fct_convert_weight_to_clean`, `get_shape`, `create_new_pti`
+      - [x] [`test-template-reader.R`](tests/testthat/test-template-reader.R) — `fct_template_reader`, `fct_convert_weight_to_clean`, `get_shape`, `create_new_pti` (PR #21; 11 blocks / 28 expectations)
       - [ ] [`test-indicators-list.R`](tests/testthat/) — `get_indicators_list`
       - [ ] [`test-legend-palette.R`](tests/testthat/) — `legend_map_satelite`, `recode_val_base`
       - [ ] [`test-plot-helpers.R`](tests/testthat/) — `preplot_reshape_wghtd_dta`, `filter_admin_levels`, `add_legend_paras`, `complete_pti_labels`, `check_existing_groups`, plus `plot_pti_polygons`/`clean_pti_polygons`/`add_pti_poly_controls`/`clean_pti_poly_controls`
@@ -241,8 +241,9 @@ Lifted from arch-00 §"End-State Goals":
 | [#18](https://github.com/worldbank/devPTIpack/pull/18) | 2026-05-01 | 1c | Level A.10 (`label_generic_pti`) + A.11 (`structure_pti_data`) + Level B integration |
 | [#19](https://github.com/worldbank/devPTIpack/pull/19) | 2026-05-01 | tooling | Operationalize PLAN.md sync (CLAUDE.md rule + skill steps); sync PLAN.md to current state |
 | [#20](https://github.com/worldbank/devPTIpack/pull/20) | 2026-05-01 | 1e (validators) | Tier-1 tests for `validate_*` functions; pinned the empty-pattern bug in `validate_read_shp` |
+| [#21](https://github.com/worldbank/devPTIpack/pull/21) | 2026-05-01 | 1e (template-reader) | Tier-1 tests for `fct_template_reader`, `fct_convert_weight_to_clean`, `get_shape`, `create_new_pti` |
 
-Suite total after merged PRs: **450 expectations / 0 failures / 0 errors / 1 skip**.
+Suite total after merged PRs: **478 expectations / 0 failures / 0 errors / 1 skip**.
 
 ---
 
