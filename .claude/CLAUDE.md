@@ -4,23 +4,60 @@ A golem-based Shiny R package for computing, visualizing, and exploring Priority
 
 ## Architecture
 
-- Modern path uses: `launch_pti()` → `mod_ptipage_newsrv` → `mod_calc_pti2_server` → `mod_plot_pti2_srv`
-- Legacy modules (`mod_weights`, `mod_calc_pti`, `mod_map_pti_leaf`) are being removed.
-- See `.github/docs/arch-00-overview.md` for full architecture.
-- See `.github/docs/arch-01-cleanup.md` for removal plan.
-- See `.github/docs/arch-02-docs.md` for documentation standards.
+- Modern path uses: `launch_pti()` → `mod_ptipage_newsrv` → `mod_calc_pti2_server` → `mod_plot_pti2_srv`.
+- Legacy modules (`mod_weights`, `mod_calc_pti`, `mod_map_pti_leaf`, etc.) are scheduled for removal.
+- The active redesign is tracked by GitHub issue [#9](https://github.com/worldbank/devPTIpack/issues/9). Sub-issues: #8 cleanup, #10 testing, #11 docs, #12 workspace/pkgdown, #13 hex ingest.
+- Working plan is [`PLAN.md`](../PLAN.md) (thin tracker; the architecture lives under `.github/docs/`).
 
-## Key Conventions
+## Source-of-truth docs
+
+- `.github/docs/arch-00-overview.md` — overview & redesign workflow
+- `.github/docs/arch-01-cleanup.md` — function-by-function cleanup audit
+- `.github/docs/arch-02-docs.md` — documentation implementation order
+- `.github/docs/arch-02.01-testing-calc-pipeline.md` — calc pipeline test spec
+- `.github/docs/arch-03-testing.md` — three-tier testing strategy
+- `.github/docs/arch-04-workspace.md` — vignettes & pkgdown plan
+- `.github/docs/arch-05-hex-ingestion.md` — hex (H3) ingestion design
+- `.claude/rules/roxygen-documentation.md` — roxygen2 standards
+
+## Key conventions
 
 - Follow tidyverse style with `|>` pipe.
-- Use roxygen2 for all documentation (see `rules/roxygen-documentation.md`).
-- Examples must only use built-in data: `ukr_shp`, `ukr_mtdt_full`.
-- Tests use testthat framework.
-- Do not touch legacy/dead code marked for removal unless explicitly asked.
+- Roxygen2 per `.claude/rules/roxygen-documentation.md`.
+- Examples must use only built-in data: `ukr_shp`, `ukr_mtdt_full`.
+- Tests use `testthat`. Tier 1 (pure functions) → Tier 2 (`shiny::testServer`) → Tier 3 (manual / `shinytest2`).
+- Tests target only the **permanent** functions in arch-01 — do not test code scheduled for deletion.
+- Do not touch legacy/dead code marked for removal in arch-01 unless executing a cleanup batch.
+
+## Branching
+
+- Default branch: `main`.
+- Current integration branch: `koichi-arch-redesign` (off `main`).
+- Sub-branches per phase/batch (e.g. `tests/calc-pipeline`, `cleanup/batch-1`, `docs/phase-2`) PR'd into the integration branch.
+- Each PR must keep `R CMD check` green and update the changelog.
+
+## Skills & sub-agents
+
+Project-scoped tooling under `.claude/`:
+
+| Tool | Type | Purpose |
+|---|---|---|
+| `tdd-permanent-fn` | skill | Scaffold Tier-1 tests for a permanent function per arch-03 / arch-02.01 |
+| `cleanup-batch` | skill | Execute one arch-01 cleanup batch end-to-end (delete, document, test, check) |
+| `roxygen-document` | skill | Add/upgrade roxygen2 per `.claude/rules/roxygen-documentation.md` |
+| `issue-progress-comment` | skill | Draft a status comment for a GitHub issue from the recent diff/work |
+| `r-package-reviewer` | sub-agent | Review diffs for R-package conventions (NAMESPACE, exports, examples, no `browser()`) |
+
+Invoke skills via the Skill tool by name. Spawn the sub-agent via the Agent tool with `subagent_type: r-package-reviewer`.
 
 ## Change Logging (COMPULSORY)
 
-After every code or documentation change, append an entry to `.github/docs/changelog.md`.
+Every code/doc change must be logged to `.github/docs/changelog.md`.
+
+A Stop hook (`.claude/hooks/auto-changelog.sh`, registered in `.claude/settings.json`)
+auto-drafts entries from the diff at the end of each turn so nothing slips. **You should still
+review and rewrite the auto-drafted summaries to be specific and informative** —
+auto-drafts are placeholders, not finished entries.
 
 **Format:**
 
@@ -34,12 +71,7 @@ After every code or documentation change, append an entry to `.github/docs/chang
 
 **Rules:**
 - One row per discrete change (file created, function rewritten, test added, etc.)
-- Scope = short category: `Docs`, `Code`, `Tests`, `Rules`, `Data`, `Config`
+- Scope = short category: `Docs`, `Code`, `Tests`, `Rules`, `Data`, `Config`, `Tooling`
 - Keep each summary to one sentence — a reader should grasp the change instantly.
 - Group entries under the same date heading when working in the same session.
-- Never skip this step. Log before yielding back to the user.
-
-## Branch
-
-- Working branch: `eb-arch-redesign`
-- Default branch: `main`
+- Auto-drafted rows include the marker `<!-- AUTODRAFT -->`. Replace the placeholder summary with a real one before yielding.
