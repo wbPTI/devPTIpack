@@ -43,3 +43,6 @@
 | Tests   | Added Level A.10 cases (`label_generic_pti` + `generic_pti_glue`) covering glue-class output, HTML structure, NA -> "No data" rendering, 5-decimal score formatting, and list-shape preservation |
 | Tests   | Added Level A.11 cases (`structure_pti_data`) covering output slots, `pti_codes` mapping, wide pivot to `pti_score..pti_ind_N`, row-count-preserving geometry join, the synthetic "No data" filler for missing (Pcod, scheme) combos, and admin_level extraction from shape list names |
 | Tests   | Added Level B integration tests — one per adjacent-stage pair (pivot->weight->score->expand->merge->agg->label->structure) so contracts between stages are pinned in addition to the orchestrator-level checks |
+| Tooling | Added "PLAN.md Sync (COMPULSORY)" section to `.claude/CLAUDE.md` — every PR that touches tracked work updates `PLAN.md` in the same commit                                                            |
+| Tooling | Added a final "Sync `PLAN.md`" step to the `tdd-permanent-fn`, `cleanup-batch`, and `roxygen-document` skills so tick-off is part of the workflow, not an afterthought                                |
+| Docs    | Synced `PLAN.md`: marked 1a-1c complete, expanded 1e with a per-file checklist, resolved §3.1 and §3.2 (branch + skills shipped), pruned answered §9 questions, added a §11 "Progress log" of merged PRs |

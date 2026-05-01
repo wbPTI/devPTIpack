@@ -48,6 +48,9 @@ Document permanent devPTIpack functions to the standard defined by
    `Rscript -e 'devtools::run_examples(run_dontrun = FALSE)'`. All must pass
    before yielding.
 7. **Changelog row** under Scope `Docs`.
+8. **Sync `PLAN.md`.** Tick the relevant phase under §6 / Phase 3 and
+   note the PR number in the "Progress log". See `.claude/CLAUDE.md`
+   § "PLAN.md Sync (COMPULSORY)".
 
 ## Hard rules
 

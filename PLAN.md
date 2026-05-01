@@ -1,9 +1,10 @@
 # devPTIpack — Working Plan
 
 > **Living document.** Tracks current phase, immediate next actions, and shared
-> workflow conventions. The authoritative architecture lives under
-> [`.github/docs/`](.github/docs/) and the master GitHub tracker is
-> [`worldbank/devPTIpack#9`](https://github.com/worldbank/devPTIpack/issues/9).
+> workflow conventions. Every PR that touches tracked work updates this file in
+> the same commit (see [`.claude/CLAUDE.md`](.claude/CLAUDE.md) §"PLAN.md Sync").
+> The authoritative architecture lives under [`.github/docs/`](.github/docs/) and
+> the master GitHub tracker is [`#9`](https://github.com/worldbank/devPTIpack/issues/9).
 > When this file disagrees with `.github/docs/`, `.github/docs/` wins.
 
 ---
@@ -37,12 +38,12 @@ GitHub issues map:
 ## 2. Execution order (TDD-first)
 
 ```
-Phase 0  Setup & shared workflow ──────────────────────────────┐
+Phase 0  Setup & shared workflow ──────────────────────────────┐  ✓ done
                                                                │
-Phase 1  Test baseline for permanent functions     (#10)       │
-   ├─ 1a   `run_pti_pipeline()` orchestrator                   │
-   ├─ 1b   Tier-1 fixtures + tests for calc pipeline           │
-   └─ 1c   Tier-1 tests for I/O, validation, helpers           │
+Phase 1  Test baseline for permanent functions     (#10)       │  in progress
+   ├─ 1a   `run_pti_pipeline()` orchestrator             ✓ #15 │
+   ├─ 1b   Tier-1 calc-pipeline tests                    ✓ #15-#18
+   └─ 1e   Tier-1 tests for the remaining files               ◀ next
             ▼                                                  │
 Phase 2  Cleanup legacy code in batches            (#8)        │ Tests
    ├─ Batch 1  Dead files & functions                          │ guard
@@ -63,50 +64,38 @@ batch then re-runs the suite — green = no regression. Docs come once the API
 stabilises (no point documenting code that's about to be deleted). Vignettes &
 pkgdown depend on stable, documented exports.
 
-**Hybrid suggestion (worth considering):** when writing a Tier-1 test for a
-permanent function, also draft its roxygen at the same time. Reading the
-function carefully to test it is the ideal moment to document it. We then run
-a dedicated "docs sweep" in Phase 3 only for what was missed.
+**Hybrid (in effect):** when writing a Tier-1 test for a permanent function, we
+also draft its roxygen at the same time. Phase 3 then sweeps only what's missed.
 
 ---
 
-## 3. Phase 0 — Setup & shared workflow
+## 3. Phase 0 — Setup & shared workflow ✓
 
-Done before substantive work begins. Scoped to enable both collaborators to
-use the same conventions.
+### 3.1 Branch strategy (resolved)
 
-### 3.1 Branch strategy
-- **Question to resolve:** `.claude/CLAUDE.md` declares the working branch as
-  `eb-arch-redesign`, but the local repo is on `main` with PLAN.md and
-  `.claude/` untracked. **Need confirmation:** keep working on `eb-arch-redesign`
-  (one long-lived integration branch with PRs from short-lived sub-branches), or
-  switch to per-phase feature branches off `main`?
-- Proposal: short-lived branches per phase/batch, PR'd into `eb-arch-redesign`
-  (or `main`), each with a passing `R CMD check` and the changelog updated.
+- Integration branch: **`koichi-arch-redesign`** off `main`.
+- Sub-branches per phase / batch (e.g. `tests/calc-pipeline-baseline`,
+  `cleanup/batch-1`) PR'd into `koichi-arch-redesign`.
+- Once Phase 1–4 are complete, `koichi-arch-redesign` PRs into `main`.
+- Each PR keeps `R CMD check` green and updates the changelog and `PLAN.md`.
 
-### 3.2 Tooling — Claude Code skills & sub-agents (proposed)
+### 3.2 Tooling — committed under `.claude/` ✓
 
-Goal: encode the workflow as committed skills under `.claude/` so both
-collaborators use it consistently. Concrete proposals (each is one file):
-
-| Skill / agent | Type | Purpose |
+| Tool | Type | Status |
 |---|---|---|
-| `tdd-permanent-fn` | skill | Given a permanent function, drafts a Tier-1 test file using `helper-test-data.R` fixtures, mirrors the test cases listed in arch-03 / arch-02.01. |
-| `cleanup-batch` | skill | Executes one batch from arch-01: deletes the listed files/functions, removes NAMESPACE exports, runs `devtools::document()` + `devtools::test()`, reports diff stats. |
-| `roxygen-document` | skill | For a given file, fills in roxygen per `.claude/rules/roxygen-documentation.md`, runs `devtools::document()`, validates examples against `devtools::check()`. |
-| `changelog-logger` | hook (Stop) | Reminds/auto-appends an entry to `.github/docs/changelog.md` after edits — already declared compulsory in CLAUDE.md but currently relies on memory. |
-| `r-package-reviewer` | sub-agent | Reviews diffs for R-package conventions: NAMESPACE coherence, `@export` presence, examples runnable, no `library()` calls inside R/, no `browser()`, etc. |
-| `issue-progress-comment` | skill | After a logical milestone (e.g. a test file lands, a cleanup batch is merged), drafts a status comment to post on the relevant GitHub issue (#8/#10/#11/#12/#13). |
-
-Plan: introduce these incrementally — start with `tdd-permanent-fn` and
-`changelog-logger`, since Phase 1 begins immediately.
+| [`tdd-permanent-fn`](.claude/skills/tdd-permanent-fn/SKILL.md) | skill | ✓ committed |
+| [`cleanup-batch`](.claude/skills/cleanup-batch/SKILL.md) | skill | ✓ committed |
+| [`roxygen-document`](.claude/skills/roxygen-document/SKILL.md) | skill | ✓ committed |
+| [`issue-progress-comment`](.claude/skills/issue-progress-comment/SKILL.md) | skill | ✓ committed |
+| [`r-package-reviewer`](.claude/agents/r-package-reviewer.md) | sub-agent | ✓ committed |
+| [`auto-changelog.sh`](.claude/hooks/auto-changelog.sh) | Stop hook | ✓ committed (auto-drafts changelog rows from the diff) |
 
 ### 3.3 Working agreements
-- **Changelog is mandatory** (CLAUDE.md §"Change Logging"). Every commit appends
-  to `.github/docs/changelog.md`. Skill/hook above will enforce.
+
+- **Changelog is mandatory.** Hook drafts; humans refine.
+- **PLAN.md sync is mandatory.** Skills include the step; CLAUDE.md states the rule.
 - **Examples in roxygen** must use only `ukr_shp` / `ukr_mtdt_full`.
-- **Don't touch legacy code** flagged for deletion in arch-01 unless executing
-  a cleanup batch.
+- **Don't touch legacy code** flagged for deletion in arch-01 unless executing a cleanup batch.
 - **`R CMD check` must stay green** between phases.
 
 ---
@@ -118,61 +107,69 @@ Plan: introduce these incrementally — start with `tdd-permanent-fn` and
 > scheduled for deletion in arch-01 batches.
 
 ### 4.1 Concrete next actions
-- [ ] **1a — Orchestrator.** Implement `run_pti_pipeline()` as specified in
-      arch-02.01 § "Orchestrator Function". Export it. Add roxygen2.
-- [ ] **1b — Fixtures.** Create `tests/testthat/fixtures/` and the deterministic
-      fixtures listed in arch-03 § "Test Data Fixtures" (start with
-      `fx_shp_3lvl`, `fx_mtdt_full`, `fx_weights_*`). Generator script:
-      `tests/testthat/fixtures/generate-fixtures.R`.
-- [ ] **1c — Helper.** Create `tests/testthat/helper-test-data.R` per arch-03
-      § "Shared Test Setup Helper".
-- [ ] **1d — Tier 1 calc pipeline.** Author `test-calc-pipeline.R` (~71 cases,
-      arch-02.01). Pin known quirks (lexicographic admin sort,
-      `get_scores_data` 1-row NA, `pivot_pti_dta` `"administrative"` over-match,
-      `expand_adm_levels` first-digit extraction) as explicit assertions, not
-      skips.
+
+- [x] **1a — Orchestrator.** `run_pti_pipeline()` exported, documented, used as
+      the test seam (PR #15).
+- [x] **1b — Helper + initial fixtures.** `tests/testthat/helper-test-data.R`
+      with deterministic intermediates (PR #15, extended in #16, #17).
+- [x] **1c — Tier 1 calc pipeline.** [`test-calc-pipeline.R`](tests/testthat/test-calc-pipeline.R)
+      now covers the full arch-02.01 spec — Level A.1–A.11, Level B integration
+      (7 pairs), Level C end-to-end (PRs #15→#16→#17→#18). Suite total: 398
+      expectations passing. Synthetic `.rds` fixtures (`fx_shp_*`) deferred —
+      added when a test cannot be expressed inline.
 - [ ] **1e — Tier 1 remaining files** (arch-03 §1.2–1.11):
-      `test-indicators-list.R`, `test-template-reader.R`, `test-validators.R`,
-      `test-legend-palette.R`, `test-plot-helpers.R`, `test-drop-inval-adm.R`,
-      `test-export.R`, `test-explorer-helpers.R`, `test-map-render.R`,
-      `test-dt-construction.R`.
+      - [ ] [`test-validators.R`](tests/testthat/) — `validate_geometries`, `validate_single_geom`, `validate_metadata`, `validate_read_shp`, `validate_read_metadata`
+      - [ ] [`test-template-reader.R`](tests/testthat/) — `fct_template_reader`, `fct_convert_weight_to_clean`, `get_shape`, `create_new_pti`
+      - [ ] [`test-indicators-list.R`](tests/testthat/) — `get_indicators_list`
+      - [ ] [`test-legend-palette.R`](tests/testthat/) — `legend_map_satelite`, `recode_val_base`
+      - [ ] [`test-plot-helpers.R`](tests/testthat/) — `preplot_reshape_wghtd_dta`, `filter_admin_levels`, `add_legend_paras`, `complete_pti_labels`, `check_existing_groups`, plus `plot_pti_polygons`/`clean_pti_polygons`/`add_pti_poly_controls`/`clean_pti_poly_controls`
+      - [ ] [`test-drop-inval-adm.R`](tests/testthat/) — `get_vars_un_avbil`, `get_min_admin_wght`, `drop_inval_adm`
+      - [ ] [`test-export.R`](tests/testthat/) — `get_pti_scores_export`, `get_pti_weights_export`, `fct_inp_for_exp`, `fct_internal_wt_to_exp`
+      - [ ] [`test-explorer-helpers.R`](tests/testthat/) — `reshaped_explorer_dta`, `get_var_choices`, `filter_var_explorer`
+      - [ ] [`test-map-render.R`](tests/testthat/) — `make_ggmap`, `make_gg_line_map`, `plot_leaf_line_map2`
+      - [ ] [`test-dt-construction.R`](tests/testthat/) — `prep_input_data`, `make_vis_targets_for_dt`, `make_input_DT`
 - [ ] **1f — CI guard.** Confirm `devtools::test()` finishes < 2 min and run it
       via GitHub Actions on push.
 - [ ] **1g — Tier 2 (after Tier 1 green).** Module-server tests via
       `shiny::testServer` (arch-03 §2). 7 modules.
-- [ ] **1h — Validate baseline.** Run full suite against the *current
-      (uncleaned) codebase*. Tier 1 should be green before Phase 2.
 
-### 4.2 Open questions
-- Is `shinytest2` (Tier 3 automation) in or out of scope for this push?
-  Suggestion: keep it manual for now (arch-03 §3.2 checklist); add automation
-  after pkgdown deploys.
+### 4.2 Tier 3 timing
+
+`shinytest2` automation deferred until **after** pkgdown deploys (Phase 4).
+Tier 3 stays manual until then (arch-03 §3.2 checklist).
 
 ---
 
 ## 5. Phase 2 — Cleanup (#8)
 
-Drive each batch from arch-01 § "Removal Batches". Discipline:
+Drive each batch from arch-01 § "Removal Batches" using the
+[`cleanup-batch`](.claude/skills/cleanup-batch/SKILL.md) skill. Discipline:
 
-1. Branch off main: `cleanup/batch-N`.
+1. Branch off integration: `cleanup/batch-N`.
 2. Delete files/functions per the batch table.
 3. Run `devtools::document()` → `devtools::test()` → `devtools::check()`.
 4. Smoke-test: `launch_pti(shp_dta = ukr_shp, inp_dta = ukr_mtdt_full)` opens.
-5. Append changelog row(s).
+5. Append changelog row(s) and update `PLAN.md`.
 6. Open PR; merge once green.
 
 Batch order is fixed by dependencies (arch-01 §"Cleanup Strategy"). Don't reorder
 without re-checking caller graphs.
 
+- [ ] Batch 1 — dead files & functions
+- [ ] Batch 2 — legacy runners + app_server/app_ui
+- [ ] Batch 3 — legacy map server (~1200 lines)
+- [ ] Batch 4 — migrate sample app to `launch_pti()`
+- [ ] Batch 5 — remove `mod_weights.R` legacy
+
 ---
 
 ## 6. Phase 3 — Documentation (#11)
 
-Follow arch-02-docs § "Implementation Order". Per-file checklist there.
+Follow arch-02-docs § "Implementation Order" and use the
+[`roxygen-document`](.claude/skills/roxygen-document/SKILL.md) skill.
 
-- [ ] Phase 1 (data) → Phase 6 (remaining modules) as listed.
-- [ ] Track in this PR: any function whose body changed in Phase 2 cleanup needs
-      its docs reviewed even if listed as "partial" before.
+- [ ] Phase 3.1 (data) → 3.6 (remaining modules) as listed in arch-02-docs.
+- [ ] Any function whose body changed in Phase 2 cleanup needs its docs reviewed.
 - [ ] After each file's docs land, run `devtools::document()` and confirm
       `R CMD check` produces no doc-related notes.
 
@@ -187,47 +184,40 @@ Per arch-04. Concrete cuts:
       arch-04 §"Vignette Groups". **Highest-value first:**
       `calculation-pipeline.Rmd`, `data-preparation.Rmd`.
 - [ ] Source for `pti-overview.Rmd` / `project-history.Rmd`: the
-      [WB OpenKnowledge PTI article](https://openknowledge.worldbank.org/server/api/core/bitstreams/1fa677a7-7c1c-5a39-8705-511a7038e3a2/content)
-      (mentioned by user). Quote / paraphrase / link as appropriate.
-- [ ] Update `_pkgdown.yml` (currently 12 lines, no articles config) to add
-      grouped article navigation per arch-04 §"_pkgdown.yml Updates".
+      [WB OpenKnowledge PTI article](https://openknowledge.worldbank.org/server/api/core/bitstreams/1fa677a7-7c1c-5a39-8705-511a7038e3a2/content).
+- [ ] Update `_pkgdown.yml` to add grouped article navigation per arch-04
+      §"_pkgdown.yml Updates".
 - [ ] Add a GitHub Action for pkgdown build & GitHub Pages deploy.
 - [ ] Confirm `R CMD check` builds vignettes cleanly.
+- [ ] **After this phase:** add `shinytest2` automation for Tier 3.
 
 ---
 
 ## 8. Phase 5 — Hex ingestion (#13, independent)
 
-Independent track. Can start in parallel on `feature/hex-ingestion`. Five new
-exported functions, all developer-facing, all pre-deployment (no runtime API
-calls). Spec: arch-05.
+Independent track. Five new exported functions, all developer-facing, all
+pre-deployment. Spec: arch-05.
 
-Defer-or-parallel decision to be made — if Phase 1–4 are the priority, this
-waits. If a collaborator wants to drive this in parallel, the existing
-calculation pipeline is geometry-agnostic and won't be affected.
+**Decision:** deferred until Phases 1–4 are complete. The calculation pipeline
+is geometry-agnostic so this is non-blocking.
 
 ---
 
 ## 9. Open questions for the team
 
-1. **Working branch.** `eb-arch-redesign` per CLAUDE.md, or per-phase branches
-   off `main`? (See §3.1.)
-2. **Skills/sub-agents.** Greenlight on the six tools listed in §3.2? Any
-   should be combined or dropped?
-3. **Tier 3 automation.** `shinytest2` now or after pkgdown ships?
-4. **Hex ingestion priority.** Defer until after Phase 4, or start on a parallel
-   branch now?
-5. **Changelog protocol.** Should the Stop hook auto-append entries from the
-   diff, or just remind?
-6. **Skill scope sharing.** Are the proposed skills committed to the repo
-   (`.claude/`) so my collaborator's Claude Code session picks them up, or kept
-   personal? My recommendation: commit them.
+*(All Phase 0 questions resolved — see §3. Below are the still-open ones.)*
+
+1. **Tier 2 module-server tests.** Cover all 7 modules listed in arch-03 §2.1–2.7
+   in one PR, or one per PR? Recommend one per PR for review velocity.
+2. **CI runtime budget.** arch-03 sets <2 min for `devtools::test()`. Phase 1c
+   currently runs in well under that locally; confirm post-cleanup once GitHub
+   Actions runner timing is known.
 
 ---
 
 ## 10. Definition of done (end-state, all phases)
 
-Lifted from arch-00 §"End-State Goals", mirrored here as a single checklist:
+Lifted from arch-00 §"End-State Goals":
 
 - [ ] Only the modern pipeline remains. Public entry points: `launch_pti()`,
       `launch_pti_onepage()`, `create_new_pti()`.
@@ -236,6 +226,21 @@ Lifted from arch-00 §"End-State Goals", mirrored here as a single checklist:
 - [ ] Package website deployed on GitHub Pages with grouped vignettes.
 - [ ] Hex ingestion pipeline (#13) lands on its own milestone.
 - [ ] `R CMD check` passes with 0 warnings, 0 errors, 0 notes.
+
+---
+
+## 11. Progress log
+
+> One line per merged PR — what changed and which PLAN item it advanced.
+
+| PR | Date | Phase item | Outcome |
+|---|---|---|---|
+| [#15](https://github.com/worldbank/devPTIpack/pull/15) | 2026-04-30 | 1a, 1b, 1c (start) | `run_pti_pipeline()` orchestrator + helper + Level A.1–A.6 + Level C |
+| [#16](https://github.com/worldbank/devPTIpack/pull/16) | 2026-05-01 | 1c | Level A.7 (`expand_adm_levels`) + A.8 (`merge_expandedn_adm_levels`) |
+| [#17](https://github.com/worldbank/devPTIpack/pull/17) | 2026-05-01 | 1c | Level A.9 (`agg_pti_scores`) |
+| [#18](https://github.com/worldbank/devPTIpack/pull/18) | 2026-05-01 | 1c | Level A.10 (`label_generic_pti`) + A.11 (`structure_pti_data`) + Level B integration |
+
+Suite total after merged PRs: **398 expectations / 0 failures / 0 errors / 1 skip**.
 
 ---
 
