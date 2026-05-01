@@ -38,6 +38,12 @@ test_weighted    <- get_weighted_data(
 )
 test_scored      <- get_scores_data(test_weighted)
 
+# Cross-level expansion + merge for the `all_ones` scheme. These are the
+# inputs for tests of `agg_pti_scores`, `label_generic_pti`, and
+# `structure_pti_data` so they live in the helper to avoid duplication.
+test_expanded    <- expand_adm_levels(test_scored[["all_ones"]], test_mt)
+test_merged      <- merge_expandedn_adm_levels(test_expanded)
+
 # ---- Full pipeline output via the orchestrator ----------------------------
 test_pipeline_out <- run_pti_pipeline(
   weights_clean   = test_weights_clean,
