@@ -125,7 +125,7 @@ also draft its roxygen at the same time. Phase 3 then sweeps only what's missed.
       - [x] [`test-plot-helpers.R`](tests/testthat/test-plot-helpers.R) — `preplot_reshape_wghtd_dta`, `get_current_levels`, `filter_admin_levels`, `add_legend_paras`, `complete_pti_labels`, `check_existing_groups` (PR #25; 18 blocks / 73 expectations; pinned 2 newly-discovered bugs and 1 spec asymmetry — see §12 Discovered bugs). `plot_pti_polygons`/`clean_pti_polygons`/`add_pti_poly_controls`/`clean_pti_poly_controls` are leaflet-rendering helpers and stay in Tier 3 (manual)
       - [x] [`test-drop-inval-adm.R`](tests/testthat/test-drop-inval-adm.R) — `get_vars_un_avbil`, `get_min_admin_wght`, `drop_inval_adm` (PR #23; 10 blocks / 16 expectations)
       - [x] [`test-export.R`](tests/testthat/test-export.R) — `get_pti_scores_export`, `get_pti_weights_export`, `fct_inp_for_exp`, `fct_internal_wt_to_exp` (PR #26; 14 blocks / 58 expectations; pinned `fct_internal_wt_to_exp(list())` left-join error)
-      - [ ] [`test-explorer-helpers.R`](tests/testthat/) — `reshaped_explorer_dta`, `get_var_choices`, `filter_var_explorer`
+      - [x] [`test-explorer-helpers.R`](tests/testthat/test-explorer-helpers.R) — `reshaped_explorer_dta`, `get_var_choices`, `filter_var_explorer` (PR #27; 11 blocks / 27 expectations; pinned `get_var_choices` empty-tibble error and the actual nested-by-pillar return shape)
       - [ ] [`test-map-render.R`](tests/testthat/) — `make_ggmap`, `make_gg_line_map`, `plot_leaf_line_map2`
       - [ ] [`test-dt-construction.R`](tests/testthat/) — `prep_input_data`, `make_vis_targets_for_dt`, `make_input_DT`
 - [ ] **1f — CI guard.** Confirm `devtools::test()` finishes < 2 min and run it
@@ -247,8 +247,9 @@ Lifted from arch-00 §"End-State Goals":
 | [#24](https://github.com/worldbank/devPTIpack/pull/24) | 2026-05-01 | 1e (legend-palette) | Tier-1 tests for `legend_map_satelite`, `recode_val_base`; pinned the integer/continuous branch split |
 | [#25](https://github.com/worldbank/devPTIpack/pull/25) | 2026-05-01 | 1e (plot-helpers) | Tier-1 tests for `preplot_reshape_wghtd_dta`/`get_current_levels`/`filter_admin_levels`/`add_legend_paras`/`complete_pti_labels`/`check_existing_groups`; pinned 2 bugs (see §12) |
 | [#26](https://github.com/worldbank/devPTIpack/pull/26) | 2026-05-01 | 1e (export) | Tier-1 tests for `get_pti_scores_export`, `get_pti_weights_export`, `fct_inp_for_exp`, `fct_internal_wt_to_exp`; pinned `fct_internal_wt_to_exp(list())` failure (see §12) |
+| [#27](https://github.com/worldbank/devPTIpack/pull/27) | 2026-05-01 | 1e (explorer-helpers) | Tier-1 tests for `reshaped_explorer_dta`, `get_var_choices`, `filter_var_explorer`; pinned `get_var_choices(empty)` NULL-attribute error (see §12) |
 
-Suite total after merged PRs: **673 expectations / 0 failures / 0 errors / 1 skip**.
+Suite total after merged PRs: **700 expectations / 0 failures / 0 errors / 1 skip**.
 
 ---
 
@@ -269,6 +270,7 @@ Suite total after merged PRs: **673 expectations / 0 failures / 0 errors / 1 ski
 | [`R/calc_pti_helpers.R::get_scores_data`](R/calc_pti_helpers.R) | 1-row `year × var_code` group produces `NA` (not `0`) because `sd()` of length-1 returns `NA` (not `NaN`), so the `is.nan` filter misses. | [test-calc-pipeline.R:get_scores_data: 1-row groups produce NA, not 0 (PINNED)](tests/testthat/test-calc-pipeline.R) |
 | [`R/calc_pti_expander.R::expand_adm_levels`](R/calc_pti_expander.R) | When >1 list element name matches an admin level (`length(...) == 1` guard fails), the entire source-loop iteration returns nested `NULL`s. Silent data loss. | [test-calc-pipeline.R:expand_adm_levels: >1 element matches (PINNED)](tests/testthat/test-calc-pipeline.R) |
 | [`R/fct_inp_for_exp.R::fct_internal_wt_to_exp`](R/fct_inp_for_exp.R#L51) | Errors with "Join columns in `x` must be present" when called with an empty `weights_clean = list()`. Cause: `imap_dfr(list())` yields a 0×0 tibble that has no `var_code` column for the downstream `left_join`. Should early-return on length-0 input. | [test-export.R:fct_internal_wt_to_exp: empty list errors at left_join (PINNED)](tests/testthat/test-export.R) |
+| [`R/mod_dta_explorer2.R::get_var_choices`](R/mod_dta_explorer2.R#L302) | Errors with "attempt to set an attribute on NULL" when called with an empty `indicators_list`. The fallback branch `names(out) <- "Indicators"` runs even when `out` is `NULL`. A length-0 list output would be more useful. | [test-explorer-helpers.R:get_var_choices: empty indicators tibble errors (PINNED)](tests/testthat/test-explorer-helpers.R) |
 
 ---
 
