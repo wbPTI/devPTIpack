@@ -118,7 +118,7 @@ also draft its roxygen at the same time. Phase 3 then sweeps only what's missed.
       expectations passing. Synthetic `.rds` fixtures (`fx_shp_*`) deferred —
       added when a test cannot be expressed inline.
 - [ ] **1e — Tier 1 remaining files** (arch-03 §1.2–1.11):
-      - [ ] [`test-validators.R`](tests/testthat/) — `validate_geometries`, `validate_single_geom`, `validate_metadata`, `validate_read_shp`, `validate_read_metadata`
+      - [x] [`test-validators.R`](tests/testthat/test-validators.R) — `validate_geometries`, `validate_single_geom`, `validate_metadata`, `validate_read_shp`, `validate_read_metadata` (PR #20; 12 blocks / 52 expectations; pinned the empty-pattern str_detect bug in `validate_read_shp`)
       - [ ] [`test-template-reader.R`](tests/testthat/) — `fct_template_reader`, `fct_convert_weight_to_clean`, `get_shape`, `create_new_pti`
       - [ ] [`test-indicators-list.R`](tests/testthat/) — `get_indicators_list`
       - [ ] [`test-legend-palette.R`](tests/testthat/) — `legend_map_satelite`, `recode_val_base`
@@ -239,8 +239,10 @@ Lifted from arch-00 §"End-State Goals":
 | [#16](https://github.com/worldbank/devPTIpack/pull/16) | 2026-05-01 | 1c | Level A.7 (`expand_adm_levels`) + A.8 (`merge_expandedn_adm_levels`) |
 | [#17](https://github.com/worldbank/devPTIpack/pull/17) | 2026-05-01 | 1c | Level A.9 (`agg_pti_scores`) |
 | [#18](https://github.com/worldbank/devPTIpack/pull/18) | 2026-05-01 | 1c | Level A.10 (`label_generic_pti`) + A.11 (`structure_pti_data`) + Level B integration |
+| [#19](https://github.com/worldbank/devPTIpack/pull/19) | 2026-05-01 | tooling | Operationalize PLAN.md sync (CLAUDE.md rule + skill steps); sync PLAN.md to current state |
+| [#20](https://github.com/worldbank/devPTIpack/pull/20) | 2026-05-01 | 1e (validators) | Tier-1 tests for `validate_*` functions; pinned the empty-pattern bug in `validate_read_shp` |
 
-Suite total after merged PRs: **398 expectations / 0 failures / 0 errors / 1 skip**.
+Suite total after merged PRs: **450 expectations / 0 failures / 0 errors / 1 skip**.
 
 ---
 
