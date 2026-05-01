@@ -50,3 +50,6 @@
 | Docs    | `PLAN.md` ticked the validators item under §4.1 1e and logged PR #20 in §11; suite total updated to 450 expectations |
 | Tests   | Added `tests/testthat/test-template-reader.R` (1e bullet 2) — covers `fct_template_reader` (sheet structure, fltr_* logical coercion, NULL `weights_clean` when no `weights_table` sheet, var_code filtering), `fct_convert_weight_to_clean` (synthetic `wsN..*` columns), `get_shape` (all three branches), and `create_new_pti` (template scaffolding into a tempdir with `open = FALSE` and stdout silenced) |
 | Docs    | `PLAN.md` ticked template-reader under §4.1 1e and logged PR #21 in §11; suite total updated to 478 expectations |
+| Tests   | Added `tests/testthat/test-indicators-list.R` (1e bullet 3) — covers `get_indicators_list` happy path, column schema, var_code uniqueness, nested `admin_levels_years` shape, the `fltr_exclude_pti` filter, alternative `fltr_var` arg, and a PINNED error on a non-existent fltr_var |
+| Tests   | Removed legacy placeholder `tests/testthat/test-get_indicators_list.R` (a 6-line tautology `expect_gt(2*2, 3)`) — superseded by the new `test-indicators-list.R` |
+| Docs    | `PLAN.md` ticked indicators-list under §4.1 1e and logged PR #22 in §11; suite total updated to 507 expectations |
