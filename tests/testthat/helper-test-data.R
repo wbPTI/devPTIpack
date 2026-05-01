@@ -44,6 +44,15 @@ test_scored      <- get_scores_data(test_weighted)
 test_expanded    <- expand_adm_levels(test_scored[["all_ones"]], test_mt)
 test_merged      <- merge_expandedn_adm_levels(test_expanded)
 
+# Multi-scheme extrapolation structure that `agg_pti_scores` consumes:
+# outer = scheme, inner = target admin level (each tibble wide).
+test_extrap <- purrr::imap(test_scored, function(scored, scheme) {
+  merge_expandedn_adm_levels(expand_adm_levels(scored, test_mt))
+})
+
+# Aggregated output (list keyed by admin level, schemes row-bound).
+test_aggregated  <- agg_pti_scores(test_extrap, test_clean_geoms)
+
 # ---- Full pipeline output via the orchestrator ----------------------------
 test_pipeline_out <- run_pti_pipeline(
   weights_clean   = test_weights_clean,

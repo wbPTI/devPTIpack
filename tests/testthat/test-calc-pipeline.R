@@ -341,6 +341,118 @@ test_that("merge_expandedn_adm_levels: NULL elements are filtered out", {
 })
 
 # ---------------------------------------------------------------------------
+# Level A.9 — agg_pti_scores(extrap_dta, adm_ids, na_rm_pti2)
+# ---------------------------------------------------------------------------
+
+test_that("agg_pti_scores: output is a list keyed by admin level", {
+  expect_setequal(
+    names(test_aggregated),
+    c("admin0", "admin1", "admin2", "admin4")
+  )
+  for (x in test_aggregated) expect_s3_class(x, "tbl_df")
+})
+
+test_that("agg_pti_scores: every tibble has the expected score columns", {
+  for (x in test_aggregated) {
+    expect_true(all(
+      c("pti_score", "pti_name", "spatial_name") %in% names(x)
+    ))
+  }
+})
+
+test_that("agg_pti_scores: pti_score equals rowSums of indicator columns", {
+  # Synthetic, single-level input avoids the foreign-vs-native dedup logic
+  # so the arithmetic is transparent.
+  extrap <- list(scheme1 = list(admin0 = tibble::tibble(
+    admin0Pcod = c("A", "B"),
+    ind_x = c(1, 2),
+    ind_y = c(10, 20)
+  )))
+  ids <- list(admin0 = tibble::tibble(
+    admin0Pcod = c("A", "B"),
+    admin0Name = c("Alpha", "Beta")
+  ))
+  out <- agg_pti_scores(extrap, ids)$admin0
+  expect_equal(out$pti_score, c(11, 22))
+})
+
+test_that("agg_pti_scores: schemes appear as rows under each admin level", {
+  for (x in test_aggregated) {
+    expect_setequal(unique(x$pti_name), names(test_weights_clean))
+  }
+})
+
+test_that("agg_pti_scores: pti_name preserves scheme names verbatim", {
+  extrap <- list(
+    A = list(admin0 = tibble::tibble(admin0Pcod = "X", v = 1)),
+    B = list(admin0 = tibble::tibble(admin0Pcod = "X", v = 2))
+  )
+  ids <- list(admin0 = tibble::tibble(
+    admin0Pcod = "X", admin0Name = "ex"
+  ))
+  out <- agg_pti_scores(extrap, ids)$admin0
+  expect_equal(sort(out$pti_name), c("A", "B"))
+})
+
+test_that("agg_pti_scores: spatial_name is sourced from adm_ids", {
+  for (lvl in names(test_aggregated)) {
+    name_col <- paste0(lvl, "Name")
+    if (!name_col %in% names(test_clean_geoms[[lvl]])) next
+    expect_true(all(
+      test_aggregated[[lvl]]$spatial_name %in%
+        test_clean_geoms[[lvl]][[name_col]]
+    ))
+  }
+})
+
+test_that("agg_pti_scores: na_rm_pti2 = FALSE propagates NAs to pti_score", {
+  na_extrap <- list(scheme1 = list(admin0 = tibble::tibble(
+    admin0Pcod = c("A", "B"),
+    ind_x = c(NA_real_, 3),
+    ind_y = c(NA_real_, 4)
+  )))
+  ids <- list(admin0 = tibble::tibble(
+    admin0Pcod = c("A", "B"),
+    admin0Name = c("Alpha", "Beta")
+  ))
+  out <- agg_pti_scores(na_extrap, ids, na_rm_pti2 = FALSE)$admin0
+  expect_true(is.na(out$pti_score[out$admin0Pcod == "A"]))
+  expect_equal(out$pti_score[out$admin0Pcod == "B"], 7)
+})
+
+test_that("agg_pti_scores: na_rm_pti2 = TRUE drops NAs and zero-sums all-NA", {
+  # arch-02.01 §A.9.4: all-NA row with na_rm = TRUE -> pti_score = 0
+  # (rowSums of an empty numeric vector).
+  na_extrap <- list(scheme1 = list(admin0 = tibble::tibble(
+    admin0Pcod = c("A", "B"),
+    ind_x = c(NA_real_, 3),
+    ind_y = c(NA_real_, NA_real_)
+  )))
+  ids <- list(admin0 = tibble::tibble(
+    admin0Pcod = c("A", "B"),
+    admin0Name = c("Alpha", "Beta")
+  ))
+  out <- agg_pti_scores(na_extrap, ids, na_rm_pti2 = TRUE)$admin0
+  expect_equal(out$pti_score[out$admin0Pcod == "A"], 0)
+  expect_equal(out$pti_score[out$admin0Pcod == "B"], 3)
+})
+
+test_that("agg_pti_scores: drops rows whose admin Pcod is NA", {
+  # arch-02.01 §A.9: filter_at(contains(nonsum_cols), all_vars(!is.na)).
+  extrap <- list(scheme1 = list(admin0 = tibble::tibble(
+    admin0Pcod = c("A", NA_character_),
+    v = c(1, 2)
+  )))
+  ids <- list(admin0 = tibble::tibble(
+    admin0Pcod = c("A", "B"),
+    admin0Name = c("Alpha", "Beta")
+  ))
+  out <- agg_pti_scores(extrap, ids)$admin0
+  expect_equal(out$admin0Pcod, "A")
+  expect_equal(nrow(out), 1L)
+})
+
+# ---------------------------------------------------------------------------
 # Level C — End-to-end via run_pti_pipeline()
 # ---------------------------------------------------------------------------
 
