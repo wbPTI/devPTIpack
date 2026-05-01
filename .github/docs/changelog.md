@@ -55,3 +55,5 @@
 | Docs    | `PLAN.md` ticked indicators-list under §4.1 1e and logged PR #22 in §11; suite total updated to 507 expectations |
 | Tests   | Added `tests/testthat/test-drop-inval-adm.R` (1e bullet 4) — covers `get_vars_un_avbil` (output shape + explicit admin_levels arg), `get_min_admin_wght` (zero-weight / fully-available / weighting-an-unavailable-var / multi-scheme), and `drop_inval_adm` (empty drops, scheme+admin match, drop-everything) |
 | Docs    | `PLAN.md` ticked drop-inval-adm under §4.1 1e and logged PR #23 in §11; suite total updated to 523 expectations |
+| Tests   | Added `tests/testthat/test-legend-palette.R` (1e bullet 5) — output schema, factor-vs-continuous-branch behaviour, single-unique-value, binary, NA -> "No data", `legend_revert_colours` flip, plus full `recode_val_base` coverage including the single-break patch and NA->no_data_label semantics. Pins arch-03 §1.5 spec corrections (the input `c(1,5,3,7,2)` takes the integer branch, not the continuous branch the doc assumed) |
+| Docs    | `PLAN.md` ticked legend-palette under §4.1 1e and logged PR #24 in §11; suite total updated to 542 expectations |
