@@ -1,0 +1,198 @@
+# Tier-1 tests for plot helpers (arch-03 §1.6).
+# Source: R/plot_pti_helpers.R. Permanent functions per arch-01.
+#
+# Functions under test (Tier 1):
+#   - preplot_reshape_wghtd_dta
+#   - get_current_levels
+#   - filter_admin_levels
+#   - add_legend_paras
+#   - complete_pti_labels
+#   - check_existing_groups
+#
+# `plot_pti_polygons` and friends interact with leaflet maps and are
+# covered by Tier 3 manual tests, not here.
+
+# ---------------------------------------------------------------------------
+# preplot_reshape_wghtd_dta
+# ---------------------------------------------------------------------------
+
+test_that("preplot_reshape_wghtd_dta: one entry per admin x scheme", {
+  preplot <- preplot_reshape_wghtd_dta(test_pipeline_out)
+  # 4 admin levels x 2 schemes (test_weights_clean) = 8 entries.
+  expect_equal(length(preplot), 4 * length(test_weights_clean))
+})
+
+test_that("preplot_reshape_wghtd_dta: entry shape has the expected slots", {
+  preplot <- preplot_reshape_wghtd_dta(test_pipeline_out)
+  for (x in preplot) {
+    expect_named(x, c("pti_dta", "pti_codes", "admin_level"))
+    expect_s3_class(x$pti_dta, "sf")
+    expect_type(x$pti_codes, "character")
+  }
+})
+
+test_that("preplot_reshape_wghtd_dta: 1-scheme input -> 1 entry per admin", {
+  one_scheme <- list(all_ones = test_weights_clean[["all_ones"]])
+  one_pipeline <- run_pti_pipeline(
+    weights_clean   = one_scheme,
+    inp_dta         = ukr_mtdt_full,
+    shp_dta         = ukr_shp,
+    indicators_list = test_indicators
+  )
+  preplot <- preplot_reshape_wghtd_dta(one_pipeline)
+  expect_equal(length(preplot), length(one_pipeline))
+})
+
+# ---------------------------------------------------------------------------
+# get_current_levels
+# ---------------------------------------------------------------------------
+
+test_that("get_current_levels: returns one named entry per distinct admin", {
+  preplot <- preplot_reshape_wghtd_dta(test_pipeline_out)
+  out <- get_current_levels(preplot)
+  expect_type(out, "character")
+  # Names are admin0..admin4; values are the friendly labels.
+  expect_setequal(names(out), c("admin0", "admin1", "admin2", "admin4"))
+  expect_setequal(unname(out), c("Country", "Oblast", "Rayon", "Hexagon"))
+})
+
+# ---------------------------------------------------------------------------
+# filter_admin_levels
+# ---------------------------------------------------------------------------
+
+test_that("filter_admin_levels: 'all' returns input unchanged", {
+  preplot <- preplot_reshape_wghtd_dta(test_pipeline_out)
+  expect_equal(filter_admin_levels(preplot, "all"), preplot)
+})
+
+test_that("filter_admin_levels: filters by admin_level value (not name)", {
+  # arch-03 §1.6 case "Specific level" expects passing 'admin1' to keep
+  # admin1 entries. The current implementation matches against the
+  # `admin_level` *value* ("Oblast"), not its name ("admin1"). Pin both
+  # behaviours so any future refactor under #7-style work catches the
+  # asymmetry.
+  preplot <- preplot_reshape_wghtd_dta(test_pipeline_out)
+  by_value <- filter_admin_levels(preplot, "Oblast")
+  expect_equal(length(by_value), length(test_weights_clean))
+  for (x in by_value) {
+    expect_equal(unname(x$admin_level), "Oblast")
+  }
+})
+
+test_that("filter_admin_levels: name-only filter returns 0 entries (PINNED)", {
+  # PINNED quirk: the if-branch is entered (name match), but the
+  # `keep()` predicate compares values. So passing the name alone
+  # produces an empty list rather than the corresponding entries.
+  preplot <- preplot_reshape_wghtd_dta(test_pipeline_out)
+  expect_equal(length(filter_admin_levels(preplot, "admin1")), 0L)
+})
+
+test_that("filter_admin_levels: NULL filter -> NULL output", {
+  preplot <- preplot_reshape_wghtd_dta(test_pipeline_out)
+  expect_null(filter_admin_levels(preplot, NULL))
+})
+
+test_that("filter_admin_levels: non-matching filter -> NULL output", {
+  preplot <- preplot_reshape_wghtd_dta(test_pipeline_out)
+  expect_null(filter_admin_levels(preplot, "admin99"))
+})
+
+# ---------------------------------------------------------------------------
+# add_legend_paras
+# ---------------------------------------------------------------------------
+
+test_that("add_legend_paras: attaches a $leg slot with palette + labels", {
+  preplot <- preplot_reshape_wghtd_dta(test_pipeline_out)
+  out <- add_legend_paras(preplot, nbins = 5)
+  for (x in out) {
+    expect_true("leg" %in% names(x))
+    expect_true(all(
+      c("pal", "our_labels", "recode_function") %in% names(x$leg)
+    ))
+  }
+})
+
+test_that("add_legend_paras: NULL input -> NULL output", {
+  expect_null(add_legend_paras(NULL))
+})
+
+test_that("add_legend_paras: respects nbins for the continuous branch", {
+  # Force the continuous branch by mutating the score column.
+  preplot <- preplot_reshape_wghtd_dta(test_pipeline_out)
+  preplot[[1]]$pti_dta$pti_score <- runif(nrow(preplot[[1]]$pti_dta))
+  out <- add_legend_paras(preplot, nbins = 3)
+  expect_equal(out[[1]]$leg$selected_groups, 3L)
+})
+
+# ---------------------------------------------------------------------------
+# complete_pti_labels  (PINNED no-op: see source — see follow-up note)
+# ---------------------------------------------------------------------------
+
+test_that("complete_pti_labels: returns input unchanged (PINNED BUG)", {
+  # arch-03 §1.6 expects pti_label enriched with the priority-rank
+  # category. Source bug in plot_pti_helpers.R::complete_pti_labels:
+  # the `dta %>% purrr::map(...)` result is computed but never assigned;
+  # the function returns the original `dta`. The fix is one line, but
+  # is out of scope for the pure test-coverage phase (see PLAN.md
+  # §"Discovered bugs"). Pinning the current no-op so a future fix
+  # surfaces this test as failing and the contract gets re-stated.
+  preplot <- preplot_reshape_wghtd_dta(test_pipeline_out)
+  with_leg <- add_legend_paras(preplot, nbins = 3)
+  out <- complete_pti_labels(with_leg)
+  for (i in seq_along(with_leg)) {
+    expect_equal(
+      out[[i]]$pti_dta$pti_label,
+      with_leg[[i]]$pti_dta$pti_label
+    )
+  }
+})
+
+test_that("complete_pti_labels: NULL input -> NULL output", {
+  expect_null(complete_pti_labels(NULL))
+})
+
+# ---------------------------------------------------------------------------
+# check_existing_groups
+# ---------------------------------------------------------------------------
+
+test_that("check_existing_groups: prior selection is kept when still present", {
+  cur <- c("all_ones (Country)", "all_ones (Oblast)", "uniform (Oblast)")
+  old <- c("all_ones (Oblast)")
+  out <- check_existing_groups(cur, old, priority_group = "Oblast")
+  expect_equal(out$out_show, "all_ones (Oblast)")
+  expect_equal(
+    sort(out$out_hide),
+    sort(c("all_ones (Country)", "uniform (Oblast)"))
+  )
+})
+
+test_that("check_existing_groups: empty old errors via str_detect (PINNED)", {
+  # arch-03 §1.6 expects empty old -> "first of current" shown. The
+  # current implementation passes character(0) into str_detect's
+  # `pattern` argument, which raises a vctrs size error.
+  expect_error(
+    check_existing_groups(
+      c("a (Country)", "b (Oblast)"),
+      character(0),
+      priority_group = "Oblast"
+    ),
+    regexp = "size"
+  )
+})
+
+test_that("check_existing_groups: disjoint old -> first current shown", {
+  cur <- c("foo (Country)", "bar (Oblast)")
+  old <- c("baz (Country)")
+  out <- check_existing_groups(cur, old, priority_group = "Country")
+  expect_equal(out$out_show, "foo (Country)")
+})
+
+test_that("check_existing_groups: empty current -> NULL show / hide", {
+  out <- check_existing_groups(
+    cur_grps = character(0),
+    old_grps = c("a (Country)"),
+    priority_group = "Country"
+  )
+  expect_null(out$out_show)
+  expect_null(out$out_hide)
+})
