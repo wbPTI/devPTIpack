@@ -202,6 +202,145 @@ test_that("get_scores_data: 1-row groups produce NA, not 0 (PINNED)", {
 })
 
 # ---------------------------------------------------------------------------
+# Level A.7 — expand_adm_levels(wtd_scrd_dta, mt)
+# ---------------------------------------------------------------------------
+
+test_that("expand_adm_levels: returns nested list source x target", {
+  expect_setequal(
+    names(test_expanded),
+    c("admin0", "admin1", "admin2", "admin4")
+  )
+  for (src in test_expanded) {
+    expect_setequal(names(src), c("admin0", "admin1", "admin2", "admin4"))
+  }
+})
+
+test_that("expand_adm_levels: same-level branch has no `._._.` suffix", {
+  same_level <- test_expanded$admin1$admin1
+  expect_s3_class(same_level, "tbl_df")
+  expect_true("admin1Pcod" %in% names(same_level))
+  expect_false(any(grepl("\\._\\._\\.", names(same_level))))
+})
+
+test_that("expand_adm_levels: upward branch suffixes cols with source level", {
+  # source admin1 -> target admin2: indicator columns carry `._._.admin1`
+  upward <- test_expanded$admin1$admin2
+  expect_true("admin2Pcod" %in% names(upward))
+  indicator_cols <- setdiff(names(upward), "admin2Pcod")
+  expect_true(all(grepl("\\._\\._\\.admin1$", indicator_cols)))
+})
+
+test_that("expand_adm_levels: downward branch suffixes cols with src level", {
+  # source admin2 -> target admin1: indicator columns carry `._._.admin2`
+  downward <- test_expanded$admin2$admin1
+  expect_true("admin1Pcod" %in% names(downward))
+  indicator_cols <- setdiff(names(downward), "admin1Pcod")
+  expect_true(all(grepl("\\._\\._\\.admin2$", indicator_cols)))
+})
+
+test_that("expand_adm_levels: downward aggregation averages children", {
+  # admin2 -> admin1 should average all admin2 values per admin1 parent.
+  # Use raw (unscored) admin2 values to make the arithmetic transparent.
+  # The function ignores admin1Pcod in the input long tibble (the
+  # `select(contains("admin2"))` strips it) and instead derives parents
+  # from the mapping table. So we reproduce that logic to compute the
+  # expected mean.
+  long <- ukr_mtdt_full$admin2_Rayon |>
+    dplyr::filter(!is.na(var_nval6_na_adm12)) |>
+    dplyr::transmute(
+      admin2Pcod,
+      year,
+      var_code = "var_nval6_na_adm12",
+      value    = var_nval6_na_adm12
+    )
+  expanded <- expand_adm_levels(list(admin2 = long), test_mt)
+  out <- expanded$admin2$admin1
+
+  mt_link <- dplyr::distinct(
+    dplyr::select(test_mt, admin1Pcod, admin2Pcod)
+  )
+  expected <- long |>
+    dplyr::left_join(mt_link, by = "admin2Pcod") |>
+    dplyr::group_by(admin1Pcod) |>
+    dplyr::summarise(mean_val = mean(value), .groups = "drop")
+
+  joined <- dplyr::inner_join(out, expected, by = "admin1Pcod")
+  expect_equal(
+    joined[["var_nval6_na_adm12._._.admin2"]],
+    joined$mean_val
+  )
+})
+
+test_that("expand_adm_levels: empty input -> all NULL outputs", {
+  empty_in <- list(admin1 = test_scored$all_ones$admin1_Oblast[0, ])
+  out <- expand_adm_levels(empty_in, test_mt)
+  for (src in out) {
+    for (tgt in src) expect_null(tgt)
+  }
+})
+
+test_that("expand_adm_levels: >1 element matches a level -> NULLs (PINNED)", {
+  # arch-02.01 §A.7 case 10: when two list elements both contain the same
+  # admin level string in their names, the source-loop guard `length(...)
+  # == 1` fails and the entire iteration returns nested NULLs.
+  src1 <- test_scored$all_ones$admin1_Oblast
+  duped <- list(admin1_a = src1, admin1_b = src1)
+  out <- expand_adm_levels(duped, test_mt)
+  # admin1 source iteration short-circuits because two names match
+  for (tgt in out$admin1) expect_null(tgt)
+})
+
+test_that("expand_adm_levels: missing `year` column errors at all_of()", {
+  # arch-02.01 §A.7 case 11: pivot survives without year, but
+  # expand_adm_levels requires it via `all_of(c("year", ...))`.
+  no_year <- test_scored$all_ones$admin1_Oblast |>
+    dplyr::select(-dplyr::any_of("year"))
+  expect_error(
+    expand_adm_levels(list(admin1 = no_year), test_mt),
+    regexp = "year"
+  )
+})
+
+# ---------------------------------------------------------------------------
+# Level A.8 — merge_expandedn_adm_levels(dta)
+# ---------------------------------------------------------------------------
+
+test_that("merge_expandedn_adm_levels: one wide tibble per target admin", {
+  expect_setequal(names(test_merged), names(test_expanded))
+  for (lvl in names(test_merged)) {
+    pcod_col <- paste0(lvl, "Pcod")
+    expect_true(pcod_col %in% names(test_merged[[lvl]]))
+    # multi-source merge: more than just the Pcod column
+    expect_gt(ncol(test_merged[[lvl]]), 1L)
+  }
+})
+
+test_that("merge_expandedn_adm_levels: column names are unique", {
+  for (m in test_merged) expect_equal(anyDuplicated(names(m)), 0L)
+})
+
+test_that("merge_expandedn_adm_levels: row count matches mapping table", {
+  # Each target admin's wide tibble should have one row per Pcod present
+  # in the mapping table.
+  for (lvl in names(test_merged)) {
+    pcod_col <- paste0(lvl, "Pcod")
+    expected_rows <- dplyr::n_distinct(test_mt[[pcod_col]])
+    expect_equal(nrow(test_merged[[lvl]]), expected_rows)
+  }
+})
+
+test_that("merge_expandedn_adm_levels: NULL elements are filtered out", {
+  # Inject NULLs for admin4 source across all targets — merge should still
+  # produce valid output for the remaining sources.
+  with_nulls <- test_expanded
+  for (tgt in names(with_nulls$admin4)) with_nulls$admin4[[tgt]] <- NULL
+  out <- merge_expandedn_adm_levels(with_nulls)
+  expect_equal(names(out), names(test_merged))
+  # admin1 target should still have its native admin1 values
+  expect_true("var_nval3_skewd_adm1" %in% names(out$admin1))
+})
+
+# ---------------------------------------------------------------------------
 # Level C — End-to-end via run_pti_pipeline()
 # ---------------------------------------------------------------------------
 

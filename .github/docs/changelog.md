@@ -36,3 +36,5 @@
 | Tests   | Added `tests/testthat/helper-test-data.R` providing bundled data plus deterministic pipeline intermediates for Tier-1 tests                     |
 | Tests   | Added `tests/testthat/test-calc-pipeline.R` — first batch of Tier-1 cases for `get_mt`/`get_adm_levels`/`clean_geoms`/`pivot_pti_dta`/`get_weighted_data`/`get_scores_data` plus end-to-end via `run_pti_pipeline()`, pinning the lexicographic-sort and 1-row-NA quirks per arch-03 |
 | Config  | Regenerated `NAMESPACE` to export `run_pti_pipeline`; bumped `RoxygenNote` to 7.3.3 as a side-effect of `roxygen2::roxygenise()`                |
+| Tests   | Extended `helper-test-data.R` with `test_expanded` and `test_merged` so downstream Tier-1 tests don't each rebuild the expand/merge pipeline    |
+| Tests   | Added Level A.7 + A.8 cases to `test-calc-pipeline.R` covering `expand_adm_levels` and `merge_expandedn_adm_levels`; pins the >1-element-match short-circuit and the missing-`year` error per arch-02.01 |
