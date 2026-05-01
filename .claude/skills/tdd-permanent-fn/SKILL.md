@@ -50,6 +50,10 @@ tests for code scheduled for deletion.
    before the test file lands.
 6. **Update changelog.** Append a row to `.github/docs/changelog.md` under
    today's date — Scope `Tests`. (The Stop hook will draft this; refine.)
+7. **Sync `PLAN.md`.** Tick the relevant box(es) under §4.1 (e.g. `1d`,
+   `1e`), add new sub-bullets if the PR introduced work not previously
+   enumerated, and update the "Progress log" with the PR number. See
+   `.claude/CLAUDE.md` § "PLAN.md Sync (COMPULSORY)".
 
 ## Hard rules
 

@@ -54,7 +54,10 @@ For batch N:
    today's date with Scope `Code` — one row per logical group (file or
    function). The Stop hook will draft these; refine each summary to be
    specific (which functions, which file, which downstream impact).
-8. **Open PR** into the integration branch.
+8. **Sync `PLAN.md`.** Tick the corresponding `Batch N` box under
+   §5 / Phase 2, and update the "Progress log" with the PR number. See
+   `.claude/CLAUDE.md` § "PLAN.md Sync (COMPULSORY)".
+9. **Open PR** into the integration branch.
 
 ## Hard rules
 

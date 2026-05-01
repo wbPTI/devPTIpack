@@ -50,6 +50,29 @@ Project-scoped tooling under `.claude/`:
 
 Invoke skills via the Skill tool by name. Spawn the sub-agent via the Agent tool with `subagent_type: r-package-reviewer`.
 
+## PLAN.md Sync (COMPULSORY)
+
+[`PLAN.md`](../PLAN.md) is the working tracker. It must stay in step with
+reality, not drift behind it. Every PR that **completes**, **starts**, or
+**meaningfully advances** a tracked item updates `PLAN.md` in the same
+commit.
+
+What "in step" means:
+- Tick `[x]` boxes for items finished by this PR.
+- Add new sub-bullets under the active phase when a PR introduces work
+  not previously enumerated (e.g. a new test file, a new vignette).
+- Move resolved §"Open questions" out of that section into the relevant
+  phase prose (or delete if no longer load-bearing).
+- Update the "Progress log" / status block with the PR number and a
+  one-line outcome.
+
+The skills under `.claude/skills/` already include a final "update
+PLAN.md" step. Don't yield back to the user without performing that step
+when the PR's scope intersects a tracked item.
+
+PRs that *don't* touch PLAN-tracked work (pure infra fixes, typo
+corrections, dependency bumps) need no PLAN.md edit.
+
 ## Change Logging (COMPULSORY)
 
 Every code/doc change must be logged to `.github/docs/changelog.md`.
