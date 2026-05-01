@@ -53,3 +53,5 @@
 | Tests   | Added `tests/testthat/test-indicators-list.R` (1e bullet 3) — covers `get_indicators_list` happy path, column schema, var_code uniqueness, nested `admin_levels_years` shape, the `fltr_exclude_pti` filter, alternative `fltr_var` arg, and a PINNED error on a non-existent fltr_var |
 | Tests   | Removed legacy placeholder `tests/testthat/test-get_indicators_list.R` (a 6-line tautology `expect_gt(2*2, 3)`) — superseded by the new `test-indicators-list.R` |
 | Docs    | `PLAN.md` ticked indicators-list under §4.1 1e and logged PR #22 in §11; suite total updated to 507 expectations |
+| Tests   | Added `tests/testthat/test-drop-inval-adm.R` (1e bullet 4) — covers `get_vars_un_avbil` (output shape + explicit admin_levels arg), `get_min_admin_wght` (zero-weight / fully-available / weighting-an-unavailable-var / multi-scheme), and `drop_inval_adm` (empty drops, scheme+admin match, drop-everything) |
+| Docs    | `PLAN.md` ticked drop-inval-adm under §4.1 1e and logged PR #23 in §11; suite total updated to 523 expectations |

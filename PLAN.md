@@ -123,7 +123,7 @@ also draft its roxygen at the same time. Phase 3 then sweeps only what's missed.
       - [x] [`test-indicators-list.R`](tests/testthat/test-indicators-list.R) — `get_indicators_list` (PR #22; 7 blocks / 29 expectations; replaces the placeholder `test-get_indicators_list.R`)
       - [ ] [`test-legend-palette.R`](tests/testthat/) — `legend_map_satelite`, `recode_val_base`
       - [ ] [`test-plot-helpers.R`](tests/testthat/) — `preplot_reshape_wghtd_dta`, `filter_admin_levels`, `add_legend_paras`, `complete_pti_labels`, `check_existing_groups`, plus `plot_pti_polygons`/`clean_pti_polygons`/`add_pti_poly_controls`/`clean_pti_poly_controls`
-      - [ ] [`test-drop-inval-adm.R`](tests/testthat/) — `get_vars_un_avbil`, `get_min_admin_wght`, `drop_inval_adm`
+      - [x] [`test-drop-inval-adm.R`](tests/testthat/test-drop-inval-adm.R) — `get_vars_un_avbil`, `get_min_admin_wght`, `drop_inval_adm` (PR #23; 10 blocks / 16 expectations)
       - [ ] [`test-export.R`](tests/testthat/) — `get_pti_scores_export`, `get_pti_weights_export`, `fct_inp_for_exp`, `fct_internal_wt_to_exp`
       - [ ] [`test-explorer-helpers.R`](tests/testthat/) — `reshaped_explorer_dta`, `get_var_choices`, `filter_var_explorer`
       - [ ] [`test-map-render.R`](tests/testthat/) — `make_ggmap`, `make_gg_line_map`, `plot_leaf_line_map2`
@@ -243,8 +243,9 @@ Lifted from arch-00 §"End-State Goals":
 | [#20](https://github.com/worldbank/devPTIpack/pull/20) | 2026-05-01 | 1e (validators) | Tier-1 tests for `validate_*` functions; pinned the empty-pattern bug in `validate_read_shp` |
 | [#21](https://github.com/worldbank/devPTIpack/pull/21) | 2026-05-01 | 1e (template-reader) | Tier-1 tests for `fct_template_reader`, `fct_convert_weight_to_clean`, `get_shape`, `create_new_pti` |
 | [#22](https://github.com/worldbank/devPTIpack/pull/22) | 2026-05-01 | 1e (indicators-list) | Tier-1 tests for `get_indicators_list`; deleted the placeholder `test-get_indicators_list.R` |
+| [#23](https://github.com/worldbank/devPTIpack/pull/23) | 2026-05-01 | 1e (drop-inval-adm) | Tier-1 tests for `get_vars_un_avbil`, `get_min_admin_wght`, `drop_inval_adm` |
 
-Suite total after merged PRs: **507 expectations / 0 failures / 0 errors / 1 skip**.
+Suite total after merged PRs: **523 expectations / 0 failures / 0 errors / 1 skip**.
 
 ---
 
