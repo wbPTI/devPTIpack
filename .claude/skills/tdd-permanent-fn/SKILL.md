@@ -82,6 +82,53 @@ test_that("<function>: <case-from-arch-table>", {
 })
 ```
 
+## Tier-2 patterns (`shiny::testServer`)
+
+When the target is a Shiny module server (e.g. `mod_*_server`),
+follow the patterns established in
+[`tests/testthat/test-mod-calc-pti2.R`](../../../tests/testthat/test-mod-calc-pti2.R) — the canonical Tier-2
+template — instead of starting from scratch.
+
+Key gotchas (don't re-discover):
+
+1. **Attach `shiny`** at the top of the test file:
+   ```r
+   suppressPackageStartupMessages(library(shiny))
+   ```
+   Module servers use unnamespaced `reactive`, `observeEvent`, etc.
+   `pkgload::load_all()` loads but does not attach Imports.
+
+2. **Drive observers with `session$flushReact()`** before inspecting
+   the returned reactive. Many modules wrap their inputs in an
+   `observeEvent` that copies into an internal `reactiveVal`; without
+   a flush, the `eventReactive` body runs once with the initial NULL
+   and yields an empty result.
+   ```r
+   testServer(mod_X_server, args = list(...), expr = {
+     session$flushReact()
+     out <- session$getReturned()()
+     # ... assertions
+   })
+   ```
+
+3. **Use a `.build_*()` helper** to centralise the input-list shape so
+   per-test variations only override the fields they care about.
+   See `.build_wt_dta()` in `test-mod-calc-pti2.R`.
+
+4. **Reactive inputs change via `reactiveVal()`** in the calling
+   scope, *not* by re-passing `args`. Capture the rv outside the
+   `args = list(...)` block and update it from inside `expr = {...}`,
+   then `session$flushReact()` again.
+
+5. **Skip cases that depend on bugged behaviour** elsewhere in the
+   pipeline — pick fixture data that avoids the bug rather than
+   pinning a Tier-2 failure for a Tier-1 issue. Reference the bug in
+   PLAN.md §12 from a comment.
+
+Per-module test cases live in `arch-03 §2.1`–`§2.7`. PR one module per
+sub-branch (`tests/mod-<name>`) to keep review velocity high — see
+PLAN.md §9 for the open-question rationale.
+
 ## After authoring
 
 - If tests fail against current code, **do not** weaken the assertion to
