@@ -181,7 +181,7 @@ also draft its roxygen at the same time. Phase 3 then sweeps only what's missed.
             tibble has one column per scheme, per-admin score slots
             are reversed (finer admin first), `req()` halts when
             `plotted_dta()` is NULL. Synthetic minimal inputs (the
-            wrapper does no calc work itself). PR TBD; 6 blocks /
+            wrapper does no calc work itself). PR #39; 6 blocks /
             13 expectations
 
 ### 4.2 Tier 3 timing
@@ -206,7 +206,14 @@ Drive each batch from arch-01 § "Removal Batches" using the
 Batch order is fixed by dependencies (arch-01 §"Cleanup Strategy"). Don't reorder
 without re-checking caller graphs.
 
-- [ ] Batch 1 — dead files & functions
+- [x] Batch 1 — dead files & functions (PR TBD): 4 whole files
+      (`fct_export_data.R`, `mod_explorer.R`, `mod_info_page.R`,
+      `mod_calc_pti.R`), ~20 individual functions, 1 orphan `.rda`,
+      and 3 NAMESPACE exports (`extrapo_one_weight`,
+      `fct_exp_wt_to_internal`, `mod_weights_html_ui`). Plus a
+      pre-existing DESCRIPTION fix (Authors@R needed comma-separated
+      `c(...)` wrapping; added explicit Author/Maintainer fields)
+      that was needed to make `R CMD check` produce useful output.
 - [ ] Batch 2 — legacy runners + app_server/app_ui
 - [ ] Batch 3 — legacy map server (~1200 lines)
 - [ ] Batch 4 — migrate sample app to `launch_pti()`
@@ -309,9 +316,10 @@ Lifted from arch-00 §"End-State Goals":
 | [#36](https://github.com/worldbank/devPTIpack/pull/36) | 2026-05-02 | 1g (mod_get_admin_levels_srv) | Tier-2 `shiny::testServer` tests for `mod_get_admin_levels_srv` — no-filter passthrough, `default_adm_level` (name / value / "All" case-insensitive / non-match → last), `show_adm_levels` filtering, single non-match → last, `default_adm_level` precedence over `show_adm_levels`, update on `cur_levels` change |
 | [#37](https://github.com/worldbank/devPTIpack/pull/37) | 2026-05-02 | 1g (mod_fltr_sel_var2_srv) | Tier-2 `shiny::testServer` tests for `mod_fltr_sel_var2_srv` — initial `updatePickerInput` with display-name choices (mocked via `local_mocked_bindings(.package = "shinyWidgets")`), selection → debounced filter of `preplot_dta`, switching selection swaps surviving slots, `first_open(TRUE)` → auto-select first display name, `add_selected()` override (single-var-per-pillar happy path) + pinned multi-var-pillar `purrr::map_lgl` bug as new §12 entry |
 | [#38](https://github.com/worldbank/devPTIpack/pull/38) | 2026-05-02 | 1g (mod_wt_save_newsrv) | Tier-2 `shiny::testServer` tests for `mod_wt_save_newsrv` — save-new (empty store), overwrite, save-alongside-existing; button-UI states for "Save and plot new PTI" / "Provide a name" / "Modify weights" / "No changes to save" / "Save changes and plot PTI" via internal `current_btn_ui()` reactiveVal. Delete logic lives in `mod_wt_delete_newsrv`, out of scope |
-| TBD                                                    | 2026-05-02 | **1g complete** (mod_export_pti_data_server) | Tier-2 `shiny::testServer` tests for `mod_export_pti_data_server` — returned named list (`Country` + `Weighting schemes` + per-admin scores), `Country` slot mirrors `weights_dta()$general`, weights tibble has one column per scheme, per-admin score slots are reversed (finer admin first), `req()` halts on NULL `plotted_dta`. **Closes 1g — all 7 Tier-2 modules covered.** |
+| [#39](https://github.com/worldbank/devPTIpack/pull/39) | 2026-05-02 | **1g complete** (mod_export_pti_data_server) | Tier-2 `shiny::testServer` tests for `mod_export_pti_data_server` — returned named list (`Country` + `Weighting schemes` + per-admin scores), `Country` slot mirrors `weights_dta()$general`, weights tibble has one column per scheme, per-admin score slots are reversed (finer admin first), `req()` halts on NULL `plotted_dta`. **Closes 1g — all 7 Tier-2 modules covered.** |
+| TBD                                                    | 2026-05-02 | **Phase 2 starts** (Batch 1) | arch-01 Batch 1 — delete 4 whole files (`fct_export_data.R`, `mod_explorer.R`, `mod_info_page.R`, `mod_calc_pti.R`), ~20 dead functions, 1 orphan `.rda`, 3 NAMESPACE exports; clean up commented-out `do.call(make_*_2/spplot/sp_line_map, ...)` lines; regenerate NAMESPACE/Rd via `roxygen2::roxygenise()`. Pre-existing DESCRIPTION fix (Authors@R `c(...)` wrap + explicit Author/Maintainer) folded in to make `R CMD check` produce useful output. Suite stays at 682 PASS — no regression. |
 
-Suite total after this branch: **0 failures / 1 skip / 682 PASS** (`testthat::test_local()`; +13 from this PR).
+Suite total after this branch: **0 failures / 1 skip / 682 PASS** (`testthat::test_local()`; cleanup-only PR, no test delta).
 
 > **Suite totals revised on 2026-05-02:** prior counts in §11 were
 > derived from `sum(res$nb)` over `as.data.frame(testthat::test_local())`,

@@ -103,21 +103,3 @@ fct_convert_weight_to_clean <- function(dta) {
 }
 
 
-#' Fucntion for reading xlsx files with the templates
-#'
-#' @import dplyr purrr stringr readxl
-#' @noRd
-fct_convert_clean_to_weight <- function(dta) {
-  dta %>%
-    list(., names(.), seq_along(.)) %>%
-    pmap( ~ {
-      name_add <- str_c("ws", ..3, "..")
-      ..1 %>%
-        rename_at(vars(!(var_code)), list( ~ str_c(name_add, .))) %>%
-        mutate(!!str_c("ws", ..3, "..", "name") := ..2) %>%
-        dplyr::select(var_code, contains("name"), contains(name_add))
-      
-    }) %>%
-    reduce(full_join, by = "var_code")
-}
-
