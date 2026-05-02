@@ -45,7 +45,7 @@ Phase 1  Test baseline for permanent functions     (#10)       │  in progress
    ├─ 1b   Tier-1 calc-pipeline tests                    ✓ #15-#18
    ├─ 1e   Tier-1 tests for the remaining files         ✓ #20-#29
    ├─ 1f   CI guard via .github/workflows/tests.yaml     ✓ #30
-   └─ 1g   Tier 2 (shiny::testServer for 7 modules)            in progress (3/7)
+   └─ 1g   Tier 2 (shiny::testServer for 7 modules)            in progress (4/7)
             ▼                                                  │
 Phase 2  Cleanup legacy code in batches            (#8)        │ Tests
    ├─ Batch 1  Dead files & functions                          │ guard
@@ -152,7 +152,14 @@ also draft its roxygen at the same time. Phase 3 then sweeps only what's missed.
             a drop. Pinned the asymmetric `get_vars_un_avbil` fill
             direction (PLAN.md §12 new entry). PR #34; 5 blocks / 10
             expectations
-      - [ ] `mod_get_admin_levels_srv`
+      - [x] `mod_get_admin_levels_srv` — no-filter passthrough,
+            `default_adm_level` matches admin key / display value /
+            "All" (case-insensitive) / nothing (→ last element),
+            `show_adm_levels` filtering by name and value, single
+            non-matching `show_adm_levels` (→ last element),
+            `default_adm_level` precedence over `show_adm_levels`,
+            update on `cur_levels` reactive change. PR TBD; 11 blocks /
+            12 expectations
       - [ ] `mod_fltr_sel_var2_srv`
       - [ ] `mod_wt_save_newsrv`
       - [ ] `mod_export_pti_data_server`
@@ -278,8 +285,10 @@ Lifted from arch-00 §"End-State Goals":
 | [#31](https://github.com/worldbank/devPTIpack/pull/31) | 2026-05-02 | 1g (mod_calc_pti2) | Tier-2 `shiny::testServer` tests for `mod_calc_pti2_server` — happy path, all-zero, single-indicator, dedup, weight-change recompute |
 | [#33](https://github.com/worldbank/devPTIpack/pull/33) | 2026-05-02 | 1g (mod_DT_inputs) | Tier-2 `shiny::testServer` tests for `mod_DT_inputs_server` — initial-render NA weights, direct input → current_values, all-zero + all-one button paths, `update_dta()` push, 500ms throttle window. Recounted §11 suite total via summary-reporter `PASS` |
 | [#34](https://github.com/worldbank/devPTIpack/pull/34) | 2026-05-02 | 1g (mod_drop_inval_adm) | Tier-2 `shiny::testServer` tests for `mod_drop_inval_adm` — no-drops happy path, indicator missing at admin1 → admin1 dropped, `showNotification` fires on drop (mocked via `local_mocked_bindings`), suppressed when no drops, weight-0 indicator does not trigger a drop. Pinned `get_vars_un_avbil` fill-direction asymmetry as §12 entry |
+| [#35](https://github.com/worldbank/devPTIpack/pull/35) | 2026-05-02 | chore (PLAN/gitignore) | Replace two PR-#34 `TBD` placeholders in PLAN.md with `#34`; gitignore `.claude/scheduled_tasks.lock` so the auto-changelog hook stops drafting noise rows for it |
+| TBD                                                    | 2026-05-02 | 1g (mod_get_admin_levels_srv) | Tier-2 `shiny::testServer` tests for `mod_get_admin_levels_srv` — no-filter passthrough, `default_adm_level` (name / value / "All" case-insensitive / non-match → last), `show_adm_levels` filtering, single non-match → last, `default_adm_level` precedence over `show_adm_levels`, update on `cur_levels` change |
 
-Suite total after this branch: **0 failures / 1 skip / 622 PASS** (`testthat::test_local()`; +10 from this PR).
+Suite total after this branch: **0 failures / 1 skip / 634 PASS** (`testthat::test_local()`; +12 from this PR).
 
 > **Suite totals revised on 2026-05-02:** prior counts in §11 were
 > derived from `sum(res$nb)` over `as.data.frame(testthat::test_local())`,
@@ -294,8 +303,9 @@ Suite total after this branch: **0 failures / 1 skip / 622 PASS** (`testthat::te
 > **Phase 1e milestone reached** with PR #29: all 10 Tier-1 test files
 > from arch-03 §1.2–§1.11 are now in place. 8 bugs / spec
 > corrections pinned along the way (see §12). 1f (CI guard) merged in
-> #30. 1g (Tier 2) underway — 3 of 7 modules covered (`mod_calc_pti2`
-> in #31, `mod_DT_inputs` in #33, `mod_drop_inval_adm` on this branch).
+> #30. 1g (Tier 2) underway — 4 of 7 modules covered (`mod_calc_pti2`
+> in #31, `mod_DT_inputs` in #33, `mod_drop_inval_adm` in #34,
+> `mod_get_admin_levels_srv` on this branch).
 
 ---
 
