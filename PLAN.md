@@ -45,7 +45,7 @@ Phase 1  Test baseline for permanent functions     (#10)       │  in progress
    ├─ 1b   Tier-1 calc-pipeline tests                    ✓ #15-#18
    ├─ 1e   Tier-1 tests for the remaining files         ✓ #20-#29
    ├─ 1f   CI guard via .github/workflows/tests.yaml     ✓ #30
-   └─ 1g   Tier 2 (shiny::testServer for 7 modules)            in progress (2/7)
+   └─ 1g   Tier 2 (shiny::testServer for 7 modules)            in progress (3/7)
             ▼                                                  │
 Phase 2  Cleanup legacy code in batches            (#8)        │ Tests
    ├─ Batch 1  Dead files & functions                          │ guard
@@ -144,8 +144,14 @@ also draft its roxygen at the same time. Phase 3 then sweeps only what's missed.
             all-one button paths (round-trip simulated via `setInputs`
             because `updateNumericInput` does not round-trip in
             `MockShinySession`), `update_dta()` push, 500ms throttle
-            window (PR TBD; 6 blocks / 13 expectations)
-      - [ ] `mod_drop_inval_adm`
+            window (PR #33; 6 blocks / 13 expectations)
+      - [x] `mod_drop_inval_adm` — no-drops happy path, indicator
+            missing at admin1 → admin1 dropped, `showNotification` fires
+            on drop (mocked via `local_mocked_bindings`), notification
+            suppressed when no drops, weight-0 indicator does not trigger
+            a drop. Pinned the asymmetric `get_vars_un_avbil` fill
+            direction (PLAN.md §12 new entry). PR TBD; 5 blocks / 10
+            expectations
       - [ ] `mod_get_admin_levels_srv`
       - [ ] `mod_fltr_sel_var2_srv`
       - [ ] `mod_wt_save_newsrv`
@@ -270,9 +276,10 @@ Lifted from arch-00 §"End-State Goals":
 | [#29](https://github.com/worldbank/devPTIpack/pull/29) | 2026-05-01 | **1e complete** (dt-construction) | Tier-1 tests for `prep_input_data`, `make_vis_targets_for_dt`, `make_input_DT`; pinned arch-03 §1.11 spec correction — pillar rows interleaved with variable rows |
 | [#30](https://github.com/worldbank/devPTIpack/pull/30) | 2026-05-02 | 1f (CI guard) | `.github/workflows/tests.yaml` runs `testthat::test_local()` on push / PR; local suite ~30s, well under the 2-min budget |
 | [#31](https://github.com/worldbank/devPTIpack/pull/31) | 2026-05-02 | 1g (mod_calc_pti2) | Tier-2 `shiny::testServer` tests for `mod_calc_pti2_server` — happy path, all-zero, single-indicator, dedup, weight-change recompute |
-| TBD                                                    | 2026-05-02 | 1g (mod_DT_inputs) | Tier-2 `shiny::testServer` tests for `mod_DT_inputs_server` — initial-render NA weights, direct input → current_values, all-zero + all-one button paths, `update_dta()` push, 500ms throttle window |
+| [#33](https://github.com/worldbank/devPTIpack/pull/33) | 2026-05-02 | 1g (mod_DT_inputs) | Tier-2 `shiny::testServer` tests for `mod_DT_inputs_server` — initial-render NA weights, direct input → current_values, all-zero + all-one button paths, `update_dta()` push, 500ms throttle window. Recounted §11 suite total via summary-reporter `PASS` |
+| TBD                                                    | 2026-05-02 | 1g (mod_drop_inval_adm) | Tier-2 `shiny::testServer` tests for `mod_drop_inval_adm` — no-drops happy path, indicator missing at admin1 → admin1 dropped, `showNotification` fires on drop (mocked via `local_mocked_bindings`), suppressed when no drops, weight-0 indicator does not trigger a drop. Pinned `get_vars_un_avbil` fill-direction asymmetry as §12 entry |
 
-Suite total after this branch: **0 failures / 1 skip / 612 PASS** (`testthat::test_local()`; +13 from this PR).
+Suite total after this branch: **0 failures / 1 skip / 622 PASS** (`testthat::test_local()`; +10 from this PR).
 
 > **Suite totals revised on 2026-05-02:** prior counts in §11 were
 > derived from `sum(res$nb)` over `as.data.frame(testthat::test_local())`,
@@ -285,10 +292,10 @@ Suite total after this branch: **0 failures / 1 skip / 612 PASS** (`testthat::te
 > historical record, with this footnote covering the methodology shift.
 >
 > **Phase 1e milestone reached** with PR #29: all 10 Tier-1 test files
-> from arch-03 §1.2–§1.11 are now in place. 7 bugs / spec
+> from arch-03 §1.2–§1.11 are now in place. 8 bugs / spec
 > corrections pinned along the way (see §12). 1f (CI guard) merged in
-> #30. 1g (Tier 2) underway — 2 of 7 modules covered (`mod_calc_pti2`
-> in #31, `mod_DT_inputs` on this branch).
+> #30. 1g (Tier 2) underway — 3 of 7 modules covered (`mod_calc_pti2`
+> in #31, `mod_DT_inputs` in #33, `mod_drop_inval_adm` on this branch).
 
 ---
 
@@ -310,6 +317,7 @@ Suite total after this branch: **0 failures / 1 skip / 612 PASS** (`testthat::te
 | [`R/calc_pti_expander.R::expand_adm_levels`](R/calc_pti_expander.R) | When >1 list element name matches an admin level (`length(...) == 1` guard fails), the entire source-loop iteration returns nested `NULL`s. Silent data loss. | [test-calc-pipeline.R:expand_adm_levels: >1 element matches (PINNED)](tests/testthat/test-calc-pipeline.R) |
 | [`R/fct_inp_for_exp.R::fct_internal_wt_to_exp`](R/fct_inp_for_exp.R#L51) | Errors with "Join columns in `x` must be present" when called with an empty `weights_clean = list()`. Cause: `imap_dfr(list())` yields a 0×0 tibble that has no `var_code` column for the downstream `left_join`. Should early-return on length-0 input. | [test-export.R:fct_internal_wt_to_exp: empty list errors at left_join (PINNED)](tests/testthat/test-export.R) |
 | [`R/mod_dta_explorer2.R::get_var_choices`](R/mod_dta_explorer2.R#L302) | Errors with "attempt to set an attribute on NULL" when called with an empty `indicators_list`. The fallback branch `names(out) <- "Indicators"` runs even when `out` is `NULL`. A length-0 list output would be more useful. | [test-explorer-helpers.R:get_var_choices: empty indicators tibble errors (PINNED)](tests/testthat/test-explorer-helpers.R) |
+| [`R/mod_drop_inval_adm.R::get_vars_un_avbil`](R/mod_drop_inval_adm.R#L72-L101) | Asymmetric availability check. The fill logic uses `lag(value)` (after `arrange(admin_level)`), so an indicator that exists only at an earlier-sorted level (e.g. admin1 only) is treated as "available" at later-sorted levels (admin2) — admin2 is never surfaced as unavailable. Reverse direction (admin2-only → admin1 unavailable) works because admin1 is first-sorted and has no `lag`. Also: the `is.na(value & !any_larger)` expression looks like missing parens — likely meant `(is.na(value) & !any_larger)`. Caught while writing Tier-2 tests for `mod_drop_inval_adm`. | [test-mod-drop-inval-adm.R: comment block above "Notification side effect" (DOCUMENTED, not pinned — Tier-2 test avoids the bug per the skill rule)](tests/testthat/test-mod-drop-inval-adm.R) |
 
 ---
 
