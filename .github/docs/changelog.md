@@ -74,3 +74,5 @@
 | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | Config  | Added `.github/workflows/tests.yaml` (1f) — runs `testthat::test_local()` on push/PR to main and koichi-arch-redesign via r-lib/actions v2. Local suite ~30s, well under arch-03's 2-min budget |
 | Docs    | `PLAN.md` ticked 1f, updated the Phase 1 tree to mark 1g as next, logged PR #30                                                                  |
+| Tests   | Added `tests/testthat/test-mod-calc-pti2.R` (1g first module) — Tier-2 `shiny::testServer` coverage for `mod_calc_pti2_server`: happy path (admin-keyed slots), all-zero weights -> 0 scores, single-indicator weight list, identical-input dedup, weight-change recompute. Notes the multi-admin-only constraint pinned in PLAN.md §12 (single-admin indicators trip the expand_adm_levels NULL short-circuit) |
+| Docs    | `PLAN.md` expanded 1g into a 7-bullet checklist (one per module), ticked the first module, logged PR #31; suite total 725 -> 792 expectations |
