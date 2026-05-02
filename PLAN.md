@@ -44,8 +44,8 @@ Phase 1  Test baseline for permanent functions     (#10)       │  in progress
    ├─ 1a   `run_pti_pipeline()` orchestrator             ✓ #15 │
    ├─ 1b   Tier-1 calc-pipeline tests                    ✓ #15-#18
    ├─ 1e   Tier-1 tests for the remaining files         ✓ #20-#29
-   ├─ 1f   CI guard (devtools::test() < 2 min on Actions)      ◀ next
-   └─ 1g   Tier 2 (shiny::testServer for 7 modules)            
+   ├─ 1f   CI guard via .github/workflows/tests.yaml     ✓ #30
+   └─ 1g   Tier 2 (shiny::testServer for 7 modules)            ◀ next
             ▼                                                  │
 Phase 2  Cleanup legacy code in batches            (#8)        │ Tests
    ├─ Batch 1  Dead files & functions                          │ guard
@@ -130,8 +130,10 @@ also draft its roxygen at the same time. Phase 3 then sweeps only what's missed.
       - [x] [`test-explorer-helpers.R`](tests/testthat/test-explorer-helpers.R) — `reshaped_explorer_dta`, `get_var_choices`, `filter_var_explorer` (PR #27; 11 blocks / 27 expectations; pinned `get_var_choices` empty-tibble error and the actual nested-by-pillar return shape)
       - [x] [`test-map-render.R`](tests/testthat/test-map-render.R) — `make_ggmap`, `make_gg_line_map`, `plot_leaf_line_map2` (PR #28; 7 blocks / 8 expectations; class-only assertions for ggplot/leaflet renderers)
       - [x] [`test-dt-construction.R`](tests/testthat/test-dt-construction.R) — `prep_input_data`, `make_vis_targets_for_dt`, `make_input_DT` (PR #29; 8 blocks / 17 expectations; pinned arch-03 §1.11 spec correction — pillar rows interleaved with variable rows)
-- [ ] **1f — CI guard.** Confirm `devtools::test()` finishes < 2 min and run it
-      via GitHub Actions on push.
+- [x] **1f — CI guard.** [`.github/workflows/tests.yaml`](.github/workflows/tests.yaml)
+      runs `testthat::test_local()` on every push / PR to `main` /
+      `koichi-arch-redesign`. Local suite finishes in ~30s, well under
+      arch-03's 2-min budget. PR #30.
 - [ ] **1g — Tier 2 (after Tier 1 green).** Module-server tests via
       `shiny::testServer` (arch-03 §2). 7 modules.
 
@@ -252,6 +254,7 @@ Lifted from arch-00 §"End-State Goals":
 | [#27](https://github.com/worldbank/devPTIpack/pull/27) | 2026-05-01 | 1e (explorer-helpers) | Tier-1 tests for `reshaped_explorer_dta`, `get_var_choices`, `filter_var_explorer`; pinned `get_var_choices(empty)` NULL-attribute error (see §12) |
 | [#28](https://github.com/worldbank/devPTIpack/pull/28) | 2026-05-01 | 1e (map-render) | Tier-1 class-assertion tests for `make_ggmap`, `make_gg_line_map`, `plot_leaf_line_map2` |
 | [#29](https://github.com/worldbank/devPTIpack/pull/29) | 2026-05-01 | **1e complete** (dt-construction) | Tier-1 tests for `prep_input_data`, `make_vis_targets_for_dt`, `make_input_DT`; pinned arch-03 §1.11 spec correction — pillar rows interleaved with variable rows |
+| [#30](https://github.com/worldbank/devPTIpack/pull/30) | 2026-05-02 | 1f (CI guard) | `.github/workflows/tests.yaml` runs `testthat::test_local()` on push / PR; local suite ~30s, well under the 2-min budget |
 
 Suite total after merged PRs: **725 expectations / 0 failures / 0 errors / 1 skip**.
 
