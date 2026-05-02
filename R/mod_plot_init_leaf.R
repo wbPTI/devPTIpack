@@ -38,7 +38,7 @@ mod_plot_init_leaf_server <- function(id, shp_dta, ...){
 #' @param show_adm_levels character vector with the ids of the admin levels which could be plotted
 #' 
 #' @export
-#' @importFrom leaflet  fitBounds addProviderTiles addMapPane addPolylines pathOptions providers
+#' @importFrom leaflet  fitBounds addProviderTiles addMapPane addPolylines pathOptions providers addTiles
 #' @importFrom sf st_bbox
 plot_leaf_line_map2 <-
   function(leaf_map,

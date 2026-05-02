@@ -225,7 +225,19 @@ without re-checking caller graphs.
       `golem_add_external_resources` (Batch 4 territory). Removed 7
       NAMESPACE exports via `roxygen2::roxygenise()`. Suite stays at
       682 PASS — no regressions.
-- [ ] Batch 3 — legacy map server (~1200 lines)
+- [x] Batch 3 — legacy map server (~1200 lines) (PR TBD): extracted
+      `mod_map_pti_leaf_ui` to its own file `R/mod_map_pti_leaf_ui.R`
+      (the kept UI used by `mod_pti_comparepage_ui`, `mod_weights_ui`,
+      and `mod_ptipage_core.R`). Deleted whole file `R/mod_map_pti_leaf.R`
+      (1258 lines, all 12 legacy server functions go) and `make_shapes()` +
+      `make_labels()` from `R/fct_legend_map_satelites.R`. Folded in a
+      one-line patch to `app_new_pti_ui` to use the modern
+      `mod_pti_comparepage_ui` instead of the deleted
+      `mod_map_pti_leaf_page_ui`. Relocated 2 `@importFrom` tags
+      (`leaflet::colorFactor` → `legend_map_satelite`,
+      `leaflet::addTiles` → `plot_leaf_line_map2`) that were
+      auto-pruned from NAMESPACE because their roxygen lived in the
+      deleted file. Suite stays at 682 PASS — no regressions.
 - [ ] Batch 4 — migrate sample app to `launch_pti()`
 - [ ] Batch 5 — remove `mod_weights.R` legacy
 
@@ -329,6 +341,7 @@ Lifted from arch-00 §"End-State Goals":
 | [#39](https://github.com/worldbank/devPTIpack/pull/39) | 2026-05-02 | **1g complete** (mod_export_pti_data_server) | Tier-2 `shiny::testServer` tests for `mod_export_pti_data_server` — returned named list (`Country` + `Weighting schemes` + per-admin scores), `Country` slot mirrors `weights_dta()$general`, weights tibble has one column per scheme, per-admin score slots are reversed (finer admin first), `req()` halts on NULL `plotted_dta`. **Closes 1g — all 7 Tier-2 modules covered.** |
 | [#40](https://github.com/worldbank/devPTIpack/pull/40)  | 2026-05-02 | **Phase 2 starts** (Batch 1) | arch-01 Batch 1 — delete 4 whole files (`fct_export_data.R`, `mod_explorer.R`, `mod_info_page.R`, `mod_calc_pti.R`), ~20 dead functions, 1 orphan `.rda`, 3 NAMESPACE exports; clean up commented-out `do.call(make_*_2/spplot/sp_line_map, ...)` lines; regenerate NAMESPACE/Rd via `roxygen2::roxygenise()`. Pre-existing DESCRIPTION fix (Authors@R `c(...)` wrap + explicit Author/Maintainer) folded in to make `R CMD check` produce useful output. Suite stays at 682 PASS — no regression. |
 | [#41](https://github.com/worldbank/devPTIpack/pull/41)  | 2026-05-02 | Phase 2 Batch 2 | arch-01 Batch 2 — delete whole file `R/mod_pti_onepage.R` (both `mod_pti_onepage_ui` + `mod_pti_onepage_server`), trim `R/run_app.R` to keep only `run_new_pti` (delete `run_pti`/`run_onepage_pti`/`run_onepage_pti_sample`/`run_dev_map_pti`/`run_dev_pti_plot`), trim `R/app_server.R` to keep only `app_new_pti_server` (delete `app_server`/`app_server_input_simple`/`app_server_sample_pti_vis`), trim `R/app_ui.R` to keep `app_new_pti_ui` + `golem_add_external_resources` (delete `app_ui`/`app_server_sample_pti_vis_ui`). 7 NAMESPACE exports dropped via `roxygen2::roxygenise()`. Suite stays at 682 PASS — no regression. |
+| TBD                                                    | 2026-05-02 | Phase 2 Batch 3 | arch-01 Batch 3 — extract `mod_map_pti_leaf_ui` to new file `R/mod_map_pti_leaf_ui.R`, delete whole file `R/mod_map_pti_leaf.R` (1258 lines, all 12 legacy server functions), delete `make_shapes()` + `make_labels()` from `R/fct_legend_map_satelites.R`. Patched `app_new_pti_ui` to use modern `mod_pti_comparepage_ui` instead of deleted `mod_map_pti_leaf_page_ui` (Batch-4 mini-patch folded in to avoid `R CMD check` undefined-symbol note). Relocated 2 `@importFrom` tags (`leaflet::colorFactor` → `legend_map_satelite`; `leaflet::addTiles` → `plot_leaf_line_map2`) auto-pruned from NAMESPACE because their roxygen lived in the deleted file. Suite stays at 682 PASS — no regression. |
 
 Suite total after this branch: **0 failures / 1 skip / 682 PASS** (`testthat::test_local()`; cleanup-only PR, no test delta).
 
