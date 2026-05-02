@@ -13,46 +13,6 @@ mod_weights_rand_ui <- function(id){
 
 }
     
-#' Assign random weights 
-#' 
-#' @noRd 
-#' @importFrom rlang set_names
-#' @importFrom purrr map
-mod_weights_rand_server <- function(id, imported_data){
-  moduleServer( id, function(input, output, session){
-    ns <- session$ns
-    
-    ws_to_plot2 <- reactiveVal()
-    indicators <-  mod_indicarots_srv("id", imported_data)
-    
-    output$rand_weights_ui <- renderUI({
-      tagList(
-        actionButton(ns("new_weights"), "Regenerate random weights"),
-        verbatimTextOutput(ns("weights_tbl"))
-      )
-    }) 
-    
-    out_dta <-
-      eventReactive(#
-        list(indicators(), input$new_weights),
-        {
-          req(indicators())
-          a <- imported_data()
-          a$indicators_list <- indicators()
-          a$weights_clean <- get_rand_weights(a$indicators_list)
-          a
-        }, ignoreNULL = TRUE)
-    
-    output$weights_tbl <-
-      renderPrint({
-        out_dta()$weights_clean %>% map( ~ set_names(.x$weight, .x$var_code))
-      })
-    
-    out_dta
-  })
-}
-
-
 #' @describeIn mod_weights_rand_ui  Computes random weights
 #' 
 #' @noRd

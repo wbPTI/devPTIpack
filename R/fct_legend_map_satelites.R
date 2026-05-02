@@ -305,26 +305,6 @@ recode_val_base <-
   }
 
 
-#' New
-#' 
-#' @noRd
-#'
-get_pal_lab_fn <- function(x_uni) {
-  
-  lab_function <- scales::label_number(0.01, big.mark = " ")
-  
-  if (abs(max(x_uni, na.rm = T) / 10) > 1 & abs(max(x_uni, na.rm = T) / 100) < 1) {
-    lab_function <- scales::label_number(0.1, big.mark = " ")
-  } 
-  
-  if (abs(max(x_uni, na.rm = T) / 100) > 1 ) {
-    lab_function <- scales::label_number(1, big.mark = " ")
-  } 
-  
-  lab_function
-}
-
-
 #' #' Circle shifter
 #' #'
 #' #' @description Circle shifter
@@ -387,21 +367,6 @@ make_labels <- function(sizes, labels) {
   )
 }
 
-
-
-#' Breaks helpers 7
-#'
-#' @noRd
-#' 
-zeros_after_period <- function(x) {
-  if (isTRUE(all.equal(round(x), x)))
-    return (rep(0, length(x)))
-  out_number <-
-    log10(abs(x) - floor(abs(x))) %>%
-    abs() %>%
-    ceiling(.)
-  ifelse(is.infinite(out_number), 0, out_number)
-} 
 
 
 

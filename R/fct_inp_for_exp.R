@@ -57,12 +57,3 @@ fct_internal_wt_to_exp <- function(weights_clean, indicators_list) {
     select(contains("var_"), contains("weight"))
 }
 
-
-
-#' convert exported weights to internal
-#'  
-#' @noRd
-#' @export
-fct_exp_wt_to_internal <- function(dta) {
-  dta
-}

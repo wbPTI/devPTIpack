@@ -1,36 +1,3 @@
-#' dwnld_dta UI Function
-#'
-#' @description A shiny Module.
-#'
-#' @param id module ID. If sued inside a parent module, NULL
-#' @param outputId optional. If use multiple downloads in same NS, we allow for 
-#'        outputId variation. Remember to specify same id for the server side fucntion.
-#'
-#' @noRd 
-#'
-#' @importFrom shiny NS tagList icon
-mod_dwnld_dta_btn_ui <-
-  function(id = NULL,
-           outputId = "dta.dwld",
-           label = "Download data",
-           icon = shiny::icon("download"),
-           class = "btn-info  btn-xs",
-           style = "width: 49%") {
-    ns <- NS(id)
-    tagList(
-      shinyjs::useShinyjs(),
-      downloadButton(
-        ns(outputId),
-        label = label,
-        icon = icon,
-        class = class,
-        style = style
-      ) %>%
-        shinyjs::disabled()
-    )
-  }
-
-
 mod_dwnld_dta_link_ui <-
   function(id,
            outputId = "dta.dwld",

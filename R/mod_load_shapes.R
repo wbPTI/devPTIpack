@@ -1,29 +1,5 @@
 
-#' load_shapes Server Function
-#'
-#' @noRd 
-mod_load_shapes_server <- function(input, output, session, globr, shapes_list){
-  ns <- session$ns
-  
-  shapes_fldr <- "app-shapes/"
-  globr[[shapes_list]] <-
-    list.files(shapes_fldr, "rds") %>%
-    stringr::str_replace_all("\\.rds", "") %>% 
-    purrr::map(~ {
-      glue::glue("{shapes_fldr}{.x}.rds") %>% 
-        readr::read_rds() %>% 
-        list() %>% 
-        purrr::set_names(.x)
-    }) %>%
-    unlist(recursive = F) 
-  
-  # reactive({
-  #   req(globr[[shapes_list]]) %>% 
-  #     return()
-  # })
-}
-
-# New get shape module 
+# New get shape module
 mod_get_shape_srv <-
   function(id,
            shapes_fldr = "app-shapes/",

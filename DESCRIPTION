@@ -1,10 +1,14 @@
 Package: devPTIpack
 Title: Development environment for Precise Index Targeting analysis
 Version: 0.0.0.9941
-Authors@R: 
-  person('Takaaki', 'Masaki', email = 'tmasaki@worldbank.org', role = c('aut'))
-  person('Arden', 'Finn', email = 'afinn1@worldbank.org', role = c('aut'))
-  person('Eduard', 'Bukin', email = 'edwardbukin@gmail.com', role = c('cre'))
+Authors@R: c(
+  person('Takaaki', 'Masaki', email = 'tmasaki@worldbank.org', role = c('aut')),
+  person('Arden', 'Finn', email = 'afinn1@worldbank.org', role = c('aut')),
+  person('Eduard', 'Bukin', email = 'edwardbukin@gmail.com', role = c('cre')))
+Author: Takaaki Masaki [aut],
+  Arden Finn [aut],
+  Eduard Bukin [cre]
+Maintainer: Eduard Bukin <edwardbukin@gmail.com>
 Description: We attempt to create a generic framework that allows to consolidate PIT 
   related indicators, agregate them according to a given methodology and 
   weighting scheme and visualise their spatial distribution.
