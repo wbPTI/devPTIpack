@@ -45,7 +45,7 @@ Phase 1  Test baseline for permanent functions     (#10)       │  in progress
    ├─ 1b   Tier-1 calc-pipeline tests                    ✓ #15-#18
    ├─ 1e   Tier-1 tests for the remaining files         ✓ #20-#29
    ├─ 1f   CI guard via .github/workflows/tests.yaml     ✓ #30
-   └─ 1g   Tier 2 (shiny::testServer for 7 modules)            in progress (1/7)
+   └─ 1g   Tier 2 (shiny::testServer for 7 modules)            in progress (2/7)
             ▼                                                  │
 Phase 2  Cleanup legacy code in batches            (#8)        │ Tests
    ├─ Batch 1  Dead files & functions                          │ guard
@@ -139,7 +139,12 @@ also draft its roxygen at the same time. Phase 3 then sweeps only what's missed.
       - [x] `mod_calc_pti2_server` — happy path, all-zero, single-indicator,
             identical-input dedup, weight-change recompute (PR #31; 5 blocks /
             67 expectations)
-      - [ ] `mod_DT_inputs_server`
+      - [x] `mod_DT_inputs_server` — initial render (NA weights, all
+            var_codes), direct numericInput → current_values, all-zero +
+            all-one button paths (round-trip simulated via `setInputs`
+            because `updateNumericInput` does not round-trip in
+            `MockShinySession`), `update_dta()` push, 500ms throttle
+            window (PR TBD; 6 blocks / 13 expectations)
       - [ ] `mod_drop_inval_adm`
       - [ ] `mod_get_admin_levels_srv`
       - [ ] `mod_fltr_sel_var2_srv`
@@ -265,13 +270,25 @@ Lifted from arch-00 §"End-State Goals":
 | [#29](https://github.com/worldbank/devPTIpack/pull/29) | 2026-05-01 | **1e complete** (dt-construction) | Tier-1 tests for `prep_input_data`, `make_vis_targets_for_dt`, `make_input_DT`; pinned arch-03 §1.11 spec correction — pillar rows interleaved with variable rows |
 | [#30](https://github.com/worldbank/devPTIpack/pull/30) | 2026-05-02 | 1f (CI guard) | `.github/workflows/tests.yaml` runs `testthat::test_local()` on push / PR; local suite ~30s, well under the 2-min budget |
 | [#31](https://github.com/worldbank/devPTIpack/pull/31) | 2026-05-02 | 1g (mod_calc_pti2) | Tier-2 `shiny::testServer` tests for `mod_calc_pti2_server` — happy path, all-zero, single-indicator, dedup, weight-change recompute |
+| TBD                                                    | 2026-05-02 | 1g (mod_DT_inputs) | Tier-2 `shiny::testServer` tests for `mod_DT_inputs_server` — initial-render NA weights, direct input → current_values, all-zero + all-one button paths, `update_dta()` push, 500ms throttle window |
 
-Suite total after merged PRs: **792 expectations / 0 failures / 0 errors / 1 skip**.
+Suite total after this branch: **0 failures / 1 skip / 612 PASS** (`testthat::test_local()`; +13 from this PR).
 
+> **Suite totals revised on 2026-05-02:** prior counts in §11 were
+> derived from `sum(res$nb)` over `as.data.frame(testthat::test_local())`,
+> which over-counts internal `testthat::test_that()` calls inside
+> `validate_geometries()` and `validate_single_geom()` (those use
+> `test_that()` as a runtime validation mechanism — pinned in §12 as
+> candidates for the #7 refactor). The summary-reporter `PASS` count is
+> now the source of truth. Per-PR "expectations" deltas above were
+> measured the same way and are similarly inflated; left as-is for
+> historical record, with this footnote covering the methodology shift.
+>
 > **Phase 1e milestone reached** with PR #29: all 10 Tier-1 test files
 > from arch-03 §1.2–§1.11 are now in place. 7 bugs / spec
 > corrections pinned along the way (see §12). 1f (CI guard) merged in
-> #30. 1g (Tier 2) underway — first module landed in #31.
+> #30. 1g (Tier 2) underway — 2 of 7 modules covered (`mod_calc_pti2`
+> in #31, `mod_DT_inputs` on this branch).
 
 ---
 
