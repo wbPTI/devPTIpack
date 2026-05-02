@@ -45,7 +45,7 @@ Phase 1  Test baseline for permanent functions     (#10)       │  in progress
    ├─ 1b   Tier-1 calc-pipeline tests                    ✓ #15-#18
    ├─ 1e   Tier-1 tests for the remaining files         ✓ #20-#29
    ├─ 1f   CI guard via .github/workflows/tests.yaml     ✓ #30
-   └─ 1g   Tier 2 (shiny::testServer for 7 modules)            in progress (5/7)
+   └─ 1g   Tier 2 (shiny::testServer for 7 modules)            in progress (6/7)
             ▼                                                  │
 Phase 2  Cleanup legacy code in batches            (#8)        │ Tests
    ├─ Batch 1  Dead files & functions                          │ guard
@@ -166,8 +166,15 @@ also draft its roxygen at the same time. Phase 3 then sweeps only what's missed.
             slots, `first_open(TRUE)` → auto-select first display
             name, `add_selected()` override (single-var-per-pillar
             happy path) + pinned multi-var-pillar `purrr::map_lgl` bug
-            (PLAN.md §12 new entry). PR TBD; 7 blocks / 18 expectations
-      - [ ] `mod_wt_save_newsrv`
+            (PLAN.md §12 new entry). PR #37; 7 blocks / 18 expectations
+      - [x] `mod_wt_save_newsrv` — save-new (empty store), overwrite,
+            save-alongside-existing; button-UI labels and disabled
+            state for "Save and plot new PTI" / "Provide a name" /
+            "Modify weights" / "No changes to save" / "Save changes
+            and plot PTI". Internal `current_btn_ui()` reactiveVal
+            tapped directly from `expr` scope (renderUI side effect).
+            Delete logic lives in `mod_wt_delete_newsrv`, out of
+            scope for arch-03 §2.6. PR TBD; 8 blocks / 17 expectations
       - [ ] `mod_export_pti_data_server`
 
 ### 4.2 Tier 3 timing
@@ -293,9 +300,10 @@ Lifted from arch-00 §"End-State Goals":
 | [#34](https://github.com/worldbank/devPTIpack/pull/34) | 2026-05-02 | 1g (mod_drop_inval_adm) | Tier-2 `shiny::testServer` tests for `mod_drop_inval_adm` — no-drops happy path, indicator missing at admin1 → admin1 dropped, `showNotification` fires on drop (mocked via `local_mocked_bindings`), suppressed when no drops, weight-0 indicator does not trigger a drop. Pinned `get_vars_un_avbil` fill-direction asymmetry as §12 entry |
 | [#35](https://github.com/worldbank/devPTIpack/pull/35) | 2026-05-02 | chore (PLAN/gitignore) | Replace two PR-#34 `TBD` placeholders in PLAN.md with `#34`; gitignore `.claude/scheduled_tasks.lock` so the auto-changelog hook stops drafting noise rows for it |
 | [#36](https://github.com/worldbank/devPTIpack/pull/36) | 2026-05-02 | 1g (mod_get_admin_levels_srv) | Tier-2 `shiny::testServer` tests for `mod_get_admin_levels_srv` — no-filter passthrough, `default_adm_level` (name / value / "All" case-insensitive / non-match → last), `show_adm_levels` filtering, single non-match → last, `default_adm_level` precedence over `show_adm_levels`, update on `cur_levels` change |
-| TBD                                                    | 2026-05-02 | 1g (mod_fltr_sel_var2_srv) | Tier-2 `shiny::testServer` tests for `mod_fltr_sel_var2_srv` — initial `updatePickerInput` with display-name choices (mocked via `local_mocked_bindings(.package = "shinyWidgets")`), selection → debounced filter of `preplot_dta`, switching selection swaps surviving slots, `first_open(TRUE)` → auto-select first display name, `add_selected()` override (single-var-per-pillar happy path) + pinned multi-var-pillar `purrr::map_lgl` bug as new §12 entry |
+| [#37](https://github.com/worldbank/devPTIpack/pull/37) | 2026-05-02 | 1g (mod_fltr_sel_var2_srv) | Tier-2 `shiny::testServer` tests for `mod_fltr_sel_var2_srv` — initial `updatePickerInput` with display-name choices (mocked via `local_mocked_bindings(.package = "shinyWidgets")`), selection → debounced filter of `preplot_dta`, switching selection swaps surviving slots, `first_open(TRUE)` → auto-select first display name, `add_selected()` override (single-var-per-pillar happy path) + pinned multi-var-pillar `purrr::map_lgl` bug as new §12 entry |
+| TBD                                                    | 2026-05-02 | 1g (mod_wt_save_newsrv) | Tier-2 `shiny::testServer` tests for `mod_wt_save_newsrv` — save-new (empty store), overwrite, save-alongside-existing; button-UI states for "Save and plot new PTI" / "Provide a name" / "Modify weights" / "No changes to save" / "Save changes and plot PTI" via internal `current_btn_ui()` reactiveVal. Delete logic lives in `mod_wt_delete_newsrv`, out of scope |
 
-Suite total after this branch: **0 failures / 1 skip / 652 PASS** (`testthat::test_local()`; +18 from this PR).
+Suite total after this branch: **0 failures / 1 skip / 669 PASS** (`testthat::test_local()`; +17 from this PR).
 
 > **Suite totals revised on 2026-05-02:** prior counts in §11 were
 > derived from `sum(res$nb)` over `as.data.frame(testthat::test_local())`,
@@ -310,10 +318,10 @@ Suite total after this branch: **0 failures / 1 skip / 652 PASS** (`testthat::te
 > **Phase 1e milestone reached** with PR #29: all 10 Tier-1 test files
 > from arch-03 §1.2–§1.11 are now in place. 9 bugs / spec
 > corrections pinned along the way (see §12). 1f (CI guard) merged in
-> #30. 1g (Tier 2) underway — 5 of 7 modules covered (`mod_calc_pti2`
+> #30. 1g (Tier 2) underway — 6 of 7 modules covered (`mod_calc_pti2`
 > in #31, `mod_DT_inputs` in #33, `mod_drop_inval_adm` in #34,
-> `mod_get_admin_levels_srv` in #36, `mod_fltr_sel_var2_srv` on this
-> branch).
+> `mod_get_admin_levels_srv` in #36, `mod_fltr_sel_var2_srv` in #37,
+> `mod_wt_save_newsrv` on this branch).
 
 ---
 
