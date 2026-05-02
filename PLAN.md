@@ -45,7 +45,7 @@ Phase 1  Test baseline for permanent functions     (#10)       │  in progress
    ├─ 1b   Tier-1 calc-pipeline tests                    ✓ #15-#18
    ├─ 1e   Tier-1 tests for the remaining files         ✓ #20-#29
    ├─ 1f   CI guard via .github/workflows/tests.yaml     ✓ #30
-   └─ 1g   Tier 2 (shiny::testServer for 7 modules)            in progress (4/7)
+   └─ 1g   Tier 2 (shiny::testServer for 7 modules)            in progress (5/7)
             ▼                                                  │
 Phase 2  Cleanup legacy code in batches            (#8)        │ Tests
    ├─ Batch 1  Dead files & functions                          │ guard
@@ -158,9 +158,15 @@ also draft its roxygen at the same time. Phase 3 then sweeps only what's missed.
             `show_adm_levels` filtering by name and value, single
             non-matching `show_adm_levels` (→ last element),
             `default_adm_level` precedence over `show_adm_levels`,
-            update on `cur_levels` reactive change. PR TBD; 11 blocks /
+            update on `cur_levels` reactive change. PR #36; 11 blocks /
             12 expectations
-      - [ ] `mod_fltr_sel_var2_srv`
+      - [x] `mod_fltr_sel_var2_srv` — initial `updatePickerInput`
+            with display-name choices, selection → debounced filter
+            of `preplot_dta`, switching selection swaps surviving
+            slots, `first_open(TRUE)` → auto-select first display
+            name, `add_selected()` override (single-var-per-pillar
+            happy path) + pinned multi-var-pillar `purrr::map_lgl` bug
+            (PLAN.md §12 new entry). PR TBD; 7 blocks / 18 expectations
       - [ ] `mod_wt_save_newsrv`
       - [ ] `mod_export_pti_data_server`
 
@@ -286,9 +292,10 @@ Lifted from arch-00 §"End-State Goals":
 | [#33](https://github.com/worldbank/devPTIpack/pull/33) | 2026-05-02 | 1g (mod_DT_inputs) | Tier-2 `shiny::testServer` tests for `mod_DT_inputs_server` — initial-render NA weights, direct input → current_values, all-zero + all-one button paths, `update_dta()` push, 500ms throttle window. Recounted §11 suite total via summary-reporter `PASS` |
 | [#34](https://github.com/worldbank/devPTIpack/pull/34) | 2026-05-02 | 1g (mod_drop_inval_adm) | Tier-2 `shiny::testServer` tests for `mod_drop_inval_adm` — no-drops happy path, indicator missing at admin1 → admin1 dropped, `showNotification` fires on drop (mocked via `local_mocked_bindings`), suppressed when no drops, weight-0 indicator does not trigger a drop. Pinned `get_vars_un_avbil` fill-direction asymmetry as §12 entry |
 | [#35](https://github.com/worldbank/devPTIpack/pull/35) | 2026-05-02 | chore (PLAN/gitignore) | Replace two PR-#34 `TBD` placeholders in PLAN.md with `#34`; gitignore `.claude/scheduled_tasks.lock` so the auto-changelog hook stops drafting noise rows for it |
-| TBD                                                    | 2026-05-02 | 1g (mod_get_admin_levels_srv) | Tier-2 `shiny::testServer` tests for `mod_get_admin_levels_srv` — no-filter passthrough, `default_adm_level` (name / value / "All" case-insensitive / non-match → last), `show_adm_levels` filtering, single non-match → last, `default_adm_level` precedence over `show_adm_levels`, update on `cur_levels` change |
+| [#36](https://github.com/worldbank/devPTIpack/pull/36) | 2026-05-02 | 1g (mod_get_admin_levels_srv) | Tier-2 `shiny::testServer` tests for `mod_get_admin_levels_srv` — no-filter passthrough, `default_adm_level` (name / value / "All" case-insensitive / non-match → last), `show_adm_levels` filtering, single non-match → last, `default_adm_level` precedence over `show_adm_levels`, update on `cur_levels` change |
+| TBD                                                    | 2026-05-02 | 1g (mod_fltr_sel_var2_srv) | Tier-2 `shiny::testServer` tests for `mod_fltr_sel_var2_srv` — initial `updatePickerInput` with display-name choices (mocked via `local_mocked_bindings(.package = "shinyWidgets")`), selection → debounced filter of `preplot_dta`, switching selection swaps surviving slots, `first_open(TRUE)` → auto-select first display name, `add_selected()` override (single-var-per-pillar happy path) + pinned multi-var-pillar `purrr::map_lgl` bug as new §12 entry |
 
-Suite total after this branch: **0 failures / 1 skip / 634 PASS** (`testthat::test_local()`; +12 from this PR).
+Suite total after this branch: **0 failures / 1 skip / 652 PASS** (`testthat::test_local()`; +18 from this PR).
 
 > **Suite totals revised on 2026-05-02:** prior counts in §11 were
 > derived from `sum(res$nb)` over `as.data.frame(testthat::test_local())`,
@@ -301,11 +308,12 @@ Suite total after this branch: **0 failures / 1 skip / 634 PASS** (`testthat::te
 > historical record, with this footnote covering the methodology shift.
 >
 > **Phase 1e milestone reached** with PR #29: all 10 Tier-1 test files
-> from arch-03 §1.2–§1.11 are now in place. 8 bugs / spec
+> from arch-03 §1.2–§1.11 are now in place. 9 bugs / spec
 > corrections pinned along the way (see §12). 1f (CI guard) merged in
-> #30. 1g (Tier 2) underway — 4 of 7 modules covered (`mod_calc_pti2`
+> #30. 1g (Tier 2) underway — 5 of 7 modules covered (`mod_calc_pti2`
 > in #31, `mod_DT_inputs` in #33, `mod_drop_inval_adm` in #34,
-> `mod_get_admin_levels_srv` on this branch).
+> `mod_get_admin_levels_srv` in #36, `mod_fltr_sel_var2_srv` on this
+> branch).
 
 ---
 
@@ -328,6 +336,7 @@ Suite total after this branch: **0 failures / 1 skip / 634 PASS** (`testthat::te
 | [`R/fct_inp_for_exp.R::fct_internal_wt_to_exp`](R/fct_inp_for_exp.R#L51) | Errors with "Join columns in `x` must be present" when called with an empty `weights_clean = list()`. Cause: `imap_dfr(list())` yields a 0×0 tibble that has no `var_code` column for the downstream `left_join`. Should early-return on length-0 input. | [test-export.R:fct_internal_wt_to_exp: empty list errors at left_join (PINNED)](tests/testthat/test-export.R) |
 | [`R/mod_dta_explorer2.R::get_var_choices`](R/mod_dta_explorer2.R#L302) | Errors with "attempt to set an attribute on NULL" when called with an empty `indicators_list`. The fallback branch `names(out) <- "Indicators"` runs even when `out` is `NULL`. A length-0 list output would be more useful. | [test-explorer-helpers.R:get_var_choices: empty indicators tibble errors (PINNED)](tests/testthat/test-explorer-helpers.R) |
 | [`R/mod_drop_inval_adm.R::get_vars_un_avbil`](R/mod_drop_inval_adm.R#L72-L101) | Asymmetric availability check. The fill logic uses `lag(value)` (after `arrange(admin_level)`), so an indicator that exists only at an earlier-sorted level (e.g. admin1 only) is treated as "available" at later-sorted levels (admin2) — admin2 is never surfaced as unavailable. Reverse direction (admin2-only → admin1 unavailable) works because admin1 is first-sorted and has no `lag`. Also: the `is.na(value & !any_larger)` expression looks like missing parens — likely meant `(is.na(value) & !any_larger)`. Caught while writing Tier-2 tests for `mod_drop_inval_adm`. | [test-mod-drop-inval-adm.R: comment block above "Notification side effect" (DOCUMENTED, not pinned — Tier-2 test avoids the bug per the skill rule)](tests/testthat/test-mod-drop-inval-adm.R) |
+| [`R/mod_dta_explorer2.R::mod_fltr_sel_var2_srv`](R/mod_dta_explorer2.R#L216-L235) | The `add_selected()` observer's predicate `purrr::map_lgl(choices(), ~ { .x %in% c(selected_add, selected_now) | .x %in% names(c(selected_add, selected_now)) })` errors with "Result must be length 1, not N" whenever any pillar holds >1 variable, because `.x` is the length-N character vector for that pillar and `%in%` returns length-N. Should be `map(...) %>% map_lgl(any)`, or use `any(.x %in% ...)` inside the predicate. The Tier-2 test avoids the bug for happy-path coverage by using single-var-per-pillar choices, and pins the underlying predicate failure separately. | [test-mod-var-selector.R: add_selected() with multi-var pillar fails the inner predicate (PINNED BUG)](tests/testthat/test-mod-var-selector.R) |
 
 ---
 
