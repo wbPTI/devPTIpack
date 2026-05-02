@@ -150,7 +150,7 @@ also draft its roxygen at the same time. Phase 3 then sweeps only what's missed.
             on drop (mocked via `local_mocked_bindings`), notification
             suppressed when no drops, weight-0 indicator does not trigger
             a drop. Pinned the asymmetric `get_vars_un_avbil` fill
-            direction (PLAN.md §12 new entry). PR TBD; 5 blocks / 10
+            direction (PLAN.md §12 new entry). PR #34; 5 blocks / 10
             expectations
       - [ ] `mod_get_admin_levels_srv`
       - [ ] `mod_fltr_sel_var2_srv`
@@ -277,7 +277,7 @@ Lifted from arch-00 §"End-State Goals":
 | [#30](https://github.com/worldbank/devPTIpack/pull/30) | 2026-05-02 | 1f (CI guard) | `.github/workflows/tests.yaml` runs `testthat::test_local()` on push / PR; local suite ~30s, well under the 2-min budget |
 | [#31](https://github.com/worldbank/devPTIpack/pull/31) | 2026-05-02 | 1g (mod_calc_pti2) | Tier-2 `shiny::testServer` tests for `mod_calc_pti2_server` — happy path, all-zero, single-indicator, dedup, weight-change recompute |
 | [#33](https://github.com/worldbank/devPTIpack/pull/33) | 2026-05-02 | 1g (mod_DT_inputs) | Tier-2 `shiny::testServer` tests for `mod_DT_inputs_server` — initial-render NA weights, direct input → current_values, all-zero + all-one button paths, `update_dta()` push, 500ms throttle window. Recounted §11 suite total via summary-reporter `PASS` |
-| TBD                                                    | 2026-05-02 | 1g (mod_drop_inval_adm) | Tier-2 `shiny::testServer` tests for `mod_drop_inval_adm` — no-drops happy path, indicator missing at admin1 → admin1 dropped, `showNotification` fires on drop (mocked via `local_mocked_bindings`), suppressed when no drops, weight-0 indicator does not trigger a drop. Pinned `get_vars_un_avbil` fill-direction asymmetry as §12 entry |
+| [#34](https://github.com/worldbank/devPTIpack/pull/34) | 2026-05-02 | 1g (mod_drop_inval_adm) | Tier-2 `shiny::testServer` tests for `mod_drop_inval_adm` — no-drops happy path, indicator missing at admin1 → admin1 dropped, `showNotification` fires on drop (mocked via `local_mocked_bindings`), suppressed when no drops, weight-0 indicator does not trigger a drop. Pinned `get_vars_un_avbil` fill-direction asymmetry as §12 entry |
 
 Suite total after this branch: **0 failures / 1 skip / 622 PASS** (`testthat::test_local()`; +10 from this PR).
 

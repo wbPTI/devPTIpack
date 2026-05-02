@@ -16,3 +16,5 @@ inst/doc
 # Claude Code: machine-local settings only — committed config lives in
 # .claude/settings.json
 .claude/settings.local.json
+# Claude Code: ScheduleWakeup lock file — runtime artefact, never commit.
+.claude/scheduled_tasks.lock
