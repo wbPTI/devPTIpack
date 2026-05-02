@@ -214,7 +214,17 @@ without re-checking caller graphs.
       pre-existing DESCRIPTION fix (Authors@R needed comma-separated
       `c(...)` wrapping; added explicit Author/Maintainer fields)
       that was needed to make `R CMD check` produce useful output.
-- [ ] Batch 2 — legacy runners + app_server/app_ui
+- [x] Batch 2 — legacy runners + app_server/app_ui (PR TBD): deleted
+      whole file `R/mod_pti_onepage.R` (both UI + server) and 10
+      individual functions across `R/run_app.R` (`run_pti`,
+      `run_onepage_pti`, `run_onepage_pti_sample`, `run_dev_map_pti`,
+      `run_dev_pti_plot`), `R/app_server.R` (`app_server`,
+      `app_server_input_simple`, `app_server_sample_pti_vis`), and
+      `R/app_ui.R` (`app_ui`, `app_server_sample_pti_vis_ui`). Kept
+      `run_new_pti` / `app_new_pti_server` / `app_new_pti_ui` /
+      `golem_add_external_resources` (Batch 4 territory). Removed 7
+      NAMESPACE exports via `roxygen2::roxygenise()`. Suite stays at
+      682 PASS — no regressions.
 - [ ] Batch 3 — legacy map server (~1200 lines)
 - [ ] Batch 4 — migrate sample app to `launch_pti()`
 - [ ] Batch 5 — remove `mod_weights.R` legacy
@@ -317,7 +327,8 @@ Lifted from arch-00 §"End-State Goals":
 | [#37](https://github.com/worldbank/devPTIpack/pull/37) | 2026-05-02 | 1g (mod_fltr_sel_var2_srv) | Tier-2 `shiny::testServer` tests for `mod_fltr_sel_var2_srv` — initial `updatePickerInput` with display-name choices (mocked via `local_mocked_bindings(.package = "shinyWidgets")`), selection → debounced filter of `preplot_dta`, switching selection swaps surviving slots, `first_open(TRUE)` → auto-select first display name, `add_selected()` override (single-var-per-pillar happy path) + pinned multi-var-pillar `purrr::map_lgl` bug as new §12 entry |
 | [#38](https://github.com/worldbank/devPTIpack/pull/38) | 2026-05-02 | 1g (mod_wt_save_newsrv) | Tier-2 `shiny::testServer` tests for `mod_wt_save_newsrv` — save-new (empty store), overwrite, save-alongside-existing; button-UI states for "Save and plot new PTI" / "Provide a name" / "Modify weights" / "No changes to save" / "Save changes and plot PTI" via internal `current_btn_ui()` reactiveVal. Delete logic lives in `mod_wt_delete_newsrv`, out of scope |
 | [#39](https://github.com/worldbank/devPTIpack/pull/39) | 2026-05-02 | **1g complete** (mod_export_pti_data_server) | Tier-2 `shiny::testServer` tests for `mod_export_pti_data_server` — returned named list (`Country` + `Weighting schemes` + per-admin scores), `Country` slot mirrors `weights_dta()$general`, weights tibble has one column per scheme, per-admin score slots are reversed (finer admin first), `req()` halts on NULL `plotted_dta`. **Closes 1g — all 7 Tier-2 modules covered.** |
-| TBD                                                    | 2026-05-02 | **Phase 2 starts** (Batch 1) | arch-01 Batch 1 — delete 4 whole files (`fct_export_data.R`, `mod_explorer.R`, `mod_info_page.R`, `mod_calc_pti.R`), ~20 dead functions, 1 orphan `.rda`, 3 NAMESPACE exports; clean up commented-out `do.call(make_*_2/spplot/sp_line_map, ...)` lines; regenerate NAMESPACE/Rd via `roxygen2::roxygenise()`. Pre-existing DESCRIPTION fix (Authors@R `c(...)` wrap + explicit Author/Maintainer) folded in to make `R CMD check` produce useful output. Suite stays at 682 PASS — no regression. |
+| [#40](https://github.com/worldbank/devPTIpack/pull/40)  | 2026-05-02 | **Phase 2 starts** (Batch 1) | arch-01 Batch 1 — delete 4 whole files (`fct_export_data.R`, `mod_explorer.R`, `mod_info_page.R`, `mod_calc_pti.R`), ~20 dead functions, 1 orphan `.rda`, 3 NAMESPACE exports; clean up commented-out `do.call(make_*_2/spplot/sp_line_map, ...)` lines; regenerate NAMESPACE/Rd via `roxygen2::roxygenise()`. Pre-existing DESCRIPTION fix (Authors@R `c(...)` wrap + explicit Author/Maintainer) folded in to make `R CMD check` produce useful output. Suite stays at 682 PASS — no regression. |
+| TBD                                                    | 2026-05-02 | Phase 2 Batch 2 | arch-01 Batch 2 — delete whole file `R/mod_pti_onepage.R` (both `mod_pti_onepage_ui` + `mod_pti_onepage_server`), trim `R/run_app.R` to keep only `run_new_pti` (delete `run_pti`/`run_onepage_pti`/`run_onepage_pti_sample`/`run_dev_map_pti`/`run_dev_pti_plot`), trim `R/app_server.R` to keep only `app_new_pti_server` (delete `app_server`/`app_server_input_simple`/`app_server_sample_pti_vis`), trim `R/app_ui.R` to keep `app_new_pti_ui` + `golem_add_external_resources` (delete `app_ui`/`app_server_sample_pti_vis_ui`). 7 NAMESPACE exports dropped via `roxygen2::roxygenise()`. Suite stays at 682 PASS — no regression. |
 
 Suite total after this branch: **0 failures / 1 skip / 682 PASS** (`testthat::test_local()`; cleanup-only PR, no test delta).
 
