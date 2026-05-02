@@ -11,7 +11,7 @@
 #'
 #' @noRd
 #' @importFrom scales breaks_extended label_percent label_number
-#' @importFrom leaflet colorBin 
+#' @importFrom leaflet colorBin colorFactor
 #' @importFrom stringr str_c
 #' 
 #' @export
@@ -330,45 +330,6 @@ recode_val_base <-
 #'     st_sfc(., crs = 3857) %>% 
 #'     st_transform(crs = 4326)
 #' }
-
-#' Legend helpers
-#'
-#' @noRd
-#'
-make_shapes <- function(colors, sizes, borders, shapes = "circle") {
-  shapes <- gsub("circle", "50%", shapes)
-  shapes <- gsub("square", "0%", shapes)
-  paste0(
-    colors,
-    "; width:",
-    sizes,
-    "px; height:",
-    sizes,
-    "px; border:0.5px solid ",
-    borders,
-    "; border-radius:",
-    ifelse(!is.na(sizes), shapes, "0%" )
-  )
-}
-
-#' Legend helpers
-#'
-#' @noRd
-#'
-make_labels <- function(sizes, labels) {
-  paste0(
-    "<div style='display: inline-block;height: ",
-    sizes,
-    "px;margin-top: 4px;line-height: ",
-    sizes,
-    "px;'>",
-    labels,
-    "</div>"
-  )
-}
-
-
-
 
 
 
