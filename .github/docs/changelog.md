@@ -67,3 +67,10 @@
 | Docs    | `PLAN.md` ticked map-render under §4.1 1e, logged PR #28; suite total updated to 708 expectations |
 | Tests   | Added `tests/testthat/test-dt-construction.R` (1e bullet 10) — covers `prep_input_data` (column schema, pillar+variable row count, numericInput HTML in variable rows), `make_vis_targets_for_dt` (columnDefs+colnames shape, var_name+ui visible vs invisible mapping), `make_input_DT` (returns dt_out + nested_dta list, dt_out is a DT htmlwidget). Pinned arch-03 §1.11 spec correction: row count is `#pillars + #indicators`, not just `#indicators` |
 | Docs    | `PLAN.md` ticked dt-construction under §4.1 1e and the outer 1e box (1e complete!), logged PR #29, expanded the Phase 1 ASCII tree to surface the next sub-items (1f CI, 1g Tier 2); suite total updated to 725 expectations |
+
+## 2026-05-02
+
+| Scope   | Change                                                                                                                                          |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Config  | Added `.github/workflows/tests.yaml` (1f) — runs `testthat::test_local()` on push/PR to main and koichi-arch-redesign via r-lib/actions v2. Local suite ~30s, well under arch-03's 2-min budget |
+| Docs    | `PLAN.md` ticked 1f, updated the Phase 1 tree to mark 1g as next, logged PR #30                                                                  |

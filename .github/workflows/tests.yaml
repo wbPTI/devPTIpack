@@ -1,0 +1,55 @@
+# Run testthat on every push and pull request.
+# Lightweight gate — fails the workflow if any expectation fails or
+# errors out. Time-budget: < 2 minutes per arch-03 (run is ~30s
+# locally on the bundled fixtures, so generous headroom on CI).
+#
+# Workflow derived from r-lib/actions examples.
+on:
+  push:
+    branches: [main, koichi-arch-redesign]
+  pull_request:
+    branches: [main, koichi-arch-redesign]
+  workflow_dispatch:
+
+name: tests
+
+jobs:
+  testthat:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::testthat
+            any::pkgload
+            any::withr
+          needs: testing
+
+      - name: Run testthat
+        shell: Rscript {0}
+        run: |
+          options(testthat.progress.max_fails = Inf)
+          pkgload::load_all(quiet = TRUE)
+          res <- as.data.frame(testthat::test_local(reporter = "summary"))
+          cat(sprintf(
+            "Files: %d | blocks: %d | passed: %d | failed: %d | errors: %d | skipped: %d\n",
+            length(unique(res$file)),
+            nrow(res),
+            sum(res$nb),
+            sum(res$failed),
+            sum(res$error),
+            sum(res$skipped)
+          ))
+          if (sum(res$failed) + sum(res$error) > 0) {
+            stop("Test suite has failures or errors.")
+          }
