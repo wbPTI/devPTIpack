@@ -45,7 +45,7 @@ Phase 1  Test baseline for permanent functions     (#10)       │  in progress
    ├─ 1b   Tier-1 calc-pipeline tests                    ✓ #15-#18
    ├─ 1e   Tier-1 tests for the remaining files         ✓ #20-#29
    ├─ 1f   CI guard via .github/workflows/tests.yaml     ✓ #30
-   └─ 1g   Tier 2 (shiny::testServer for 7 modules)            ◀ next
+   └─ 1g   Tier 2 (shiny::testServer for 7 modules)            in progress (1/7)
             ▼                                                  │
 Phase 2  Cleanup legacy code in batches            (#8)        │ Tests
    ├─ Batch 1  Dead files & functions                          │ guard
@@ -135,7 +135,16 @@ also draft its roxygen at the same time. Phase 3 then sweeps only what's missed.
       `koichi-arch-redesign`. Local suite finishes in ~30s, well under
       arch-03's 2-min budget. PR #30.
 - [ ] **1g — Tier 2 (after Tier 1 green).** Module-server tests via
-      `shiny::testServer` (arch-03 §2). 7 modules.
+      `shiny::testServer` (arch-03 §2). 7 modules — one PR each:
+      - [x] `mod_calc_pti2_server` — happy path, all-zero, single-indicator,
+            identical-input dedup, weight-change recompute (PR #31; 5 blocks /
+            67 expectations)
+      - [ ] `mod_DT_inputs_server`
+      - [ ] `mod_drop_inval_adm`
+      - [ ] `mod_get_admin_levels_srv`
+      - [ ] `mod_fltr_sel_var2_srv`
+      - [ ] `mod_wt_save_newsrv`
+      - [ ] `mod_export_pti_data_server`
 
 ### 4.2 Tier 3 timing
 
@@ -255,13 +264,14 @@ Lifted from arch-00 §"End-State Goals":
 | [#28](https://github.com/worldbank/devPTIpack/pull/28) | 2026-05-01 | 1e (map-render) | Tier-1 class-assertion tests for `make_ggmap`, `make_gg_line_map`, `plot_leaf_line_map2` |
 | [#29](https://github.com/worldbank/devPTIpack/pull/29) | 2026-05-01 | **1e complete** (dt-construction) | Tier-1 tests for `prep_input_data`, `make_vis_targets_for_dt`, `make_input_DT`; pinned arch-03 §1.11 spec correction — pillar rows interleaved with variable rows |
 | [#30](https://github.com/worldbank/devPTIpack/pull/30) | 2026-05-02 | 1f (CI guard) | `.github/workflows/tests.yaml` runs `testthat::test_local()` on push / PR; local suite ~30s, well under the 2-min budget |
+| [#31](https://github.com/worldbank/devPTIpack/pull/31) | 2026-05-02 | 1g (mod_calc_pti2) | Tier-2 `shiny::testServer` tests for `mod_calc_pti2_server` — happy path, all-zero, single-indicator, dedup, weight-change recompute |
 
-Suite total after merged PRs: **725 expectations / 0 failures / 0 errors / 1 skip**.
+Suite total after merged PRs: **792 expectations / 0 failures / 0 errors / 1 skip**.
 
 > **Phase 1e milestone reached** with PR #29: all 10 Tier-1 test files
 > from arch-03 §1.2–§1.11 are now in place. 7 bugs / spec
-> corrections pinned along the way (see §12). Next: 1f (CI guard) and
-> 1g (Tier 2 module-server tests).
+> corrections pinned along the way (see §12). 1f (CI guard) merged in
+> #30. 1g (Tier 2) underway — first module landed in #31.
 
 ---
 
