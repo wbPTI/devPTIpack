@@ -1,7 +1,9 @@
 #' Start two-col or box-based PTI
-#' 
+#'
 #' @importFrom rlang is_missing
-#' 
+#' @importFrom shiny shinyApp navbarPage tabPanel
+#' @importFrom golem with_golem_options
+#'
 #' @inheritParams mod_ptipage_twocol_ui
 #' @inheritParams mod_ptipage_newsrv
 #' @inheritParams mod_waiter_newsrv
