@@ -238,7 +238,7 @@ without re-checking caller graphs.
       `leaflet::addTiles` → `plot_leaf_line_map2`) that were
       auto-pruned from NAMESPACE because their roxygen lived in the
       deleted file. Suite stays at 682 PASS — no regressions.
-- [x] Batch 4 — migrate sample app to `launch_pti()` (PR TBD): rewrote
+- [x] Batch 4 — migrate sample app to `launch_pti()` (PR #44): rewrote
       `inst/sample_pti/app.R` to load shapes via `get_shape()` and
       metadata via `fct_template_reader()`, then call `launch_pti()`
       directly (drops `default_adm_level`, `choose_adm_levels`,
@@ -254,7 +254,27 @@ without re-checking caller graphs.
       `shiny::navbarPage`, `shiny::tabPanel`, `golem::with_golem_options`
       → `launch_pti_onepage`; `shiny::reactiveValues` → `mod_wt_inp_ui`.
       Suite stays at 682 PASS — no regressions.
-- [ ] Batch 5 — remove `mod_weights.R` legacy
+- [x] Batch 5 — remove `mod_weights.R` legacy (PR TBD): extracted
+      `mod_wt_btns_srv` and `mod_collect_wt_srv` (the only two functions
+      `mod_DT_inputs_server` still uses) to a new file
+      `R/mod_wt_btns_collect.R` with proper `@noRd` roxygen and explicit
+      `@importFrom` tags (`shiny`, `dplyr`, `purrr`, `stringr`,
+      `tibble`). Deleted whole file `R/mod_weights.R` (928 lines, all 13
+      remaining legacy functions go: `mod_weights_ui`,
+      `mod_weights_server`, `mod_indicarots_srv`, `mod_gen_wt_inputs_srv`,
+      `mod_wt_name_srv`, `mod_wt_select_srv`, `mod_wt_uplod_srv`,
+      `mod_wt_delete_srv`, `mod_wt_fill_srv`, `mod_wt_save_srv`,
+      `mod_download_wt_srv`, plus the originals of the two extracted
+      functions). Deleted whole file `R/mod_new_weights.R` (112 lines —
+      `mod_new_demo_weights_server` + `mod_new_weights_server`; only
+      caller `mod_pti_onepage_server` was removed in Batch 2). Net diff
+      ~970 lines net removed (largest single batch). NAMESPACE: dropped
+      1 export (`mod_weights_ui`); added 4 imports from the new file
+      (`purrr::map2`, `purrr::map_dfr`, `shiny::updateNumericInput`,
+      `tibble::tibble`); no auto-prune fallout. `mod_weights_rand.R`
+      retains only `mod_weights_rand_ui`, `get_rand_weights`,
+      `get_all_weights_combs` as planned. Suite stays at 682 PASS — no
+      regressions.
 
 ---
 
@@ -357,7 +377,8 @@ Lifted from arch-00 §"End-State Goals":
 | [#40](https://github.com/worldbank/devPTIpack/pull/40)  | 2026-05-02 | **Phase 2 starts** (Batch 1) | arch-01 Batch 1 — delete 4 whole files (`fct_export_data.R`, `mod_explorer.R`, `mod_info_page.R`, `mod_calc_pti.R`), ~20 dead functions, 1 orphan `.rda`, 3 NAMESPACE exports; clean up commented-out `do.call(make_*_2/spplot/sp_line_map, ...)` lines; regenerate NAMESPACE/Rd via `roxygen2::roxygenise()`. Pre-existing DESCRIPTION fix (Authors@R `c(...)` wrap + explicit Author/Maintainer) folded in to make `R CMD check` produce useful output. Suite stays at 682 PASS — no regression. |
 | [#41](https://github.com/worldbank/devPTIpack/pull/41)  | 2026-05-02 | Phase 2 Batch 2 | arch-01 Batch 2 — delete whole file `R/mod_pti_onepage.R` (both `mod_pti_onepage_ui` + `mod_pti_onepage_server`), trim `R/run_app.R` to keep only `run_new_pti` (delete `run_pti`/`run_onepage_pti`/`run_onepage_pti_sample`/`run_dev_map_pti`/`run_dev_pti_plot`), trim `R/app_server.R` to keep only `app_new_pti_server` (delete `app_server`/`app_server_input_simple`/`app_server_sample_pti_vis`), trim `R/app_ui.R` to keep `app_new_pti_ui` + `golem_add_external_resources` (delete `app_ui`/`app_server_sample_pti_vis_ui`). 7 NAMESPACE exports dropped via `roxygen2::roxygenise()`. Suite stays at 682 PASS — no regression. |
 | [#43](https://github.com/worldbank/devPTIpack/pull/43)  | 2026-05-02 | Phase 2 Batch 3 | arch-01 Batch 3 — extract `mod_map_pti_leaf_ui` to new file `R/mod_map_pti_leaf_ui.R`, delete whole file `R/mod_map_pti_leaf.R` (1258 lines, all 12 legacy server functions), delete `make_shapes()` + `make_labels()` from `R/fct_legend_map_satelites.R`. Patched `app_new_pti_ui` to use modern `mod_pti_comparepage_ui` instead of deleted `mod_map_pti_leaf_page_ui` (Batch-4 mini-patch folded in to avoid `R CMD check` undefined-symbol note). Relocated 2 `@importFrom` tags (`leaflet::colorFactor` → `legend_map_satelite`; `leaflet::addTiles` → `plot_leaf_line_map2`) auto-pruned from NAMESPACE because their roxygen lived in the deleted file. Suite stays at 682 PASS — no regression. |
-| TBD                                                    | 2026-05-03 | Phase 2 Batch 4 | arch-01 Batch 4 — rewrote `inst/sample_pti/app.R` to call `launch_pti()` directly (loads shapes via `get_shape()` and metadata via `fct_template_reader()`; drops `default_adm_level`, `choose_adm_levels`, `explorer_*`, `full_ui`, `pti_landing_page` knobs that have no modern equivalent — `launch_pti` would need a signature extension to preserve them). Deleted `run_new_pti` (whole `R/run_app.R`), `app_new_pti_server` (whole `R/app_server.R` — file `git rm`'d), `app_new_pti_ui` (kept only `golem_add_external_resources` in `R/app_ui.R`), and `mod_plot_pti_comparison_srv` from `R/mod_plot_pti2.R`. Relocated 5 `@importFrom` tags auto-pruned from NAMESPACE because their roxygen lived in the deleted files: `shiny::shinyApp`, `shiny::navbarPage`, `shiny::tabPanel`, `golem::with_golem_options` → `launch_pti_onepage`; `shiny::reactiveValues` → `mod_wt_inp_ui`. Folded in the long-pending Batch 3 `TBD → #43` swap on the §11 row above. Suite stays at 682 PASS — no regression. |
+| [#44](https://github.com/worldbank/devPTIpack/pull/44)  | 2026-05-03 | Phase 2 Batch 4 | arch-01 Batch 4 — rewrote `inst/sample_pti/app.R` to call `launch_pti()` directly (loads shapes via `get_shape()` and metadata via `fct_template_reader()`; drops `default_adm_level`, `choose_adm_levels`, `explorer_*`, `full_ui`, `pti_landing_page` knobs that have no modern equivalent — `launch_pti` would need a signature extension to preserve them). Deleted `run_new_pti` (whole `R/run_app.R`), `app_new_pti_server` (whole `R/app_server.R` — file `git rm`'d), `app_new_pti_ui` (kept only `golem_add_external_resources` in `R/app_ui.R`), and `mod_plot_pti_comparison_srv` from `R/mod_plot_pti2.R`. Relocated 5 `@importFrom` tags auto-pruned from NAMESPACE because their roxygen lived in the deleted files: `shiny::shinyApp`, `shiny::navbarPage`, `shiny::tabPanel`, `golem::with_golem_options` → `launch_pti_onepage`; `shiny::reactiveValues` → `mod_wt_inp_ui`. Folded in the long-pending Batch 3 `TBD → #43` swap on the §11 row above. Suite stays at 682 PASS — no regression. |
+| TBD                                                    | 2026-05-03 | Phase 2 Batch 5 | arch-01 Batch 5 — extracted `mod_wt_btns_srv` (~67 lines) and `mod_collect_wt_srv` (~20 lines) to a new file `R/mod_wt_btns_collect.R` with `@noRd` roxygen and explicit `@importFrom` tags; both are still used by `mod_DT_inputs_server` (the only modern caller). Deleted whole file `R/mod_weights.R` (928 lines, 13 zero-caller legacy functions: `mod_weights_ui`, `mod_weights_server`, `mod_indicarots_srv`, `mod_gen_wt_inputs_srv`, `mod_wt_name_srv`, `mod_wt_select_srv`, `mod_wt_uplod_srv`, `mod_wt_delete_srv`, `mod_wt_fill_srv`, `mod_wt_save_srv`, `mod_download_wt_srv`, plus the originals of the 2 extracted functions). Deleted whole file `R/mod_new_weights.R` (112 lines, `mod_new_demo_weights_server` + `mod_new_weights_server` — only caller `mod_pti_onepage_server` was removed in Batch 2). Net diff ~970 lines net removed (largest single batch in Phase 2). NAMESPACE delta: dropped 1 export (`mod_weights_ui`); added 4 imports from the new file (`purrr::map2`, `purrr::map_dfr`, `shiny::updateNumericInput`, `tibble::tibble`); no auto-prune fallout. Folded in the long-pending Batch 4 `TBD → #44` swap on the §11 row above and on the §5 Batch-4 row. Suite stays at 682 PASS — no regression. |
 
 Suite total after this branch: **0 failures / 1 skip / 682 PASS** (`testthat::test_local()`; cleanup-only PR, no test delta).
 
