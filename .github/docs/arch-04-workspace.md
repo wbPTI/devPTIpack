@@ -153,6 +153,11 @@ Key topics:
 - Configuring the app
 - Deploying to RStudio Connect / shinyapps.io
 - Generating the metadata PDF with `render_metadata()`
+  *(Note: deleted in arch-01 Batch 6 as broken on shipped installs —
+  `system.file("pti-metadata-pdf.Rmd", ...)` resolved to `""` because
+  the Rmd lives at `inst/sample_pti/app-data/`, not the `inst/` root.
+  Reintroduce as a fixed function with the corrected key when arch-04
+  picks up this vignette.)*
 
 ---
 
