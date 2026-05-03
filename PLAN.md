@@ -276,7 +276,7 @@ without re-checking caller graphs.
       retains only `mod_weights_rand_ui`, `get_rand_weights`,
       `get_all_weights_combs` as planned. Suite stays at 682 PASS — no
       regressions.
-- [x] Batch 6 — delete convenience wrappers (PR TBD): deleted whole files
+- [x] Batch 6 — delete convenience wrappers ([PR #46](https://github.com/worldbank/devPTIpack/pull/46)): deleted whole files
       `R/mod_explrr_onepage.R` (`mod_explrr_onepage_ui`, `mod_explrr_onepage_server`,
       both exported thin wrappers over `mod_dta_explorer2_*`) and
       `R/render_metadata_pdf.R` (`render_metadata`, exported wrapper over
@@ -308,9 +308,28 @@ without re-checking caller graphs.
 Follow arch-02-docs § "Implementation Order" and use the
 [`roxygen-document`](.claude/skills/roxygen-document/SKILL.md) skill.
 
-- [ ] Phase 3.1 (data) → 3.6 (remaining modules) as listed in arch-02-docs.
+- [x] **Batch 1 — Package data** (PR TBD): rewrote `R/data.R` standalone
+      roxygen for `ukr_shp` and `ukr_mtdt_full` per the rules-file data
+      template (`@format` with `\describe{}` per slot, `@source`,
+      runnable `@examples`). Replaced `@describeIn` inheritance on
+      `ukr_mtdt_full` (which mis-attributed it as a geometries doc).
+      Documented real bundled-data shape (`admin0/1/2/4` not the
+      rules-file example's stale `admin1/2/3`; real column names
+      `admin{N}Pcod` / `admin{N}Name` / `area` / `geometry`). Two
+      `man/*.Rd` help pages now exist where there was previously one
+      shared inherited page.
+- [ ] Batch 2 — Core calculation: `calc_pti_helpers.R`,
+      `calc_pti_expander.R` (~11 fns).
+- [ ] Batch 3 — Data I/O & validation: `fct_template_reader.R`,
+      `fct_validate_metadata.R`, `validators.R`, `dta_cleaners.R` (~8 fns).
+- [ ] Batch 4 — Visualisation helpers: `plot_pti_helpers.R`,
+      `fct_legend_map_satelites.R` (~10 fns).
+- [ ] Batch 5 — Entry points & app infrastructure: `launch_pti.R`,
+      `fct_create_new_pti.R`, `app_config.R` (~3 fns).
+- [ ] Batch 6 — All remaining persistent modules & utilities (~56 fns;
+      may split into 6a/6b at scope-time).
 - [ ] Any function whose body changed in Phase 2 cleanup needs its docs reviewed.
-- [ ] After each file's docs land, run `devtools::document()` and confirm
+- [ ] After each batch lands, run `devtools::document()` and confirm
       `R CMD check` produces no doc-related notes.
 
 ---
@@ -404,9 +423,10 @@ Lifted from arch-00 §"End-State Goals":
 | [#43](https://github.com/worldbank/devPTIpack/pull/43)  | 2026-05-02 | Phase 2 Batch 3 | arch-01 Batch 3 — extract `mod_map_pti_leaf_ui` to new file `R/mod_map_pti_leaf_ui.R`, delete whole file `R/mod_map_pti_leaf.R` (1258 lines, all 12 legacy server functions), delete `make_shapes()` + `make_labels()` from `R/fct_legend_map_satelites.R`. Patched `app_new_pti_ui` to use modern `mod_pti_comparepage_ui` instead of deleted `mod_map_pti_leaf_page_ui` (Batch-4 mini-patch folded in to avoid `R CMD check` undefined-symbol note). Relocated 2 `@importFrom` tags (`leaflet::colorFactor` → `legend_map_satelite`; `leaflet::addTiles` → `plot_leaf_line_map2`) auto-pruned from NAMESPACE because their roxygen lived in the deleted file. Suite stays at 682 PASS — no regression. |
 | [#44](https://github.com/worldbank/devPTIpack/pull/44)  | 2026-05-03 | Phase 2 Batch 4 | arch-01 Batch 4 — rewrote `inst/sample_pti/app.R` to call `launch_pti()` directly (loads shapes via `get_shape()` and metadata via `fct_template_reader()`; drops `default_adm_level`, `choose_adm_levels`, `explorer_*`, `full_ui`, `pti_landing_page` knobs that have no modern equivalent — `launch_pti` would need a signature extension to preserve them). Deleted `run_new_pti` (whole `R/run_app.R`), `app_new_pti_server` (whole `R/app_server.R` — file `git rm`'d), `app_new_pti_ui` (kept only `golem_add_external_resources` in `R/app_ui.R`), and `mod_plot_pti_comparison_srv` from `R/mod_plot_pti2.R`. Relocated 5 `@importFrom` tags auto-pruned from NAMESPACE because their roxygen lived in the deleted files: `shiny::shinyApp`, `shiny::navbarPage`, `shiny::tabPanel`, `golem::with_golem_options` → `launch_pti_onepage`; `shiny::reactiveValues` → `mod_wt_inp_ui`. Folded in the long-pending Batch 3 `TBD → #43` swap on the §11 row above. Suite stays at 682 PASS — no regression. |
 | [#45](https://github.com/worldbank/devPTIpack/pull/45)  | 2026-05-03 | Phase 2 Batch 5 | arch-01 Batch 5 — extracted `mod_wt_btns_srv` (~67 lines) and `mod_collect_wt_srv` (~20 lines) to a new file `R/mod_wt_btns_collect.R` with `@noRd` roxygen and explicit `@importFrom` tags; both are still used by `mod_DT_inputs_server` (the only modern caller). Deleted whole file `R/mod_weights.R` (928 lines, 13 zero-caller legacy functions: `mod_weights_ui`, `mod_weights_server`, `mod_indicarots_srv`, `mod_gen_wt_inputs_srv`, `mod_wt_name_srv`, `mod_wt_select_srv`, `mod_wt_uplod_srv`, `mod_wt_delete_srv`, `mod_wt_fill_srv`, `mod_wt_save_srv`, `mod_download_wt_srv`, plus the originals of the 2 extracted functions). Deleted whole file `R/mod_new_weights.R` (112 lines, `mod_new_demo_weights_server` + `mod_new_weights_server` — only caller `mod_pti_onepage_server` was removed in Batch 2). Net diff ~970 lines net removed (largest single batch in Phase 2). NAMESPACE delta: dropped 1 export (`mod_weights_ui`); added 4 imports from the new file (`purrr::map2`, `purrr::map_dfr`, `shiny::updateNumericInput`, `tibble::tibble`); no auto-prune fallout. Folded in the long-pending Batch 4 `TBD → #44` swap on the §11 row above and on the §5 Batch-4 row. Suite stays at 682 PASS — no regression. |
-| TBD                                                    | 2026-05-03 | **Phase 2 Batch 6 (closes Phase 2)** | arch-01 Batch 6 — convenience-wrapper deletion. Departure from the doc's "Optional / deprecate first" framing: caller-graph audit showed both targets had no live external surface so a deprecation cycle would be bureaucratic. Deleted whole file `R/mod_explrr_onepage.R` (39 lines, `mod_explrr_onepage_ui` + `mod_explrr_onepage_server`, exported thin wrappers over `mod_dta_explorer2_*` — only callers in `dev/90-app-examples.R`, itself broken since Batch 2 and slated for arch-04 Phase 4 deletion). Deleted whole file `R/render_metadata_pdf.R` (14 lines, `render_metadata` exported wrapper over `rmarkdown::render`) — already broken on shipped installs because `system.file("pti-metadata-pdf.Rmd", package = "devPTIpack")` resolves to `""` (the Rmd lives at `inst/sample_pti/app-data/`, not the `inst/` package root); arch-04's reference to `render_metadata()` is one `system.file` keyword away from working and can be reintroduced as a fixed function when arch-04 wants it. Both also violated the project's `@noRd + @export` rule (creates exported functions with no help page). NAMESPACE delta: dropped 3 exports (`mod_explrr_onepage_ui`, `mod_explrr_onepage_server`, `render_metadata`) and 2 importFroms (`here::here`, `rmarkdown::render` — neither used elsewhere in `R/`). Folded in the Batch 5 `TBD → #45` swap on the §11 row above and on the §5 Batch-5 row. **Closes Phase 2 (#8).** Suite stays at 682 PASS — no regression. |
+| [#46](https://github.com/worldbank/devPTIpack/pull/46) | 2026-05-03 | **Phase 2 Batch 6 (closes Phase 2)** | arch-01 Batch 6 — convenience-wrapper deletion. Departure from the doc's "Optional / deprecate first" framing: caller-graph audit showed both targets had no live external surface so a deprecation cycle would be bureaucratic. Deleted whole file `R/mod_explrr_onepage.R` (39 lines, `mod_explrr_onepage_ui` + `mod_explrr_onepage_server`, exported thin wrappers over `mod_dta_explorer2_*` — only callers in `dev/90-app-examples.R`, itself broken since Batch 2 and slated for arch-04 Phase 4 deletion). Deleted whole file `R/render_metadata_pdf.R` (14 lines, `render_metadata` exported wrapper over `rmarkdown::render`) — already broken on shipped installs because `system.file("pti-metadata-pdf.Rmd", package = "devPTIpack")` resolves to `""` (the Rmd lives at `inst/sample_pti/app-data/`, not the `inst/` package root); arch-04's reference to `render_metadata()` is one `system.file` keyword away from working and can be reintroduced as a fixed function when arch-04 wants it. Both also violated the project's `@noRd + @export` rule (creates exported functions with no help page). NAMESPACE delta: dropped 3 exports (`mod_explrr_onepage_ui`, `mod_explrr_onepage_server`, `render_metadata`) and 2 importFroms (`here::here`, `rmarkdown::render` — neither used elsewhere in `R/`). Folded in the Batch 5 `TBD → #45` swap on the §11 row above and on the §5 Batch-5 row. **Closes Phase 2 (#8).** Suite stays at 682 PASS — no regression. |
+| TBD                                                    | 2026-05-03 | **Phase 3 starts** (Batch 1 — package data) | arch-02-docs Phase 3.1 — rewrote `R/data.R` with standalone roxygen2 docs for `ukr_shp` and `ukr_mtdt_full` per the rules-file data template. Replaced the misleading `@describeIn ukr_shp` on `ukr_mtdt_full` (it was inheriting a *geometries* description for a *metadata* object). Documented the real bundled-data shape: `ukr_shp` has 4 admin levels (`admin0_Country` / `admin1_Oblast` (27) / `admin2_Rayon` (629) / `admin4_Hexagon` (1,939); columns `admin{N}Pcod` / `admin{N}Name` / `area` / `geometry`) — diverges from the rules-file example's stale `admin1/2/3` skeleton; `ukr_mtdt_full` has 5 slots (`general` country tibble, 3 per-admin indicator tibbles, `metadata` 9×14 indicator dictionary). Both gain `@source`, `@format` with `\describe{}` per slot, and runnable `@examples` using only bundled data. Two `man/*.Rd` help pages now exist where there was previously one shared inherited page. Folded in the Batch 6 `TBD → #46` swap on the §5 row above and the §11 row above. Suite stays at 682 PASS — no regression. |
 
-Suite total after this branch: **0 failures / 1 skip / 682 PASS** (`testthat::test_local()`; cleanup-only PR, no test delta).
+Suite total after this branch: **0 failures / 1 skip / 682 PASS** (`testthat::test_local()`; docs-only PR, no test delta).
 
 > **Suite totals revised on 2026-05-02:** prior counts in §11 were
 > derived from `sum(res$nb)` over `as.data.frame(testthat::test_local())`,
