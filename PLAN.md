@@ -308,18 +308,43 @@ without re-checking caller graphs.
 Follow arch-02-docs § "Implementation Order" and use the
 [`roxygen-document`](.claude/skills/roxygen-document/SKILL.md) skill.
 
-- [x] **Batch 1 — Package data** (PR TBD): rewrote `R/data.R` standalone
+- [x] **Batch 1 — Package data** ([PR #47](https://github.com/worldbank/devPTIpack/pull/47)): rewrote `R/data.R` standalone
       roxygen for `ukr_shp` and `ukr_mtdt_full` per the rules-file data
       template (`@format` with `\describe{}` per slot, `@source`,
       runnable `@examples`). Replaced `@describeIn` inheritance on
       `ukr_mtdt_full` (which mis-attributed it as a geometries doc).
       Documented real bundled-data shape (`admin0/1/2/4` not the
       rules-file example's stale `admin1/2/3`; real column names
-      `admin{N}Pcod` / `admin{N}Name` / `area` / `geometry`). Two
+      `adminNPcod` / `adminNName` / `area` / `geometry`). Two
       `man/*.Rd` help pages now exist where there was previously one
       shared inherited page.
-- [ ] Batch 2 — Core calculation: `calc_pti_helpers.R`,
-      `calc_pti_expander.R` (~11 fns).
+- [x] **Batch 2 — Core calculation** (PR TBD): rewrote roxygen for all
+      12 functions across `R/calc_pti_helpers.R` (6 fns) and
+      `R/calc_pti_expander.R` (6 fns). **Honored arch-01's "Permanent
+      Functions" classification** — un-exported the 10 INTERNAL fns
+      (`get_mt`, `get_adm_levels`, `pivot_pti_dta`, `clean_geoms`,
+      `get_weighted_data`, `get_scores_data`, `expand_adm_levels`,
+      `agg_pti_scores`, `structure_pti_data`; `merge_expandedn_adm_levels`
+      was already non-exported) and re-typed them with the internal
+      `@noRd` template (typed `@param`, explicit `@return`, full
+      `@importFrom`, no `@examples`). Closes the 10× `@noRd + @export`
+      rule violation. Promoted `generic_pti_glue` from `@describeIn
+      label_generic_pti` to a standalone exported doc; both retained
+      `@export` per arch-01 (users may customise PTI popup labels).
+      Pinned 3 §12 bugs via `@note`: lex-sort in `get_adm_levels`,
+      1-row → NA in `get_scores_data`, >1 element silent NULL in
+      `expand_adm_levels`. Stripped pre-existing debug residue per
+      arch-01:436 (~50 lines: 2 `# browser()`, 2 large commented-out
+      alternate implementations in `structure_pti_data`, several
+      stray comment lines). NAMESPACE delta: dropped 9 `export()`,
+      added 7 `importFrom`s for explicit dependencies that lost their
+      previous bulk-import coverage. Test-side: converted 7
+      `devPTIpack::fn()` qualified calls in 3 pre-existing test files
+      ([test-shps-converters.R](tests/testthat/test-shps-converters.R),
+      [test-calc_pti.R](tests/testthat/test-calc_pti.R),
+      [test-weighting-logic.R](tests/testthat/test-weighting-logic.R))
+      to unqualified — needed because `::` requires export and the
+      tests' `pkgload::load_all()` exposure is unaffected.
 - [ ] Batch 3 — Data I/O & validation: `fct_template_reader.R`,
       `fct_validate_metadata.R`, `validators.R`, `dta_cleaners.R` (~8 fns).
 - [ ] Batch 4 — Visualisation helpers: `plot_pti_helpers.R`,
@@ -424,7 +449,8 @@ Lifted from arch-00 §"End-State Goals":
 | [#44](https://github.com/worldbank/devPTIpack/pull/44)  | 2026-05-03 | Phase 2 Batch 4 | arch-01 Batch 4 — rewrote `inst/sample_pti/app.R` to call `launch_pti()` directly (loads shapes via `get_shape()` and metadata via `fct_template_reader()`; drops `default_adm_level`, `choose_adm_levels`, `explorer_*`, `full_ui`, `pti_landing_page` knobs that have no modern equivalent — `launch_pti` would need a signature extension to preserve them). Deleted `run_new_pti` (whole `R/run_app.R`), `app_new_pti_server` (whole `R/app_server.R` — file `git rm`'d), `app_new_pti_ui` (kept only `golem_add_external_resources` in `R/app_ui.R`), and `mod_plot_pti_comparison_srv` from `R/mod_plot_pti2.R`. Relocated 5 `@importFrom` tags auto-pruned from NAMESPACE because their roxygen lived in the deleted files: `shiny::shinyApp`, `shiny::navbarPage`, `shiny::tabPanel`, `golem::with_golem_options` → `launch_pti_onepage`; `shiny::reactiveValues` → `mod_wt_inp_ui`. Folded in the long-pending Batch 3 `TBD → #43` swap on the §11 row above. Suite stays at 682 PASS — no regression. |
 | [#45](https://github.com/worldbank/devPTIpack/pull/45)  | 2026-05-03 | Phase 2 Batch 5 | arch-01 Batch 5 — extracted `mod_wt_btns_srv` (~67 lines) and `mod_collect_wt_srv` (~20 lines) to a new file `R/mod_wt_btns_collect.R` with `@noRd` roxygen and explicit `@importFrom` tags; both are still used by `mod_DT_inputs_server` (the only modern caller). Deleted whole file `R/mod_weights.R` (928 lines, 13 zero-caller legacy functions: `mod_weights_ui`, `mod_weights_server`, `mod_indicarots_srv`, `mod_gen_wt_inputs_srv`, `mod_wt_name_srv`, `mod_wt_select_srv`, `mod_wt_uplod_srv`, `mod_wt_delete_srv`, `mod_wt_fill_srv`, `mod_wt_save_srv`, `mod_download_wt_srv`, plus the originals of the 2 extracted functions). Deleted whole file `R/mod_new_weights.R` (112 lines, `mod_new_demo_weights_server` + `mod_new_weights_server` — only caller `mod_pti_onepage_server` was removed in Batch 2). Net diff ~970 lines net removed (largest single batch in Phase 2). NAMESPACE delta: dropped 1 export (`mod_weights_ui`); added 4 imports from the new file (`purrr::map2`, `purrr::map_dfr`, `shiny::updateNumericInput`, `tibble::tibble`); no auto-prune fallout. Folded in the long-pending Batch 4 `TBD → #44` swap on the §11 row above and on the §5 Batch-4 row. Suite stays at 682 PASS — no regression. |
 | [#46](https://github.com/worldbank/devPTIpack/pull/46) | 2026-05-03 | **Phase 2 Batch 6 (closes Phase 2)** | arch-01 Batch 6 — convenience-wrapper deletion. Departure from the doc's "Optional / deprecate first" framing: caller-graph audit showed both targets had no live external surface so a deprecation cycle would be bureaucratic. Deleted whole file `R/mod_explrr_onepage.R` (39 lines, `mod_explrr_onepage_ui` + `mod_explrr_onepage_server`, exported thin wrappers over `mod_dta_explorer2_*` — only callers in `dev/90-app-examples.R`, itself broken since Batch 2 and slated for arch-04 Phase 4 deletion). Deleted whole file `R/render_metadata_pdf.R` (14 lines, `render_metadata` exported wrapper over `rmarkdown::render`) — already broken on shipped installs because `system.file("pti-metadata-pdf.Rmd", package = "devPTIpack")` resolves to `""` (the Rmd lives at `inst/sample_pti/app-data/`, not the `inst/` package root); arch-04's reference to `render_metadata()` is one `system.file` keyword away from working and can be reintroduced as a fixed function when arch-04 wants it. Both also violated the project's `@noRd + @export` rule (creates exported functions with no help page). NAMESPACE delta: dropped 3 exports (`mod_explrr_onepage_ui`, `mod_explrr_onepage_server`, `render_metadata`) and 2 importFroms (`here::here`, `rmarkdown::render` — neither used elsewhere in `R/`). Folded in the Batch 5 `TBD → #45` swap on the §11 row above and on the §5 Batch-5 row. **Closes Phase 2 (#8).** Suite stays at 682 PASS — no regression. |
-| TBD                                                    | 2026-05-03 | **Phase 3 starts** (Batch 1 — package data) | arch-02-docs Phase 3.1 — rewrote `R/data.R` with standalone roxygen2 docs for `ukr_shp` and `ukr_mtdt_full` per the rules-file data template. Replaced the misleading `@describeIn ukr_shp` on `ukr_mtdt_full` (it was inheriting a *geometries* description for a *metadata* object). Documented the real bundled-data shape: `ukr_shp` has 4 admin levels (`admin0_Country` / `admin1_Oblast` (27) / `admin2_Rayon` (629) / `admin4_Hexagon` (1,939); columns `admin{N}Pcod` / `admin{N}Name` / `area` / `geometry`) — diverges from the rules-file example's stale `admin1/2/3` skeleton; `ukr_mtdt_full` has 5 slots (`general` country tibble, 3 per-admin indicator tibbles, `metadata` 9×14 indicator dictionary). Both gain `@source`, `@format` with `\describe{}` per slot, and runnable `@examples` using only bundled data. Two `man/*.Rd` help pages now exist where there was previously one shared inherited page. Folded in the Batch 6 `TBD → #46` swap on the §5 row above and the §11 row above. Suite stays at 682 PASS — no regression. |
+| [#47](https://github.com/worldbank/devPTIpack/pull/47) | 2026-05-03 | **Phase 3 starts** (Batch 1 — package data) | arch-02-docs Phase 3.1 — rewrote `R/data.R` with standalone roxygen2 docs for `ukr_shp` and `ukr_mtdt_full` per the rules-file data template. Replaced the misleading `@describeIn ukr_shp` on `ukr_mtdt_full` (it was inheriting a *geometries* description for a *metadata* object). Documented the real bundled-data shape: `ukr_shp` has 4 admin levels (`admin0_Country` / `admin1_Oblast` (27) / `admin2_Rayon` (629) / `admin4_Hexagon` (1,939); columns `adminNPcod` / `adminNName` / `area` / `geometry`) — diverges from the rules-file example's stale `admin1/2/3` skeleton; `ukr_mtdt_full` has 5 slots (`general` country tibble, 3 per-admin indicator tibbles, `metadata` 9×14 indicator dictionary). Both gain `@source`, `@format` with `\describe{}` per slot, and runnable `@examples` using only bundled data. Two `man/*.Rd` help pages now exist where there was previously one shared inherited page. Folded in the Batch 6 `TBD → #46` swap on the §5 row above and the §11 row above. Suite stays at 682 PASS — no regression. |
+| TBD                                                    | 2026-05-03 | Phase 3 Batch 2 (core calculation) | arch-02-docs Phase 3.2 — rewrote roxygen for all 12 functions in `R/calc_pti_helpers.R` (6) and `R/calc_pti_expander.R` (6). Honored arch-01 § "Permanent Functions": un-exported the 10 INTERNAL fns and re-typed them with the `@noRd` template (typed `@param`, explicit `@return`, no `@examples`); kept `label_generic_pti` and `generic_pti_glue` exported with synthetic-input `@examples` (real input is now from internal `agg_pti_scores`, so the example builds a minimal scores list directly). Promoted `generic_pti_glue` from `@describeIn label_generic_pti` to standalone. Pinned 3 §12 bugs via `@note` tags: `get_adm_levels` lex sort, `get_scores_data` 1-row → NA, `expand_adm_levels` >1 element silent NULL. Stripped pre-existing debug residue per arch-01:436 (~50 lines: 2 `# browser()`, 2 large commented-out alternate implementations in `structure_pti_data`, several stray comment lines). NAMESPACE delta: dropped 9 `export()` (`agg_pti_scores`, `clean_geoms`, `expand_adm_levels`, `get_adm_levels`, `get_mt`, `get_scores_data`, `get_weighted_data`, `pivot_pti_dta`, `structure_pti_data`); added 7 `importFrom`s (`dplyr::bind_rows`, `magrittr::extract`/`extract2`, `rlang::set_names`/`sym`, `tidyr::expand`, `golem::get_golem_options`) that lost their previous bulk-import coverage. Test-side: converted 7 `devPTIpack::fn()` qualified calls in 3 pre-existing test files (`test-shps-converters.R`, `test-calc_pti.R`, `test-weighting-logic.R`) to unqualified — needed because `::` requires export and the tests' `pkgload::load_all()` exposure is unaffected. Suite stays at 682 PASS — no regression. |
 
 Suite total after this branch: **0 failures / 1 skip / 682 PASS** (`testthat::test_local()`; docs-only PR, no test delta).
 

@@ -31,11 +31,11 @@ test_that("generic weigthing of the PTI data works", {
       imp_dta <- devPTIpack::ukr_mtdt_full
       imp_dta$indicators_list <- devPTIpack::get_indicators_list(imp_dta)
       imp_dta$weights_clean <- devPTIpack::get_rand_weights(imp_dta$indicators_list)
-      long_vars <- imp_dta %>% devPTIpack::pivot_pti_dta(imp_dta$indicators_list)
+      long_vars <- imp_dta %>% pivot_pti_dta(imp_dta$indicators_list)
       
-      devPTIpack::get_weighted_data(imp_dta$weights_clean,
-                                   long_vars,
-                                   imp_dta$indicators_list) %>%
+      get_weighted_data(imp_dta$weights_clean,
+                        long_vars,
+                        imp_dta$indicators_list) %>%
         class()
     }, "list")
   )

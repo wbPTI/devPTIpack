@@ -19,7 +19,7 @@ testthat::test_that("PTI metadata can be pivoted", {
   
   expect_equal({
     devPTIpack::ukr_mtdt_full %>%
-      devPTIpack::pivot_pti_dta(
+      pivot_pti_dta(
         devPTIpack::get_indicators_list(., "fltr_exclude_pti")
         ) %>%
       class()
@@ -27,7 +27,7 @@ testthat::test_that("PTI metadata can be pivoted", {
   
   expect_gt({
     devPTIpack::ukr_mtdt_full %>%
-      devPTIpack::pivot_pti_dta(
+      pivot_pti_dta(
         devPTIpack::get_indicators_list(., "fltr_exclude_pti")
       ) %>%
       length()
