@@ -4,7 +4,7 @@ test_that("get unavailable adming levels works", {
   rn_wt_1 <- 
     list(#
       wt_admi4_1 = 
-        tribble(
+        tibble::tribble(
           ~var_code, ~weight,
           "var_nval15_small_skewd_adm12",   0,
           "var_nval3_skewd_adm1",          0,
@@ -18,7 +18,7 @@ test_that("get unavailable adming levels works", {
         ),
       
       wt_admi4_2 = 
-        tribble(
+        tibble::tribble(
           ~var_code, ~weight,
           "var_nval15_small_skewd_adm12",   0,
           "var_nval3_skewd_adm1",          0,
@@ -32,7 +32,7 @@ test_that("get unavailable adming levels works", {
         ),
       
       wt_admi2_1 = 
-        tribble(
+        tibble::tribble(
           ~var_code, ~weight,
           "var_nval15_small_skewd_adm12",   0,
           "var_nval3_skewd_adm1",          1,
@@ -46,7 +46,7 @@ test_that("get unavailable adming levels works", {
         ),
       
       wt_admi2_2 = 
-        tribble(
+        tibble::tribble(
           ~var_code, ~weight,
           "var_nval15_small_skewd_adm12",   1,
           "var_nval3_skewd_adm1",          1,
@@ -60,7 +60,7 @@ test_that("get unavailable adming levels works", {
         ),
       
       wt_admi1_1 = 
-        tribble(
+        tibble::tribble(
           ~var_code, ~weight,
           "var_nval15_small_skewd_adm12",   0,
           "var_nval3_skewd_adm1",          1,
