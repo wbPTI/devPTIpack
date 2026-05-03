@@ -47,12 +47,13 @@ Phase 1  Test baseline for permanent functions     (#10)       │  ✓ done
    ├─ 1f   CI guard via .github/workflows/tests.yaml     ✓ #30
    └─ 1g   Tier 2 (shiny::testServer for 7 modules)            ✓ all 7 covered
             ▼                                                  │
-Phase 2  Cleanup legacy code in batches            (#8)        │ Tests
-   ├─ Batch 1  Dead files & functions                          │ guard
-   ├─ Batch 2  Legacy runners + app_server/app_ui              │ each
-   ├─ Batch 3  Legacy map server (~1200 lines)                 │ batch
+Phase 2  Cleanup legacy code in batches            (#8)        │  ✓ done
+   ├─ Batch 1  Dead files & functions                          │
+   ├─ Batch 2  Legacy runners + app_server/app_ui              │
+   ├─ Batch 3  Legacy map server (~1200 lines)                 │
    ├─ Batch 4  Migrate sample app to launch_pti()              │
-   └─ Batch 5  Remove mod_weights.R legacy                     │
+   ├─ Batch 5  Remove mod_weights.R legacy                     │
+   └─ Batch 6  Delete convenience wrappers                     │
             ▼                                                  │
 Phase 3  Roxygen2 docs for all permanent fns       (#11)       │
             ▼                                                  │
@@ -254,7 +255,7 @@ without re-checking caller graphs.
       `shiny::navbarPage`, `shiny::tabPanel`, `golem::with_golem_options`
       → `launch_pti_onepage`; `shiny::reactiveValues` → `mod_wt_inp_ui`.
       Suite stays at 682 PASS — no regressions.
-- [x] Batch 5 — remove `mod_weights.R` legacy (PR TBD): extracted
+- [x] Batch 5 — remove `mod_weights.R` legacy (PR #45): extracted
       `mod_wt_btns_srv` and `mod_collect_wt_srv` (the only two functions
       `mod_DT_inputs_server` still uses) to a new file
       `R/mod_wt_btns_collect.R` with proper `@noRd` roxygen and explicit
@@ -275,6 +276,30 @@ without re-checking caller graphs.
       retains only `mod_weights_rand_ui`, `get_rand_weights`,
       `get_all_weights_combs` as planned. Suite stays at 682 PASS — no
       regressions.
+- [x] Batch 6 — delete convenience wrappers (PR TBD): deleted whole files
+      `R/mod_explrr_onepage.R` (`mod_explrr_onepage_ui`, `mod_explrr_onepage_server`,
+      both exported thin wrappers over `mod_dta_explorer2_*`) and
+      `R/render_metadata_pdf.R` (`render_metadata`, exported wrapper over
+      `rmarkdown::render`). **Departure from arch-01's "deprecate first"
+      framing** — the audit showed both targets had no live external surface:
+      (a) `mod_explrr_onepage_*`'s only callers are in
+      `dev/90-app-examples.R`, itself broken since Batch 2 (it still
+      references the removed `mod_pti_onepage_*`) and slated for arch-04
+      Phase 4 deletion; (b) `render_metadata` is already broken on shipped
+      installs because it calls `system.file("pti-metadata-pdf.Rmd")`
+      which resolves to `""` (the Rmd actually lives at
+      `inst/sample_pti/app-data/`, not the `inst/` package root). A formal
+      deprecation cycle (`.Deprecated()` body for one release) is bureaucratic
+      without a release cadence to deprecate against; both also violate
+      the project's `@noRd + @export` rule. The arch-04 reference to
+      `render_metadata()` (workspace doc plan) is a one-line `system.file`
+      fix away from working — when arch-04 wants this, it can reintroduce
+      it as a fixed function rather than carrying the broken one forward.
+      NAMESPACE delta: dropped 3 exports (`mod_explrr_onepage_ui`,
+      `mod_explrr_onepage_server`, `render_metadata`) and 2 importFroms
+      (`here::here`, `rmarkdown::render` — neither used elsewhere in
+      `R/`). Net diff ~50 lines removed. **Closes Phase 2.** Suite stays
+      at 682 PASS — no regressions.
 
 ---
 
@@ -378,7 +403,8 @@ Lifted from arch-00 §"End-State Goals":
 | [#41](https://github.com/worldbank/devPTIpack/pull/41)  | 2026-05-02 | Phase 2 Batch 2 | arch-01 Batch 2 — delete whole file `R/mod_pti_onepage.R` (both `mod_pti_onepage_ui` + `mod_pti_onepage_server`), trim `R/run_app.R` to keep only `run_new_pti` (delete `run_pti`/`run_onepage_pti`/`run_onepage_pti_sample`/`run_dev_map_pti`/`run_dev_pti_plot`), trim `R/app_server.R` to keep only `app_new_pti_server` (delete `app_server`/`app_server_input_simple`/`app_server_sample_pti_vis`), trim `R/app_ui.R` to keep `app_new_pti_ui` + `golem_add_external_resources` (delete `app_ui`/`app_server_sample_pti_vis_ui`). 7 NAMESPACE exports dropped via `roxygen2::roxygenise()`. Suite stays at 682 PASS — no regression. |
 | [#43](https://github.com/worldbank/devPTIpack/pull/43)  | 2026-05-02 | Phase 2 Batch 3 | arch-01 Batch 3 — extract `mod_map_pti_leaf_ui` to new file `R/mod_map_pti_leaf_ui.R`, delete whole file `R/mod_map_pti_leaf.R` (1258 lines, all 12 legacy server functions), delete `make_shapes()` + `make_labels()` from `R/fct_legend_map_satelites.R`. Patched `app_new_pti_ui` to use modern `mod_pti_comparepage_ui` instead of deleted `mod_map_pti_leaf_page_ui` (Batch-4 mini-patch folded in to avoid `R CMD check` undefined-symbol note). Relocated 2 `@importFrom` tags (`leaflet::colorFactor` → `legend_map_satelite`; `leaflet::addTiles` → `plot_leaf_line_map2`) auto-pruned from NAMESPACE because their roxygen lived in the deleted file. Suite stays at 682 PASS — no regression. |
 | [#44](https://github.com/worldbank/devPTIpack/pull/44)  | 2026-05-03 | Phase 2 Batch 4 | arch-01 Batch 4 — rewrote `inst/sample_pti/app.R` to call `launch_pti()` directly (loads shapes via `get_shape()` and metadata via `fct_template_reader()`; drops `default_adm_level`, `choose_adm_levels`, `explorer_*`, `full_ui`, `pti_landing_page` knobs that have no modern equivalent — `launch_pti` would need a signature extension to preserve them). Deleted `run_new_pti` (whole `R/run_app.R`), `app_new_pti_server` (whole `R/app_server.R` — file `git rm`'d), `app_new_pti_ui` (kept only `golem_add_external_resources` in `R/app_ui.R`), and `mod_plot_pti_comparison_srv` from `R/mod_plot_pti2.R`. Relocated 5 `@importFrom` tags auto-pruned from NAMESPACE because their roxygen lived in the deleted files: `shiny::shinyApp`, `shiny::navbarPage`, `shiny::tabPanel`, `golem::with_golem_options` → `launch_pti_onepage`; `shiny::reactiveValues` → `mod_wt_inp_ui`. Folded in the long-pending Batch 3 `TBD → #43` swap on the §11 row above. Suite stays at 682 PASS — no regression. |
-| TBD                                                    | 2026-05-03 | Phase 2 Batch 5 | arch-01 Batch 5 — extracted `mod_wt_btns_srv` (~67 lines) and `mod_collect_wt_srv` (~20 lines) to a new file `R/mod_wt_btns_collect.R` with `@noRd` roxygen and explicit `@importFrom` tags; both are still used by `mod_DT_inputs_server` (the only modern caller). Deleted whole file `R/mod_weights.R` (928 lines, 13 zero-caller legacy functions: `mod_weights_ui`, `mod_weights_server`, `mod_indicarots_srv`, `mod_gen_wt_inputs_srv`, `mod_wt_name_srv`, `mod_wt_select_srv`, `mod_wt_uplod_srv`, `mod_wt_delete_srv`, `mod_wt_fill_srv`, `mod_wt_save_srv`, `mod_download_wt_srv`, plus the originals of the 2 extracted functions). Deleted whole file `R/mod_new_weights.R` (112 lines, `mod_new_demo_weights_server` + `mod_new_weights_server` — only caller `mod_pti_onepage_server` was removed in Batch 2). Net diff ~970 lines net removed (largest single batch in Phase 2). NAMESPACE delta: dropped 1 export (`mod_weights_ui`); added 4 imports from the new file (`purrr::map2`, `purrr::map_dfr`, `shiny::updateNumericInput`, `tibble::tibble`); no auto-prune fallout. Folded in the long-pending Batch 4 `TBD → #44` swap on the §11 row above and on the §5 Batch-4 row. Suite stays at 682 PASS — no regression. |
+| [#45](https://github.com/worldbank/devPTIpack/pull/45)  | 2026-05-03 | Phase 2 Batch 5 | arch-01 Batch 5 — extracted `mod_wt_btns_srv` (~67 lines) and `mod_collect_wt_srv` (~20 lines) to a new file `R/mod_wt_btns_collect.R` with `@noRd` roxygen and explicit `@importFrom` tags; both are still used by `mod_DT_inputs_server` (the only modern caller). Deleted whole file `R/mod_weights.R` (928 lines, 13 zero-caller legacy functions: `mod_weights_ui`, `mod_weights_server`, `mod_indicarots_srv`, `mod_gen_wt_inputs_srv`, `mod_wt_name_srv`, `mod_wt_select_srv`, `mod_wt_uplod_srv`, `mod_wt_delete_srv`, `mod_wt_fill_srv`, `mod_wt_save_srv`, `mod_download_wt_srv`, plus the originals of the 2 extracted functions). Deleted whole file `R/mod_new_weights.R` (112 lines, `mod_new_demo_weights_server` + `mod_new_weights_server` — only caller `mod_pti_onepage_server` was removed in Batch 2). Net diff ~970 lines net removed (largest single batch in Phase 2). NAMESPACE delta: dropped 1 export (`mod_weights_ui`); added 4 imports from the new file (`purrr::map2`, `purrr::map_dfr`, `shiny::updateNumericInput`, `tibble::tibble`); no auto-prune fallout. Folded in the long-pending Batch 4 `TBD → #44` swap on the §11 row above and on the §5 Batch-4 row. Suite stays at 682 PASS — no regression. |
+| TBD                                                    | 2026-05-03 | **Phase 2 Batch 6 (closes Phase 2)** | arch-01 Batch 6 — convenience-wrapper deletion. Departure from the doc's "Optional / deprecate first" framing: caller-graph audit showed both targets had no live external surface so a deprecation cycle would be bureaucratic. Deleted whole file `R/mod_explrr_onepage.R` (39 lines, `mod_explrr_onepage_ui` + `mod_explrr_onepage_server`, exported thin wrappers over `mod_dta_explorer2_*` — only callers in `dev/90-app-examples.R`, itself broken since Batch 2 and slated for arch-04 Phase 4 deletion). Deleted whole file `R/render_metadata_pdf.R` (14 lines, `render_metadata` exported wrapper over `rmarkdown::render`) — already broken on shipped installs because `system.file("pti-metadata-pdf.Rmd", package = "devPTIpack")` resolves to `""` (the Rmd lives at `inst/sample_pti/app-data/`, not the `inst/` package root); arch-04's reference to `render_metadata()` is one `system.file` keyword away from working and can be reintroduced as a fixed function when arch-04 wants it. Both also violated the project's `@noRd + @export` rule (creates exported functions with no help page). NAMESPACE delta: dropped 3 exports (`mod_explrr_onepage_ui`, `mod_explrr_onepage_server`, `render_metadata`) and 2 importFroms (`here::here`, `rmarkdown::render` — neither used elsewhere in `R/`). Folded in the Batch 5 `TBD → #45` swap on the §11 row above and on the §5 Batch-5 row. **Closes Phase 2 (#8).** Suite stays at 682 PASS — no regression. |
 
 Suite total after this branch: **0 failures / 1 skip / 682 PASS** (`testthat::test_local()`; cleanup-only PR, no test delta).
 

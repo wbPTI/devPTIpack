@@ -393,12 +393,36 @@ After this batch: `mod_weights.R` can be deleted. `mod_new_weights.R` can be del
 
 ---
 
-### Batch 6 (Optional) — Deprecate convenience wrappers
+### Batch 6 — Delete convenience wrappers
+
+> **Note (2026-05-03):** This batch was originally scoped as
+> "**Optional** — Deprecate convenience wrappers" with a `.Deprecated()`
+> cycle before removal. The audit at execution time showed both targets
+> had no live external surface, so the deprecation cycle would have been
+> bureaucratic without protective value:
+>
+> - `mod_explrr_onepage_*`: only callers are in `dev/90-app-examples.R`,
+>   itself broken since Batch 2 (it still references the removed
+>   `mod_pti_onepage_*`) and slated for arch-04 Phase 4 deletion.
+> - `render_metadata()`: already broken on shipped installs —
+>   `system.file("pti-metadata-pdf.Rmd", package = "devPTIpack")` resolves
+>   to `""` because the Rmd actually lives at `inst/sample_pti/app-data/`,
+>   not the `inst/` package root. Anyone calling it gets a runtime error
+>   from `rmarkdown::render("")`. arch-04's reference to it
+>   (.github/docs/arch-04-workspace.md:155) is one `system.file` keyword
+>   away from working — it can be reintroduced as a fixed function when
+>   arch-04 wants it, rather than carried forward in broken form.
+>
+> Both functions also violated the project rule "Never combine `@noRd`
+> with `@export`" (creates exported functions with no help page).
+>
+> Deleted in this batch. Phase 2 closed — see PLAN.md §11 for the PR
+> reference.
 
 | Item                                                     | Notes                                                                                                                   |
 | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `mod_explrr_onepage_ui/server` in `mod_explrr_onepage.R` | Exported thin wrappers over `mod_dta_explorer2_*`. Only called from `dev/90-app-examples.R`. Deprecate before removing. |
-| `render_metadata()` in `render_metadata_pdf.R`           | Exported, zero internal callers. May have external users. Deprecate first.                                              |
+| `mod_explrr_onepage_ui/server` in `mod_explrr_onepage.R` | Exported thin wrappers over `mod_dta_explorer2_*`. Only called from broken `dev/90-app-examples.R`. **Deleted in Batch 6.** |
+| `render_metadata()` in `render_metadata_pdf.R`           | Exported, zero internal callers, broken on shipped installs (wrong `system.file` key). **Deleted in Batch 6.**            |
 
 ---
 
