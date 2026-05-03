@@ -6,8 +6,8 @@
 #' @param height css for height in the `dataTableOutput` function.
 #' @param dt_style additional styling css for outer div where `dataTableOutput` is placed in.
 #'
-#' @importFrom shiny NS tagList 
-#' 
+#' @importFrom shiny NS tagList reactiveValues
+#'
 #' @examples
 #'\dontrun{
 #' column(
