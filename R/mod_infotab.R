@@ -1,6 +1,42 @@
-#' infotab Server Functions
+#' Manage the landing-page modal and guided tour
 #'
-#' @noRd 
+#' Internal page-level module that owns the "Info" and "How it works?"
+#' navbar tabs. Selecting either triggers a side effect (open the
+#' landing-page modal, or start the cicerone tour) and snaps the
+#' navbar selection back to the previously active tab so neither
+#' "tab" stays visually selected. Also wires the modal's "Tour me
+#' around!" button to start the tour, and reads the optional
+#' `pti_landing_page` golem option (HTML / md / Rmd) to populate the
+#' modal body.
+#'
+#' @param id Character. Shiny module namespace ID.
+#' @param tabpan_id Character. Input ID of the parent `navbarPage`
+#'   used to update the active tab via `updateNavbarPage()`.
+#' @param ptitab_id Character. Tab name shown by the tour as the PTI
+#'   editor target.
+#' @param comparetab_id Character or `NULL`. When supplied, the tour
+#'   includes the comparison-tab step.
+#' @param exploretab_id Character or `NULL`. When supplied, the tour
+#'   includes the data-explorer-tab step.
+#' @param infotab_id Character. Tab name that opens the landing-page
+#'   modal. Defaults to `"Info"`.
+#' @param howtab_id Character. Tab name that starts the guided tour.
+#'   Defaults to `"How it works?"`.
+#' @param firsttab_id Character. Tab name treated as the initial
+#'   "previous" tab, used by the snap-back logic. Defaults to
+#'   `infotab_id`.
+#'
+#' @return Called for side effects (registers `observeEvent` handlers
+#'   on the navbar input and the tour button).
+#'
+#' @importFrom shiny moduleServer reactiveValues reactiveVal reactive
+#'   observeEvent updateNavbarPage modalDialog modalButton actionButton
+#'   showModal removeModal getDefaultReactiveDomain debounce tagList
+#'   icon
+#' @importFrom golem get_golem_options
+#' @importFrom htmltools HTML
+#' @importFrom stringr str_detect regex
+#' @noRd
 mod_infotab_server <-
   function(id,
            tabpan_id = "tabpan",
