@@ -1,25 +1,60 @@
-#' Start two-col or box-based PTI
+#' Launch a single-page PTI Shiny app
 #'
-#' @importFrom rlang is_missing
-#' @importFrom shiny shinyApp navbarPage tabPanel
+#' Starts a stand-alone PTI app with one page -- the weights input, the
+#' calculated index, and the leaflet map living together in either a
+#' two-column or a box layout. Use this for a focused viewer when no
+#' compare or explorer tabs are needed; for the multi-tab experience
+#' use [launch_pti()].
+#'
+#' @param shp_dta Named list of `sf` tibbles, one per admin level
+#'   (e.g. the bundled [ukr_shp]). Each element must carry the
+#'   `adminNPcod` / `adminNName` / `geometry` columns.
+#' @param inp_dta Named list of metadata tibbles in the package format
+#'   (e.g. the bundled [ukr_mtdt_full]); typically built by
+#'   [fct_template_reader()].
+#' @param ui_type Character. Either `"twocol"` (default) for the
+#'   side-by-side weights / map layout or `"box"` for the boxed layout.
+#'   Only the first element is used.
+#' @param app_name Character or `NULL`. Title shown in the browser tab
+#'   and used as the waiter spinner label.
+#' @param show_waiter Logical. If `TRUE` (default) a loading spinner
+#'   covers the page until the first map render completes.
+#' @param show_adm_levels Optional character vector restricting which
+#'   admin levels appear in the level selector. `NULL` (default) shows
+#'   every level present in `shp_dta`.
+#' @param wt_dwnld_options Character vector of weights-tab download
+#'   buttons to expose. Subset of `c("data", "weights", "shapes",
+#'   "metadata")`.
+#' @param map_dwnld_options Character vector of map-tab download
+#'   buttons. Subset of `c("shapes", "metadata")`. Forced to `NULL`
+#'   when `ui_type = "box"`.
+#' @param shapes_path,mtdtpdf_path Character paths used by the download
+#'   handlers to locate the source shapefiles and the metadata PDF.
+#'   Default `"."` resolves to the working directory at launch.
+#' @param map_height,dt_style CSS strings forwarded to the map
+#'   container and the weights DataTable respectively.
+#' @param ... Additional arguments forwarded to
+#'   [mod_ptipage_newsrv()] and to [golem::with_golem_options()].
+#'
+#' @return A [shiny::shinyApp()] object wrapped in
+#'   [golem::with_golem_options()]. Called primarily for its side
+#'   effect of starting the Shiny app.
+#'
+#' @importFrom rlang is_missing dots_list
+#' @importFrom shiny shinyApp bootstrapPage reactive
+#' @importFrom htmltools tagList
 #' @importFrom golem with_golem_options
-#'
-#' @inheritParams mod_ptipage_twocol_ui
-#' @inheritParams mod_ptipage_newsrv
-#' @inheritParams mod_waiter_newsrv
-#' @param ui_type character or "twocol" or "box" defines the type of layout used.
-#' 
-#' @description Launches a two-column PTI module stand-alone.
-#' 
-#' @examples
-#'\dontrun{
-#' launch_pti_onepage(shp_dta = devPTIpack::ukr_shp, 
-#'                    inp_dta = devPTIpack::ukr_mtdt_full)
-#' launch_pti_onepage(shp_dta = devPTIpack::ukr_shp, 
-#'                    inp_dta = devPTIpack::ukr_mtdt_full, 
-#'                    show_waiter = FALSE)
-#'}
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#' launch_pti_onepage(shp_dta = ukr_shp, inp_dta = ukr_mtdt_full)
+#'
+#' launch_pti_onepage(shp_dta = ukr_shp,
+#'                    inp_dta = ukr_mtdt_full,
+#'                    ui_type = "box",
+#'                    show_waiter = FALSE)
+#' }
 launch_pti_onepage <- 
   function(shp_dta, 
            inp_dta, 
@@ -92,12 +127,46 @@ launch_pti_onepage <-
 
 
 
-#' @describeIn launch_pti_onepage start a PTI app with explorer and compare page
-#' 
-#' @param tabs character vector, where user can decide what PTI components to include.
-#'   Options are: c("info", "compare", "explorer", "how").
+#' Launch a multi-tab PTI Shiny app
+#'
+#' Starts a full PTI app with a top-level navbar that can include any
+#' combination of an info landing tab, the PTI page itself, a PTI
+#' compare tab, a data explorer tab, and a how-it-works tab. Use this
+#' when stakeholders need the comparison and explorer surfaces; for a
+#' focused single-page viewer use [launch_pti_onepage()] instead.
+#'
+#' @inheritParams launch_pti_onepage
+#' @param app_name Character. Title rendered in the navbar via
+#'   `add_logo()`; also stored as `pti.name` in the golem options so
+#'   downstream modules can reach it through
+#'   [golem::get_golem_options()].
+#' @param tabs Character vector picking which top-level tabs to show.
+#'   Subset of `c("info", "compare", "explorer", "how")`. The PTI tab
+#'   is always rendered. Defaults to
+#'   `c("info", "compare", "explorer")`.
+#'
+#' @return A [shiny::shinyApp()] object wrapped in
+#'   [golem::with_golem_options()]. Called primarily for its side
+#'   effect of starting the Shiny app.
+#'
+#' @importFrom rlang is_missing dots_list
+#' @importFrom shiny shinyApp navbarPage tabPanel reactive fluidRow
+#' @importFrom htmltools tagList
+#' @importFrom golem with_golem_options
+#' @importFrom cicerone use_cicerone
 #' @export
-launch_pti <- 
+#'
+#' @examples
+#' \dontrun{
+#' launch_pti(shp_dta = ukr_shp,
+#'            inp_dta = ukr_mtdt_full,
+#'            app_name = "Ukraine PTI demo")
+#'
+#' launch_pti(shp_dta = ukr_shp,
+#'            inp_dta = ukr_mtdt_full,
+#'            tabs = c("info", "compare", "explorer", "how"))
+#' }
+launch_pti <-
   function(shp_dta, 
            inp_dta, 
            ui_type = c("twocol", "box"),
@@ -170,8 +239,7 @@ launch_pti <-
       
       # Checking what tab is open.
       active_tab <- reactive(input$tabpan)
-      # observe(cat("tab: ", active_tab(), "\n"))
-      
+
       # Info tab + guide logic
       mod_infotab_server(NULL, 
                          tabpan_id = "tabpan", 
