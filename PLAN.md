@@ -345,10 +345,10 @@ Follow arch-02-docs § "Implementation Order" and use the
       [test-weighting-logic.R](tests/testthat/test-weighting-logic.R))
       to unqualified — needed because `::` requires export and the
       tests' `pkgload::load_all()` exposure is unaffected.
-- [x] **Batch 3 — Data I/O & validation** (PR TBD): rewrote roxygen for
-      11 functions across 5 files — `R/fct_template_reader.R` (2 fns),
+- [x] **Batch 3 -- Data I/O & validation** ([PR #49](https://github.com/worldbank/devPTIpack/pull/49)): rewrote roxygen for
+      11 functions across 5 files -- `R/fct_template_reader.R` (2 fns),
       `R/fct_validate_metadata.R` (3 fns), `R/validators.R` (2 fns),
-      `R/dta_cleaners.R` (1 fn), and `R/mod_drop_inval_adm.R` (4 fns —
+      `R/dta_cleaners.R` (1 fn), and `R/mod_drop_inval_adm.R` (4 fns --
       folded in here for thematic coherence with the validation theme;
       arch-02-docs §3 listed them implicitly in §6, but `drop_inval_adm`
       / `get_vars_un_avbil` / `get_min_admin_wght` are tightly coupled
@@ -363,30 +363,81 @@ Follow arch-02-docs § "Implementation Order" and use the
       §12 bugs via `@note`: `validate_read_shp` empty-pattern
       `str_detect` (issue #7), `get_vars_un_avbil` asymmetric `lag()`
       fill (PR #34). Stripped 4 `# browser()` debug residue lines per
-      arch-01:436 (fct_template_reader.R ×2, validators.R, dta_cleaners.R)
+      arch-01:436 (fct_template_reader.R x2, validators.R, dta_cleaners.R)
       plus an 8-line commented-out runtime `test_that` block in
       validators.R replaced by the live `if (is.na(adm_order)...)`
       block. NAMESPACE delta: dropped 2 `export()`
       (`validate_single_geom`, `get_indicators_list`); added explicit
       `importFrom`s on the rewritten functions. Kept the `@import dplyr
       purrr stringr readxl` bulk-import directive on
-      `fct_template_reader` — the `pkgload::load_all()` test environment
+      `fct_template_reader` -- the `pkgload::load_all()` test environment
       relies on the bulk import to keep `mod_DT_inputs_server`'s 500ms
       throttle test deterministic across `testServer` calls (subtle
       shiny scheduler interaction; explicit-import-only triggers a
       cross-test reactive-state leak in the throttle Tier-2 test).
       Test-side: converted 7 `devPTIpack::get_indicators_list()`
       qualified calls in 2 pre-existing test files
-      ([test-calc_pti.R](tests/testthat/test-calc_pti.R) ×4,
+      ([test-calc_pti.R](tests/testthat/test-calc_pti.R) x4,
       [test-weighting-logic.R](tests/testthat/test-weighting-logic.R)
-      ×3) to unqualified, and qualified 5 unqualified `tribble(`
+      x3) to unqualified, and qualified 5 unqualified `tribble(`
       calls in
       [test-get_uavailab_admin.R](tests/testthat/test-get_uavailab_admin.R)
       to `tibble::tribble(` (the previous transitive availability via
-      bulk imports no longer covers it). Suite stays at 682 PASS — no
+      bulk imports no longer covers it). Suite stays at 682 PASS -- no
       regressions.
-- [ ] Batch 4 — Visualisation helpers: `plot_pti_helpers.R`,
-      `fct_legend_map_satelites.R` (~10 fns).
+- [x] **Batch 4 -- Visualisation helpers** (PR TBD): rewrote roxygen for
+      12 functions across `R/plot_pti_helpers.R` (10 fns) and
+      `R/fct_legend_map_satelites.R` (2 fns). All 12 are INTERNAL per
+      arch-01 § "Permanent Functions" / "Visualisation Helpers" -- this
+      batch un-exports every one of them and converts each to the
+      `@noRd` internal template (typed `@param`, explicit `@return`,
+      full `@importFrom`, no `@export`, no `@examples`). Closes 4
+      `@noRd + @export` rule violations (`get_current_levels`,
+      `filter_admin_levels`, `add_legend_paras`, `legend_map_satelite`)
+      plus 1 stray-tag typo (the original `legend_map_satelite` had a
+      `@param dta` tag for a parameter the function never had).
+      Promoted 4 `@describeIn
+      plot_pti_polygons` chains to standalone `@noRd` docs
+      (`clean_pti_polygons`, `add_pti_poly_controls`,
+      `clean_pti_poly_controls`, `check_existing_groups`); the
+      `@describeIn` chain was acceptable while all 5 were exported but
+      becomes meaningless when nothing has a help page. Pinned 3 §12
+      bugs via `@note` (all from PR #25, all in plot_pti_helpers.R):
+      `filter_admin_levels` name-vs-value asymmetry,
+      `complete_pti_labels` missing-assignment no-op (priority-rank
+      suffix never appended in production), `check_existing_groups`
+      empty-pattern `str_detect` error. Stripped 4 `# browser()`
+      debug-residue lines per arch-01:436 (plot_pti_helpers.R x2,
+      fct_legend_map_satelites.R x2). Left the larger commented-out
+      alternate-implementation blocks in fct_legend_map_satelites.R
+      alone (lines 60-83 alternate quantile fallbacks, ~190-210
+      alternate `recode_values` closure, ~310-360 commented-out
+      `get_shift` / `generic_pal` -- these are alternate-algorithm
+      drafts, not debug residue, and stripping them is out of arch-01's
+      "remove commented-out blocks" mandate which lists specific files;
+      `fct_legend_map_satelites.R` is not on that list). Fixed the
+      `@describeIn plot_pti_polygons plot_pti_polygons` typo on
+      `add_pti_poly_controls` (function name appeared twice in the
+      previous one-liner). Package-source fix: converted one
+      `devPTIpack::get_current_levels()` qualified call in
+      `R/mod_export_pti_data.R::get_pti_scores_export` to unqualified
+      (the `::` form requires export and now errors after the
+      un-export); 9 export-data tests broke and went green again after
+      this one-line fix. NAMESPACE delta: dropped 11 `export()`
+      (`add_legend_paras`, `add_pti_poly_controls`,
+      `check_existing_groups`, `clean_pti_poly_controls`,
+      `clean_pti_polygons`, `complete_pti_labels`, `filter_admin_levels`,
+      `get_current_levels`, `legend_map_satelite`, `plot_pti_polygons`,
+      `preplot_reshape_wghtd_dta`); added 7 `importFrom`s
+      (`leaflet::addLayersControl` / `clearGroup` /
+      `layersControlOptions` / `showGroup`; `purrr::map2_chr`;
+      `shiny::HTML`; and a few re-localised tags from explicit
+      `@importFrom` sweeps). Test-side: no qualified-call conversions
+      needed -- the existing `devPTIpack:::legend_map_satelite` triple-colon
+      calls in `tests/testthat/test-legend-mapping.R` keep working
+      across the export status flip (`:::` resolves regardless of
+      export); other test files use unqualified calls that resolve via
+      `pkgload::load_all()`. Suite stays at 682 PASS -- no regressions.
 - [ ] Batch 5 — Entry points & app infrastructure: `launch_pti.R`,
       `fct_create_new_pti.R`, `app_config.R` (~3 fns).
 - [ ] Batch 6 — All remaining persistent modules & utilities (~56 fns;
@@ -489,7 +540,8 @@ Lifted from arch-00 §"End-State Goals":
 | [#46](https://github.com/worldbank/devPTIpack/pull/46) | 2026-05-03 | **Phase 2 Batch 6 (closes Phase 2)** | arch-01 Batch 6 — convenience-wrapper deletion. Departure from the doc's "Optional / deprecate first" framing: caller-graph audit showed both targets had no live external surface so a deprecation cycle would be bureaucratic. Deleted whole file `R/mod_explrr_onepage.R` (39 lines, `mod_explrr_onepage_ui` + `mod_explrr_onepage_server`, exported thin wrappers over `mod_dta_explorer2_*` — only callers in `dev/90-app-examples.R`, itself broken since Batch 2 and slated for arch-04 Phase 4 deletion). Deleted whole file `R/render_metadata_pdf.R` (14 lines, `render_metadata` exported wrapper over `rmarkdown::render`) — already broken on shipped installs because `system.file("pti-metadata-pdf.Rmd", package = "devPTIpack")` resolves to `""` (the Rmd lives at `inst/sample_pti/app-data/`, not the `inst/` package root); arch-04's reference to `render_metadata()` is one `system.file` keyword away from working and can be reintroduced as a fixed function when arch-04 wants it. Both also violated the project's `@noRd + @export` rule (creates exported functions with no help page). NAMESPACE delta: dropped 3 exports (`mod_explrr_onepage_ui`, `mod_explrr_onepage_server`, `render_metadata`) and 2 importFroms (`here::here`, `rmarkdown::render` — neither used elsewhere in `R/`). Folded in the Batch 5 `TBD → #45` swap on the §11 row above and on the §5 Batch-5 row. **Closes Phase 2 (#8).** Suite stays at 682 PASS — no regression. |
 | [#47](https://github.com/worldbank/devPTIpack/pull/47) | 2026-05-03 | **Phase 3 starts** (Batch 1 — package data) | arch-02-docs Phase 3.1 — rewrote `R/data.R` with standalone roxygen2 docs for `ukr_shp` and `ukr_mtdt_full` per the rules-file data template. Replaced the misleading `@describeIn ukr_shp` on `ukr_mtdt_full` (it was inheriting a *geometries* description for a *metadata* object). Documented the real bundled-data shape: `ukr_shp` has 4 admin levels (`admin0_Country` / `admin1_Oblast` (27) / `admin2_Rayon` (629) / `admin4_Hexagon` (1,939); columns `adminNPcod` / `adminNName` / `area` / `geometry`) — diverges from the rules-file example's stale `admin1/2/3` skeleton; `ukr_mtdt_full` has 5 slots (`general` country tibble, 3 per-admin indicator tibbles, `metadata` 9×14 indicator dictionary). Both gain `@source`, `@format` with `\describe{}` per slot, and runnable `@examples` using only bundled data. Two `man/*.Rd` help pages now exist where there was previously one shared inherited page. Folded in the Batch 6 `TBD → #46` swap on the §5 row above and the §11 row above. Suite stays at 682 PASS — no regression. |
 | [#48](https://github.com/worldbank/devPTIpack/pull/48) | 2026-05-03 | Phase 3 Batch 2 (core calculation) | arch-02-docs Phase 3.2 — rewrote roxygen for all 12 functions in `R/calc_pti_helpers.R` (6) and `R/calc_pti_expander.R` (6). Honored arch-01 § "Permanent Functions": un-exported the 10 INTERNAL fns and re-typed them with the `@noRd` template (typed `@param`, explicit `@return`, no `@examples`); kept `label_generic_pti` and `generic_pti_glue` exported with synthetic-input `@examples` (real input is now from internal `agg_pti_scores`, so the example builds a minimal scores list directly). Promoted `generic_pti_glue` from `@describeIn label_generic_pti` to standalone. Pinned 3 §12 bugs via `@note` tags: `get_adm_levels` lex sort, `get_scores_data` 1-row → NA, `expand_adm_levels` >1 element silent NULL. Stripped pre-existing debug residue per arch-01:436 (~50 lines: 2 `# browser()`, 2 large commented-out alternate implementations in `structure_pti_data`, several stray comment lines). NAMESPACE delta: dropped 9 `export()` (`agg_pti_scores`, `clean_geoms`, `expand_adm_levels`, `get_adm_levels`, `get_mt`, `get_scores_data`, `get_weighted_data`, `pivot_pti_dta`, `structure_pti_data`); added 7 `importFrom`s (`dplyr::bind_rows`, `magrittr::extract`/`extract2`, `rlang::set_names`/`sym`, `tidyr::expand`, `golem::get_golem_options`) that lost their previous bulk-import coverage. Test-side: converted 7 `devPTIpack::fn()` qualified calls in 3 pre-existing test files (`test-shps-converters.R`, `test-calc_pti.R`, `test-weighting-logic.R`) to unqualified — needed because `::` requires export and the tests' `pkgload::load_all()` exposure is unaffected. Suite stays at 682 PASS — no regression. |
-| TBD                                                    | 2026-05-03 | Phase 3 Batch 3 (data I/O & validation) | arch-02-docs Phase 3.3 — rewrote roxygen for 11 functions across 5 files: `R/fct_template_reader.R` (`fct_template_reader` exported, `fct_convert_weight_to_clean` internal), `R/fct_validate_metadata.R` (`validate_metadata` + `validate_read_shp` + `validate_read_metadata`, all exported), `R/validators.R` (`validate_geometries` exported, `validate_single_geom` un-exported per arch-01), `R/dta_cleaners.R` (`get_indicators_list` un-exported per arch-01), `R/mod_drop_inval_adm.R` (`mod_drop_inval_adm` module + `get_vars_un_avbil` + `get_min_admin_wght` + `drop_inval_adm`, all exported — folded in here for thematic coherence with the validation theme). Honored arch-01: closes 3× `@noRd + @export` rule violations (`validate_single_geom`, `validate_geometries`, `get_indicators_list`); promoted 5 functions from `@describeIn` chains to standalone exported help pages (`validate_read_shp`, `validate_read_metadata`, `get_vars_un_avbil`, `get_min_admin_wght`, `drop_inval_adm`). Pinned 2 §12 bugs via `@note`: `validate_read_shp` empty-pattern `str_detect` (issue #7), `get_vars_un_avbil` asymmetric `lag()` fill (PR #34); the second `@note` flipped my initial example to use the working direction (admin2-only -> admin1 unavailable) instead of the buggy direction. Stripped 4 `# browser()` debug-residue lines per arch-01:436 (`fct_template_reader.R` x2, `validators.R`, `dta_cleaners.R`) plus an 8-line commented-out runtime `test_that` block in `validators.R` replaced by the live `if (is.na(adm_order)...)` branch. **Kept the `@import dplyr purrr stringr readxl` bulk-import directive on `fct_template_reader`** -- the `pkgload::load_all()` test environment relies on the bulk import to keep `mod_DT_inputs_server`'s 500ms throttle test deterministic across `testServer` calls (subtle shiny scheduler interaction; explicit-import-only triggers a cross-test reactive-state leak in the throttle Tier-2 test). Replaced `admin\d` regex notation in roxygen prose with `admin<N>` to avoid Rd "Lost braces" warnings; replaced em-dashes and arrows with `--` and `->` per the Batch 2 reviewer ASCII fix. NAMESPACE delta: dropped 2 `export()` (`get_indicators_list`, `validate_single_geom`); kept 4 bulk `import()` directives intact. Test-side: converted 7 `devPTIpack::get_indicators_list()` qualified calls in 2 pre-existing test files ([test-calc_pti.R](tests/testthat/test-calc_pti.R) ×4, [test-weighting-logic.R](tests/testthat/test-weighting-logic.R) ×3) to unqualified, and qualified 5 unqualified `tribble(` calls in [test-get_uavailab_admin.R](tests/testthat/test-get_uavailab_admin.R) to `tibble::tribble(`. Folded in the Batch 2 `TBD → #48` swap on the §6 row and the §11 row above. Suite stays at 682 PASS — no regression. |
+| [#49](https://github.com/worldbank/devPTIpack/pull/49) | 2026-05-03 | Phase 3 Batch 3 (data I/O & validation) | arch-02-docs Phase 3.3 -- rewrote roxygen for 11 functions across 5 files: `R/fct_template_reader.R` (`fct_template_reader` exported, `fct_convert_weight_to_clean` internal), `R/fct_validate_metadata.R` (`validate_metadata` + `validate_read_shp` + `validate_read_metadata`, all exported), `R/validators.R` (`validate_geometries` exported, `validate_single_geom` un-exported per arch-01), `R/dta_cleaners.R` (`get_indicators_list` un-exported per arch-01), `R/mod_drop_inval_adm.R` (`mod_drop_inval_adm` module + `get_vars_un_avbil` + `get_min_admin_wght` + `drop_inval_adm`, all exported -- folded in here for thematic coherence with the validation theme). Honored arch-01: closes 3x `@noRd + @export` rule violations (`validate_single_geom`, `validate_geometries`, `get_indicators_list`); promoted 5 functions from `@describeIn` chains to standalone exported help pages (`validate_read_shp`, `validate_read_metadata`, `get_vars_un_avbil`, `get_min_admin_wght`, `drop_inval_adm`). Pinned 2 §12 bugs via `@note`: `validate_read_shp` empty-pattern `str_detect` (issue #7), `get_vars_un_avbil` asymmetric `lag()` fill (PR #34); the second `@note` flipped my initial example to use the working direction (admin2-only -> admin1 unavailable) instead of the buggy direction. Stripped 4 `# browser()` debug-residue lines per arch-01:436 (`fct_template_reader.R` x2, `validators.R`, `dta_cleaners.R`) plus an 8-line commented-out runtime `test_that` block in `validators.R` replaced by the live `if (is.na(adm_order)...)` branch. **Kept the `@import dplyr purrr stringr readxl` bulk-import directive on `fct_template_reader`** -- the `pkgload::load_all()` test environment relies on the bulk import to keep `mod_DT_inputs_server`'s 500ms throttle test deterministic across `testServer` calls (subtle shiny scheduler interaction; explicit-import-only triggers a cross-test reactive-state leak in the throttle Tier-2 test). Replaced `admin\d` regex notation in roxygen prose with `admin<N>` to avoid Rd "Lost braces" warnings; replaced em-dashes and arrows with `--` and `->` per the Batch 2 reviewer ASCII fix. NAMESPACE delta: dropped 2 `export()` (`get_indicators_list`, `validate_single_geom`); kept 4 bulk `import()` directives intact. Test-side: converted 7 `devPTIpack::get_indicators_list()` qualified calls in 2 pre-existing test files ([test-calc_pti.R](tests/testthat/test-calc_pti.R) x4, [test-weighting-logic.R](tests/testthat/test-weighting-logic.R) x3) to unqualified, and qualified 5 unqualified `tribble(` calls in [test-get_uavailab_admin.R](tests/testthat/test-get_uavailab_admin.R) to `tibble::tribble(`. Folded in the Batch 2 `TBD -> #48` swap on the §6 row and the §11 row above. Suite stays at 682 PASS -- no regression. |
+| TBD                                                    | 2026-05-04 | Phase 3 Batch 4 (visualisation helpers) | arch-02-docs Phase 3.4 -- rewrote roxygen for 12 functions across `R/plot_pti_helpers.R` (10) and `R/fct_legend_map_satelites.R` (2). All 12 are INTERNAL per arch-01 § "Permanent Functions" / "Visualisation Helpers"; batch un-exports every one and converts to the `@noRd` internal template. Closes 4 `@noRd + @export` rule violations (`get_current_levels`, `filter_admin_levels`, `add_legend_paras`, `legend_map_satelite`; `recode_val_base` was already correct). Promoted 4 `@describeIn plot_pti_polygons` chains to standalone `@noRd` docs (`clean_pti_polygons`, `add_pti_poly_controls`, `clean_pti_poly_controls`, `check_existing_groups`) -- the chain was acceptable while all 5 were exported but becomes meaningless once nothing has a help page. Pinned 3 §12 bugs via `@note` (all PR #25, all in `plot_pti_helpers.R`): `filter_admin_levels` name-vs-value asymmetry, `complete_pti_labels` missing-assignment no-op (priority-rank suffix never appended in production), `check_existing_groups` empty-pattern `str_detect` error. Stripped 4 `# browser()` debug-residue lines per arch-01:436 (`plot_pti_helpers.R` x2, `fct_legend_map_satelites.R` x2). Left larger commented-out alternate-implementation blocks in `fct_legend_map_satelites.R` alone -- arch-01's "remove commented-out blocks" mandate names specific files and that file is not on the list. Fixed `@describeIn plot_pti_polygons plot_pti_polygons` typo on `add_pti_poly_controls`. Package-source fix: converted one `devPTIpack::get_current_levels()` qualified call in `R/mod_export_pti_data.R::get_pti_scores_export` to unqualified (the `::` form requires export and now errors after the un-export); 9 export-data tests broke and went green again after this one-line fix. NAMESPACE delta: dropped 11 `export()`; added 7 `importFrom`s (`leaflet::addLayersControl` / `clearGroup` / `layersControlOptions` / `showGroup`; `purrr::map2_chr`; `shiny::HTML`; plus minor re-localisations from explicit-import sweeps). Test-side: no qualified-call conversions needed -- the existing `devPTIpack:::legend_map_satelite` triple-colon calls in `tests/testthat/test-legend-mapping.R` keep working (`:::` resolves regardless of export status); other test files use unqualified calls that resolve via `pkgload::load_all()`. Folded in the Batch 3 `TBD -> #49` swap on the §6 row above and the §11 row above. Suite stays at 682 PASS -- no regression. |
 
 Suite total after this branch: **0 failures / 1 skip / 682 PASS** (`testthat::test_local()`; docs-only PR, no test delta).
 

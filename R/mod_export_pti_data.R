@@ -35,7 +35,7 @@ mod_export_pti_data_server <- function(id, plotted_dta, weights_dta){
 #' @importFrom sf st_drop_geometry
 get_pti_scores_export <- function(plotted_dta) {
   plotted_dta %>%
-    devPTIpack::get_current_levels() %>%
+    get_current_levels() %>%
     map2(names(.), ~ {
       by_joint <- 
         plotted_dta %>%
