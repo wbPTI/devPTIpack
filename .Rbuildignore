@@ -16,3 +16,5 @@
 ^\.github$
 ^\.claude$
 ^PLAN\.md$
+^README\.Rmd$
+^inst/sample_pti/.*/\.keep$

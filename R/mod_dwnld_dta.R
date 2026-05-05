@@ -82,7 +82,7 @@ mod_dwnld_dta_xlsx_server <- function(id,
           if (isTruthy(file_name())) {
             flnm <- file_name()
           } else {
-            flnm <- str_c("data-export-", Sys.date(), ".xlsx")
+            flnm <- str_c("data-export-", Sys.Date(), ".xlsx")
           }
           flnm
         },

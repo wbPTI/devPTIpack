@@ -13,7 +13,7 @@ Description: We attempt to create a generic framework that allows to consolidate
   related indicators, agregate them according to a given methodology and 
   weighting scheme and visualise their spatial distribution.
 License: tbd.
-Depends: R (>= 3.6.0)
+Depends: R (>= 4.1.0)
 Imports: 
     config (>= 0.3),
     golem (>= 0.2.1),
@@ -51,9 +51,10 @@ Imports:
     ggplot2 (>= 3.3.5),
     DT (>= 0.20),
     htmlwidgets (>= 1.5.4)
-Suggests: 
+Suggests:
     progress (>= 1.2),
-    knitr (>= 1.33)
+    knitr (>= 1.33),
+    withr (>= 2.5)
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.3

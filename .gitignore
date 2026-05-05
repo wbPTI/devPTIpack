@@ -10,7 +10,6 @@ data-raw/
 docs/
 !.github/docs/
 inst/doc
-*.Rd
 *.dcf
 
 # Claude Code: machine-local settings only — committed config lives in
