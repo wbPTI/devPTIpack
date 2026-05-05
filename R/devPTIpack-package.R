@@ -7,8 +7,8 @@
 #'
 #' @keywords internal
 #' @importFrom grDevices dev.off pdf png
-#' @importFrom stats line quantile setNames var
-#' @importFrom utils data str
+#' @importFrom stats quantile setNames
+#' @importFrom utils str
 #' @importFrom shiny outputOptions hr
 "_PACKAGE"
 

@@ -703,10 +703,13 @@ Suite total after this branch: **0 failures / 1 skip / 682 PASS** (`testthat::te
 
 ## 12. Discovered bugs (pinned in tests)
 
-> Bugs surfaced *while* writing Tier-1 tests. Pinned with `expect_*`
-> assertions on the current (broken) behaviour so the tests fail when a
-> future fix lands — at which point the assertion is updated to the new
-> contract. Cleanup-phase candidates.
+> Bugs surfaced during Tier-1 test writing **or** during the Phase 2.5
+> R-CMD-check / manual-smoke gate. Pre-Phase-2.5 entries are pinned
+> with `expect_*` assertions on the current (broken) behaviour so the
+> tests fail when a future fix lands — at which point the assertion is
+> updated to the new contract. Phase-2.5-discovered entries (rows 12+)
+> have no test pin yet; pinning is a sub-task of the eventual fix PR.
+> All entries are cleanup-phase candidates regardless of pin status.
 
 | Loc | Bug | Pin (test) |
 |---|---|---|
@@ -721,6 +724,8 @@ Suite total after this branch: **0 failures / 1 skip / 682 PASS** (`testthat::te
 | [`R/mod_dta_explorer2.R::get_var_choices`](R/mod_dta_explorer2.R#L302) | Errors with "attempt to set an attribute on NULL" when called with an empty `indicators_list`. The fallback branch `names(out) <- "Indicators"` runs even when `out` is `NULL`. A length-0 list output would be more useful. | [test-explorer-helpers.R:get_var_choices: empty indicators tibble errors (PINNED)](tests/testthat/test-explorer-helpers.R) |
 | [`R/mod_drop_inval_adm.R::get_vars_un_avbil`](R/mod_drop_inval_adm.R#L72-L101) | Asymmetric availability check. The fill logic uses `lag(value)` (after `arrange(admin_level)`), so an indicator that exists only at an earlier-sorted level (e.g. admin1 only) is treated as "available" at later-sorted levels (admin2) — admin2 is never surfaced as unavailable. Reverse direction (admin2-only → admin1 unavailable) works because admin1 is first-sorted and has no `lag`. Also: the `is.na(value & !any_larger)` expression looks like missing parens — likely meant `(is.na(value) & !any_larger)`. Caught while writing Tier-2 tests for `mod_drop_inval_adm`. | [test-mod-drop-inval-adm.R: comment block above "Notification side effect" (DOCUMENTED, not pinned — Tier-2 test avoids the bug per the skill rule)](tests/testthat/test-mod-drop-inval-adm.R) |
 | [`R/mod_dta_explorer2.R::mod_fltr_sel_var2_srv`](R/mod_dta_explorer2.R#L216-L235) | The `add_selected()` observer's predicate `purrr::map_lgl(choices(), ~ { .x %in% c(selected_add, selected_now) | .x %in% names(c(selected_add, selected_now)) })` errors with "Result must be length 1, not N" whenever any pillar holds >1 variable, because `.x` is the length-N character vector for that pillar and `%in%` returns length-N. Should be `map(...) %>% map_lgl(any)`, or use `any(.x %in% ...)` inside the predicate. The Tier-2 test avoids the bug for happy-path coverage by using single-var-per-pillar choices, and pins the underlying predicate failure separately. | [test-mod-var-selector.R: add_selected() with multi-var pillar fails the inner predicate (PINNED BUG)](tests/testthat/test-mod-var-selector.R) |
+| [`R/supporting-goe-prep.R::gg_admin_list`](R/supporting-goe-prep.R#L51) | Default arg `mt = zam_bounds_simple` references a name that doesn't exist anywhere in `R/` or `data/`. Calling `gg_admin_list(dta, metadata)` without explicit `mt` errors at runtime with `object 'zam_bounds_simple' not found`. Discovered by r-package-reviewer during PR #54 (Phase 2.5 R-CMD-check gate); fix is to either change the default to `mt = NULL` with a guard or `mt = ukr_shp` if functionally equivalent, then drop `"zam_bounds_simple"` from `R/devPTIpack-package.R::globalVariables()`. Currently silenced via `globalVariables()` so R CMD check stays clean. | _(no test pin yet — Phase 2.5 discovery)_ |
+| [`R/mod_dwnld_dta.R::mod_dwnld_file_server`](R/mod_dwnld_dta.R#L114-L124) | Filename builder `function() { basename(filepath) }` produces broken downloads when `filepath` is `NULL`, `"."`, or any path that doesn't point to a real file. `launch_pti()`'s defaults `mtdtpdf_path = "."` and `shapes_path = "."` make `basename(".") == "."` ⇒ browser falls back to URL path + content-type sniff and saves the empty response as an `.html` file (observed filenames: `pagepti-mtdt.html` / `pagepti-shp.html` on the PTI tab; `<ns>-mtdt.files.side.html` / `<ns>-shp.files.side.html` on PTI-compare and Data-explorer tabs). **All "Download metadata" and "Download shapes" buttons fail identically across PTI / PTI-compare / Data-explorer tabs** in any `launch_pti()` call that doesn't supply `mtdtpdf_path` and `shapes_path` (the typical demo case). Map "Export as .png / .pdf" buttons (served by `mod_map_dwnld_srv`, separate handler) work fine. XLSX data-export buttons on the weights tab (served by `mod_dwnld_dta_xlsx_server`, separate handler) also work fine. Confirmed manually in `launch_pti(shp_dta = ukr_shp, inp_dta = ukr_mtdt_full)` during PR #54 testing. Fix: validate `filepath` exists; if not, gate the download button at the UI layer or surface a notification instead of streaming nothing. Sister handler `mod_dwnld_local_file_server` in `R/mod_dwnld_local_file.R` already has the right shape (`metadata-{.pti_name}-{Sys.Date()}.{.ext}` glue template) but isn't wired in. | _(no test pin yet — Phase 2.5 discovery)_ |
 
 ---
 
