@@ -4,6 +4,8 @@
 
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
+[![Codecov test
+coverage](https://codecov.io/gh/worldbank/devPTIpack/graph/badge.svg)](https://app.codecov.io/gh/worldbank/devPTIpack)
 <!-- badges: end -->
 
 The goal of the `devPTIpack` is to be a platform that contains key
@@ -55,19 +57,19 @@ package: geometries `devPTIpack::ukr_shp` and metadata
 Many other parameters could be specified in `devPTIpack::launch_pti()`.
 The most notable are:
 
--   `app_name` - title of the app. Appears across multiple places in the
-    app.
--   `show_waiter` - `TRUE/FALSE` indicates weather a “waiter” screen has
-    to show, when the app launches.
--   `show_adm_levels` - vector `c("admin1", "admin4")` or `NULL`,
-    indicates at what admin levels the map must be displayed If `NULL`
-    all available administrative levels are used.
--   `shapes_path` and `mtdtpdf_path` are relative or absolute path to a
-    zip archive with shape files used for mapping and metadata pdf
-    respectively.
--   `wt_dwnld_options` and `map_dwnld_options` specify what data and
-    metadata download options are available in different places of the
-    app’s interface.
+- `app_name` - title of the app. Appears across multiple places in the
+  app.
+- `show_waiter` - `TRUE/FALSE` indicates weather a “waiter” screen has
+  to show, when the app launches.
+- `show_adm_levels` - vector `c("admin1", "admin4")` or `NULL`,
+  indicates at what admin levels the map must be displayed If `NULL` all
+  available administrative levels are used.
+- `shapes_path` and `mtdtpdf_path` are relative or absolute path to a
+  zip archive with shape files used for mapping and metadata pdf
+  respectively.
+- `wt_dwnld_options` and `map_dwnld_options` specify what data and
+  metadata download options are available in different places of the
+  app’s interface.
 
 #### Deploying a stand-along PTI app
 
@@ -80,11 +82,11 @@ To create a new PTI project use `devPTIpack::create_new_pti()`:
 
     devPTIpack::create_new_pti("PATH-TO-NEW-PROJECT-LOCATION/PROJECT-NAME")
 
--   `PATH-TO-NEW-PROJECT-LOCATION` is a relative or an absolute path to
-    the folder, where the app should be created.
+- `PATH-TO-NEW-PROJECT-LOCATION` is a relative or an absolute path to
+  the folder, where the app should be created.
 
--   a new sub-folder with the app itself will be created with the named
-    `PROJECT-NAME`.
+- a new sub-folder with the app itself will be created with the named
+  `PROJECT-NAME`.
 
 This is how a typical PTI folder looks like.
 
@@ -99,43 +101,42 @@ This is how a typical PTI folder looks like.
 After the basic app folder was created, users need to populate it with
 data and make some minor edits.
 
--   Step 1. Prepare proper `metadata.xlsx` and `shapes.rds` files; Files
-    names can be anything. One will have to specify correct paths to the
-    files in `app.R`.
+- Step 1. Prepare proper `metadata.xlsx` and `shapes.rds` files; Files
+  names can be anything. One will have to specify correct paths to the
+  files in `app.R`.
 
--   Step 2. Place shapes and metadata into the `app-data` folder. Use
-    the `app-data` folder to store also other data such as archive with
-    the geometrical boundaries or metadata pdf documentation.
+- Step 2. Place shapes and metadata into the `app-data` folder. Use the
+  `app-data` folder to store also other data such as archive with the
+  geometrical boundaries or metadata pdf documentation.
 
--   Step 3. Knit `metadata.Rmd` in order to generate `metadata.pdf`
-    documentation of the data used in the app. This documentation is
-    based on the `metadata.xlsx` and `shapes.rds`. Remember to re-render
-    metadata PDF whenever the metadata changes.
+- Step 3. Knit `metadata.Rmd` in order to generate `metadata.pdf`
+  documentation of the data used in the app. This documentation is based
+  on the `metadata.xlsx` and `shapes.rds`. Remember to re-render
+  metadata PDF whenever the metadata changes.
 
--   Step 4. Modify the `app.R` file specifying paths to `metadata.xlsx`,
-    `shapes.rds`, pdf documentation and archive with the geometrical
-    boundaries. Change the app’s name and tune
-    `devPTIpack::launch_pti()` function according to your needs.
+- Step 4. Modify the `app.R` file specifying paths to `metadata.xlsx`,
+  `shapes.rds`, pdf documentation and archive with the geometrical
+  boundaries. Change the app’s name and tune `devPTIpack::launch_pti()`
+  function according to your needs.
 
-    Note, that `inp_dta` parameter in `devPTIpack::launch_pti()` shell
-    be specified as a pre-loaded r object. As it is usually generated
-    based on the `metadata.xlsx`, use
-    `devPTIpack::fct_template_reader()` (see
-    `?devPTIpack::fct_template_reader`).
+  Note, that `inp_dta` parameter in `devPTIpack::launch_pti()` shell be
+  specified as a pre-loaded r object. As it is usually generated based
+  on the `metadata.xlsx`, use `devPTIpack::fct_template_reader()` (see
+  `?devPTIpack::fct_template_reader`).
 
--   Step 5. Run the app and troubleshoot its functioning. Remember, if
-    the app does not start, it is likely that there are some
-    discrepancies in the data preparation. Always use the built-in data
-    to check if the app launches from its own folder. You may try using
-    `devPTIpack::validate_geometries()` or
-    `devPTIpack::validate_metadata()` to check if geometries or metadata
-    are prepared properly. These validation functions, however, are not
-    exhaustive, thus, consult `vignette("dataprep")` or ask for help.
+- Step 5. Run the app and troubleshoot its functioning. Remember, if the
+  app does not start, it is likely that there are some discrepancies in
+  the data preparation. Always use the built-in data to check if the app
+  launches from its own folder. You may try using
+  `devPTIpack::validate_geometries()` or
+  `devPTIpack::validate_metadata()` to check if geometries or metadata
+  are prepared properly. These validation functions, however, are not
+  exhaustive, thus, consult `vignette("dataprep")` or ask for help.
 
--   Step 6. Develop additional functionality in folder `R`.
+- Step 6. Develop additional functionality in folder `R`.
 
--   Step 7. `landing-page.md` is an optional parameter and may be used
-    for customizing the info modal that pops-up when the app launches.
+- Step 7. `landing-page.md` is an optional parameter and may be used for
+  customizing the info modal that pops-up when the app launches.
 
 Fully, completed app folder may look like this:
 
@@ -217,12 +218,12 @@ Here is another example of embedding the PTI into an existing dashboard.
 It should be runnable in the console if all necessary packages are
 installed.
 
--   Note that most of the code below describe the dashboard layout and
-    structure and only a few lines are dedicated to the PTI.
--   Remember to disable waiter when embedding module in a multitab
-    dashboard.
--   More elaborate example of multitab dashboard is in the source code
-    of the function `devPTIpack::launch_pti`.
+- Note that most of the code below describe the dashboard layout and
+  structure and only a few lines are dedicated to the PTI.
+- Remember to disable waiter when embedding module in a multitab
+  dashboard.
+- More elaborate example of multitab dashboard is in the source code of
+  the function `devPTIpack::launch_pti`.
 
 <!-- -->
 

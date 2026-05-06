@@ -1,20 +1,23 @@
 Package: devPTIpack
-Title: Development environment for Precise Index Targeting analysis
+Title: Project Targeting Index: a framework for developing PTI apps and dashboards
 Version: 0.0.0.9941
 Authors@R: c(
-  person('Takaaki', 'Masaki', email = 'tmasaki@worldbank.org', role = c('aut')),
-  person('Arden', 'Finn', email = 'afinn1@worldbank.org', role = c('aut')),
-  person('Eduard', 'Bukin', email = 'edwardbukin@gmail.com', role = c('cre')))
-Author: Takaaki Masaki [aut],
-  Arden Finn [aut],
-  Eduard Bukin [cre]
-Maintainer: Eduard Bukin <edwardbukin@gmail.com>
-Description: We attempt to create a generic framework that allows to consolidate PIT 
-  related indicators, agregate them according to a given methodology and 
-  weighting scheme and visualise their spatial distribution.
-License: tbd.
-Depends: R (>= 3.6.0)
-Imports: 
+  person('Eduard', 'Bukin', email = 'ebukin@gmail.com', role = c('aut')),
+  person('Koichi', 'Ito', email = 'koichi.itokoichi19960406@gmail.com', role = c('cre')),
+  person('Takaaki', 'Masaki', email = 'tmasaki@worldbank.org', role = c('ctb')),
+  person('Arden', 'Finn', email = 'afinn1@worldbank.org', role = c('rev')))
+Author:
+  Eduard Bukin [cre],
+  Koichi Ito [cre],
+  Takaaki Masaki [ctb],
+  Arden Finn [rev],
+Maintainer: Eduard Bukin <ebukin@gmail.com>
+Description: A generic framework for computing and visualising Project Targeting Index
+  (PTI) scores — composite indices derived from weighted socioeconomic indicators
+  mapped across hierarchical administrative boundaries.
+License: MIT + file LICENSE
+Depends: R (>= 4.4.0)
+Imports:
     config (>= 0.3),
     golem (>= 0.2.1),
     shiny (>= 1.5.0),
@@ -51,7 +54,7 @@ Imports:
     ggplot2 (>= 3.3.5),
     DT (>= 0.20),
     htmlwidgets (>= 1.5.4)
-Suggests: 
+Suggests:
     progress (>= 1.2),
     knitr (>= 1.33)
 Encoding: UTF-8
@@ -59,4 +62,4 @@ LazyData: true
 RoxygenNote: 7.3.3
 Config/testthat/edition: 3
 VignetteBuilder: knitr
-URL: https://ebukin.github.io/devPTIpack/
+URL: https://worldbank.github.io/devPTIpack/

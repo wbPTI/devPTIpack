@@ -8,6 +8,7 @@ editor_options:
 
 <!-- badges: start -->
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
+[![Codecov test coverage](https://codecov.io/gh/worldbank/devPTIpack/graph/badge.svg)](https://app.codecov.io/gh/worldbank/devPTIpack)
 <!-- badges: end -->
 
 The goal of the `devPTIpack` is to be a platform that contains key instruments for creating PTI dashboards as well as embedding PTI modules in to the existing shiny apps.
