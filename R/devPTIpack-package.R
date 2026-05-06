@@ -18,7 +18,6 @@ utils::globalVariables(c(
   ".",
   "admin_level",
   "admin_levels_years",
-  "any_larger",
   "colours_pass",
   "data",
   "fltr_exclude_explorer",
