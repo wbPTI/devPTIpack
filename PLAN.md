@@ -12,15 +12,16 @@
 ## 1. Where we are
 
 **Status snapshot (2026-05-06):** Phases 1 (#10), 2 (#8), 3 (#11) closed.
-Phase 2.5 §12 bug-fix sprint in progress — **6 of 14 bugs fixed** (#1
+Phase 2.5 §12 bug-fix sprint in progress — **7 of 14 bugs fixed** (#1
 `complete_pti_labels` PR #56; #5 `get_adm_levels` PR #57; #6
 `get_scores_data` PR #59; #7 `expand_adm_levels` PR #60, bundled
 with the boundary-regex follow-up — the 14th §12 row; #10
-`get_vars_un_avbil` symmetric availability PR #61). Phase 4 (#12,
-vignettes & pkgdown) and Phase 5 (#13, hex ingestion) yet to
-start. R-CMD-check workflow gates merge with `error-on:
-'"error"'`. Suite at **0 fail / 1 skip** with a small positive
-test-count delta from the new symmetric-direction tests on bug #10.
+`get_vars_un_avbil` symmetric availability PR #61; #2
+`check_existing_groups` empty-old PR #62). Phase 4 (#12, vignettes
+& pkgdown) and Phase 5 (#13, hex ingestion) yet to start.
+R-CMD-check workflow gates merge with `error-on: '"error"'`. Suite
+at **0 fail / 1 skip / 684 PASS** (PR #2 net +1 expectation: pinned
+`expect_error` flipped to two `expect_equal`s).
 
 | Concern | Source of truth |
 |---|---|
@@ -75,14 +76,15 @@ Phase 3  Roxygen2 docs for all permanent fns       (#11)       │  ✓ done
    ├─ Batch 6a PTI rendering & display stack             ✓ #52 │
    └─ Batch 6b Closes Phase 3                            ✓ #53 │
             ▼                                                  │
-Phase 2.5  §12 bug-fix sprint (concurrent)         (—)         │  in progress (6/14)
+Phase 2.5  §12 bug-fix sprint (concurrent)         (—)         │  in progress (7/14)
    ├─ #1 complete_pti_labels (silent data corruption)    ✓ #56 │
    ├─ #5 get_adm_levels lex sort (silent corruption)     ✓ #57 │
    ├─ #6 get_scores_data 1-row -> NA (silent corrup)     ✓ #59 │
    ├─ #7 expand_adm_levels >1-slot silent NULL +         ✓ #60 │
    │     boundary-regex follow-up (latent (d))                  │
    ├─ #10 get_vars_un_avbil asymmetric lag-fill          ✓ #61 │
-   └─ #2 #4 #8 #9 #11 #13 #3 #12                         ◌ next │
+   ├─ #2 check_existing_groups empty-old vctrs error     ✓ #62 │
+   └─ #4 #8 #9 #11 #13 #3 #12                            ◌ next │
             ▼                                                  │
 Phase 4  Vignettes + pkgdown deploy                (#12)       │
             ▼                                                  │
@@ -711,7 +713,9 @@ Lifted from arch-00 §"End-State Goals":
 
 | [#61](https://github.com/worldbank/devPTIpack/pull/61) | 2026-05-06 | **Phase 2.5 §12 (bug-fix #10)** | §12 bug #10 fixed -- `R/mod_drop_inval_adm.R::get_vars_un_avbil` now treats availability strictly: a `(var_code, admin_level)` pair surfaces as unavailable iff the indicator has no native data at that admin level. Body shrank from ~25 lines (lex `arrange()` + triple `lag()` back-fill + `is.na(value & !any_larger)` operator-precedence typo + `lead()`-based `any_larger` flag) to ~10 lines (`expand.grid` + `tibble::as_tibble` + `dplyr::anti_join` over the distinct `(var_code, admin_level)` set). Pre-fix: an indicator with data only at admin1 was silently `lag()`-filled into admin2 / admin4 rows, so admin2 and admin4 were never surfaced as unavailable; reverse direction (admin2-only -> admin1) worked because admin1 had no `lag`. Post-fix: both directions surface symmetrically. Decision at the gate: contract X (strict no extrapolation) over Y (aggregate-up only) and Z (bidirectional) -- X matches the existing `weighting an unavailable var produces drops` test (`var_nval4_small_skewd_adm4` admin4-only -> admin1 + admin2 dropped) and avoids re-encoding extrapolation that `expand_adm_levels` already handles in the calc pipeline. NAMESPACE delta: dropped `dplyr::lead`, `dplyr::lag`, `dplyr::group_by`, `dplyr::count`, `dplyr::rename`, `dplyr::mutate`, `dplyr::filter`, `dplyr::left_join`, `dplyr::arrange` from the `@importFrom` (the lag/lead machinery is gone); added `dplyr::distinct`, `dplyr::anti_join`, `tibble::as_tibble`. Dropped `"any_larger"` from `R/devPTIpack-package.R::globalVariables()` -- the column is no longer in the output, and `grep` confirmed no caller (in `R/` or `tests/`) read it. Roxygen: stripped the 8-line `@note Asymmetry pinned in PR #34` block; rewrote title from "Identify (variable, admin-level) pairs with no data and no upstream coverage" -> "Identify (variable, admin-level) pairs with no native data"; rewrote `@return` to drop the `any_larger` mention. Tier-1 test added in `test-drop-inval-adm.R`: `"get_vars_un_avbil: flags missing levels symmetrically"` builds a synthetic 3-indicator fixture (admin1-only / admin2-only / both) and asserts admin1-only surfaces at admin2 (the previously-broken direction), admin2-only surfaces at admin1, and the both-levels indicator surfaces nowhere. Tier-2 test added in `test-mod-drop-inval-adm.R`: `"mod_drop_inval_adm: indicator missing at admin2 -> admin2 removed"` -- reverse-direction sibling of the existing `missing at admin1 -> admin1 removed` test, replacing the prior 8-line "Note on symmetry. ... Not testing it here to avoid coupling this Tier-2 module test to a Tier-1 bug." comment block. Two pre-existing tests had to be updated to match the new contract: (a) `test-drop-inval-adm.R::"get_min_admin_wght: a fully-available var drops nothing"` -- swapped the picked var from `var_nval3_skewd_adm1` (admin1-only; the prior comment claimed it was "available at every admin level in the bundled fixture (cross-checked via probing)" but that probe was probing the broken function) to `var_nvalinf_unif_adm124`, the only fixture indicator with native data at every admin level (admin1 + admin2 + admin4); (b) `test-get_uavailab_admin.R::"get unavailable adming levels works"` -- bumped the asserted nrow() from 7 (the lag-fill bug under-counted the admin1-only direction) to 12 (9 indicators x 3 admin levels - 15 cells with native data) with an inline rationale comment. Caller-graph audit: `get_min_admin_wght` only `pull(admin_level)` from the result (`R/mod_drop_inval_adm.R:226`), so dropping the `any_larger` column is safe. Folded in the PR-#60 `TBD -> #60` swap on the §11 row above and on the §12 rows 7 + 14 (already complete in upstream). Suite goes from 680 PASS -> 683 PASS (FAIL=0, SKIP=1) -- net +2 test_that blocks (Tier-1 symmetric + Tier-2 reverse) plus 6 new individual expectations across the existing tests' contract updates. |
 
-Suite total after this branch: **0 failures / 1 skip / 683 PASS** (`testthat::test_local()`; bug-fix PR added two new test_that blocks for the symmetric availability contract).
+| [#62](https://github.com/worldbank/devPTIpack/pull/62) | 2026-05-06 | **Phase 2.5 §12 (bug-fix #2)** | §12 bug #2 fixed -- `R/plot_pti_helpers.R::check_existing_groups` now early-handles `length(old_grps) == 0` instead of erroring inside `stringr::str_detect(., character(0))` with a vctrs `pattern must have size 1` error. Body wraps the existing `check_this_too` / lookup-by-pattern block in an `if (length(old_grps) > 0)` guard; on empty input `grps_in <- character(0)`, falling through to the pre-existing "first of remaining" fallback at L457-459 which arch-03 §1.6 already specified as the empty-`old_grps` contract. Test pin in `tests/testthat/test-plot-helpers.R` flipped from `expect_error(..., regexp = "size")` (asserting the bug) to two `expect_equal`s asserting the contract: `out$out_show == "a (Country)"` (first of current) and `out$out_hide == "b (Oblast)"`. `test_that()` description renamed from `"empty old errors via str_detect (PINNED)"` -> `"empty old -> first of current shown"`; comment block rewritten to describe the contract instead of the past bug. Stripped the 5-line `@note Pinned bug (PR #25)` block from the function's roxygen. Caller-graph audit: only call site is `R/plot_pti_helpers.R:357` inside `add_pti_poly_controls`, gated by `isTruthy(old_grps)` at L356 -- so the empty-input path never fired in production today; this fix is a no-op on the deployed app and only changes behaviour for direct callers (tests). No NAMESPACE delta -- `str_detect` still used inside the guard. Folded in the PR-#61 `TBD -> #61` swap on the §11 row above and on the §12 row #10 (already complete in upstream). Suite goes from 683 PASS -> 684 PASS (FAIL=0, SKIP=1) -- net +1 expectation: 1 expect_error swapped for 2 expect_equal. |
+
+Suite total after this branch: **0 failures / 1 skip / 684 PASS** (`testthat::test_local()`; bug-fix PR; pinned `expect_error` flipped to two `expect_equal`s on the new contract, net +1 expectation).
 
 > **Suite totals revised on 2026-05-02:** prior counts in §11 were
 > derived from `sum(res$nb)` over `as.data.frame(testthat::test_local())`,
@@ -745,18 +749,19 @@ Suite total after this branch: **0 failures / 1 skip / 683 PASS** (`testthat::te
 > have no test pin yet; pinning is a sub-task of the eventual fix PR.
 > All entries are cleanup-phase candidates regardless of pin status.
 
-**Status: 6 of 14 fixed.** Done: #1 `complete_pti_labels` (PR #56),
+**Status: 7 of 14 fixed.** Done: #1 `complete_pti_labels` (PR #56),
 #5 `get_adm_levels` (PR #57), #6 `get_scores_data` (PR #59),
 #7 `expand_adm_levels` (PR #60) plus the boundary-regex follow-up
-on the same function (PR #60; the 14th §12 row), and #10
-`get_vars_un_avbil` symmetric availability (PR #61). Triage queue
-(silent data corruption → user-facing errors → spec asymmetry):
-#2 next, then #4 #8 #9 #11 #13, last #3 #12.
+on the same function (PR #60; the 14th §12 row), #10
+`get_vars_un_avbil` symmetric availability (PR #61), and #2
+`check_existing_groups` empty-old (PR #62). Triage queue
+(user-facing errors → spec asymmetry): #4 next, then #8 #9 #11
+#13, last #3 #12.
 
 | Loc | Bug | Pin (test) |
 |---|---|---|
 | [`R/plot_pti_helpers.R::complete_pti_labels`](R/plot_pti_helpers.R#L186-L206) | The function mapped over `dta` but never assigned the result; returned the original `dta` unchanged, so the deployed app silently missed the `<strong>{priority_label}</strong>` suffix on every popup. One-line fix: assign the `purrr::map()` result back to `dta`. **FIXED in PR #56 (2026-05-06).** | [test-plot-helpers.R:complete_pti_labels: appends <strong>{priority_rank}</strong> per entry](tests/testthat/test-plot-helpers.R) |
-| [`R/plot_pti_helpers.R::check_existing_groups`](R/plot_pti_helpers.R#L286) | Errors with a vctrs size error when `old_grps` is `character(0)` — `str_detect(string, character(0))` is invalid. arch-03 §1.6 expects "first of current shown" in this case. | [test-plot-helpers.R:check_existing_groups: empty old errors (PINNED)](tests/testthat/test-plot-helpers.R) |
+| [`R/plot_pti_helpers.R::check_existing_groups`](R/plot_pti_helpers.R) | Errored with a vctrs size error when `old_grps = character(0)` — `str_detect(string, character(0))` is invalid. arch-03 §1.6 contract is "first of currently shown" on empty input, and the function already had that branch at the bottom; the bug was that the body errored before reaching it. Fix: guard the `check_this_too` / lookup-by-pattern block with `if (length(old_grps) > 0)`, falling through to the existing first-of-remaining branch on empty input. **FIXED in PR #62 (2026-05-06).** Caller `add_pti_poly_controls` is already gated by `isTruthy(old_grps)` (`R/plot_pti_helpers.R:356`) so production never reached the broken path; the fix only changes behaviour for direct callers (tests). | [test-plot-helpers.R:check_existing_groups: empty old -> first of current shown](tests/testthat/test-plot-helpers.R) |
 | [`R/plot_pti_helpers.R::filter_admin_levels`](R/plot_pti_helpers.R#L60) | Asymmetry: the if-branch enters when `to_fltr` matches *names* of admin levels (e.g. `"admin1"`), but the inner `keep()` predicate compares values (e.g. `"Oblast"`). Passing a name returns 0 entries. Pinned, not a bug per se but worth normalising in the cleanup phase. | [test-plot-helpers.R:filter_admin_levels: name-only filter returns 0 entries (PINNED)](tests/testthat/test-plot-helpers.R) |
 | [`R/validators.R::validate_read_shp`](R/validators.R) | Empty-pattern `str_detect` when no admin codes are extra (i.e. the shape file is "perfect") — error caught by the function's internal `test_that`. Refactor target under issue #7. | [test-validators.R:validate_read_shp: round-trips through an .rds path (PINNED BUG)](tests/testthat/test-validators.R) |
 | [`R/calc_pti_helpers.R::get_adm_levels`](R/calc_pti_helpers.R#L34) | Lexicographic `sort()` produced `admin1 < admin10 < admin2`, breaking the iteration order of any deployment with ≥10 admin levels. One-line fix: replace `sort()` with an integer-keyed `order()` permutation (`ids[order(as.integer(str_extract(ids, "\\d{1,2}")))]`), filtering NAs first to preserve existing behaviour. **FIXED in PR #57 (2026-05-06).** Out of scope: separate first-digit-only quirks remain in `expand_adm_levels` (`str_extract(col, "\\d")` — single digit) and `agg_pti_scores` (`max(level)` as a string). | [test-calc-pipeline.R:get_adm_levels: sort is numeric across mixed-digit levels](tests/testthat/test-calc-pipeline.R) |
