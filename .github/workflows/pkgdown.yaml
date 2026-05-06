@@ -31,11 +31,11 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::pkgdown, local::.
+          extra-packages: any::pkgdown, any::roxygen2, local::.
           needs: website
 
       - name: Document package
-        run: devtools::document()
+        run: roxygen2::roxygenise()
         shell: Rscript {0}
 
       - name: Build site
