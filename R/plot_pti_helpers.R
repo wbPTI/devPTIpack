@@ -418,25 +418,24 @@ clean_pti_poly_controls <- function(leaf_map, poly_dta) {
 #' @return List with two elements: `out_show` (groups to show) and
 #'   `out_hide` (groups to hide).
 #'
-#' @note Pinned bug (PR #25): when `old_grps` is `character(0)`,
-#'   `stringr::str_detect(string, character(0))` errors with a vctrs
-#'   size error. The arch-03 contract is "first of currently shown",
-#'   so the function should early-return that on empty input. Tier-1
-#'   test pin: tests/testthat/test-plot-helpers.R.
-#'
 #' @importFrom stringr str_replace str_trim str_c str_detect
 #' @noRd
 check_existing_groups <- function(cur_grps, old_grps, priority_group) {
-  check_this_too <-
-    old_grps %>%
-    stringr::str_replace(" \\s*\\([^\\)]+\\)", "") %>%
-    stringr::str_trim() %>%
-    stringr::str_c(., " \\(")
 
-  grps_in <- cur_grps %>% `[`((.) %in% old_grps)
+  if (length(old_grps) > 0) {
+    check_this_too <-
+      old_grps %>%
+      stringr::str_replace(" \\s*\\([^\\)]+\\)", "") %>%
+      stringr::str_trim() %>%
+      stringr::str_c(., " \\(")
 
-  if (length(grps_in) == 0) {
-    grps_in <- cur_grps %>% `[`( str_detect(., check_this_too))
+    grps_in <- cur_grps %>% `[`((.) %in% old_grps)
+
+    if (length(grps_in) == 0) {
+      grps_in <- cur_grps %>% `[`(str_detect(., check_this_too))
+    }
+  } else {
+    grps_in <- character(0)
   }
 
   if (length(grps_in) >= 2) {

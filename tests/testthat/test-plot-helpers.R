@@ -165,18 +165,17 @@ test_that("check_existing_groups: prior selection is kept when still present", {
   )
 })
 
-test_that("check_existing_groups: empty old errors via str_detect (PINNED)", {
-  # arch-03 §1.6 expects empty old -> "first of current" shown. The
-  # current implementation passes character(0) into str_detect's
-  # `pattern` argument, which raises a vctrs size error.
-  expect_error(
-    check_existing_groups(
-      c("a (Country)", "b (Oblast)"),
-      character(0),
-      priority_group = "Oblast"
-    ),
-    regexp = "size"
+test_that("check_existing_groups: empty old -> first of current shown", {
+  # arch-03 §1.6 contract: empty old_grps -> first currently rendered
+  # group is shown, the rest hidden. Pre-fix this errored in
+  # `str_detect(., character(0))` with a vctrs size error.
+  out <- check_existing_groups(
+    c("a (Country)", "b (Oblast)"),
+    character(0),
+    priority_group = "Oblast"
   )
+  expect_equal(out$out_show, "a (Country)")
+  expect_equal(out$out_hide, "b (Oblast)")
 })
 
 test_that("check_existing_groups: disjoint old -> first current shown", {
