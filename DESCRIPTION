@@ -62,4 +62,4 @@ LazyData: true
 RoxygenNote: 7.3.3
 Config/testthat/edition: 3
 VignetteBuilder: knitr
-URL: https://worldbank.github.io/devPTIpack/
+URL: https://worldbank.github.io/devPTIpack/, https://stunning-engine-gzjwl6l.pages.github.io/
