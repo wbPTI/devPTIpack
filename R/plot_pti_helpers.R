@@ -178,12 +178,6 @@ add_legend_paras <- function(dta, nbins = 5) {
 #' @return The input list with `pti_label` augmented per entry. When
 #'   `dta` is not truthy the input is returned unchanged.
 #'
-#' @note Pinned bug (PR #25): the `purrr::map()` result is never
-#'   assigned back, so the function returns the input unchanged. The
-#'   deployed app silently misses the priority-rank suffix on every
-#'   popup. One-line fix (`dta <- dta %>% purrr::map(...)`). Tier-1
-#'   test pin: tests/testthat/test-plot-helpers.R.
-#'
 #' @importFrom purrr map
 #' @importFrom stringr str_c
 #' @importFrom dplyr mutate
@@ -192,7 +186,7 @@ add_legend_paras <- function(dta, nbins = 5) {
 complete_pti_labels <- function(dta) {
 
   if (isTruthy(dta)) {
-    dta %>%
+    dta <- dta %>%
       purrr::map( ~ {
         .x$pti_dta <-
           .x$pti_dta %>%
