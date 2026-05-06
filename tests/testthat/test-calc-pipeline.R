@@ -190,16 +190,17 @@ test_that("get_scores_data: structure (scheme x admin) is preserved", {
   }
 })
 
-test_that("get_scores_data: 1-row groups produce NA, not 0 (PINNED)", {
-  # arch-03 §"Known Issues to Pin": sd() of a length-1 vector returns NA
-  # (not NaN), so the `is.nan` replacement leaves the value as NA.
+test_that("get_scores_data: 1-row groups produce 0 (no variance to scale)", {
+  # A singleton (year x var_code) group has no variance, so the
+  # standardised score is the neutral value 0 -- same treatment as
+  # the zero-variance case (n>1 with all identical values).
   one_row <- list(scheme = list(adm = tibble::tibble(
     var_code = "x",
     year     = 2020,
     value    = 7
   )))
   out <- get_scores_data(one_row)
-  expect_true(is.na(out$scheme$adm$value))
+  expect_equal(out$scheme$adm$value, 0)
 })
 
 # ---------------------------------------------------------------------------

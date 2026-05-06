@@ -12,12 +12,12 @@
 ## 1. Where we are
 
 **Status snapshot (2026-05-06):** Phases 1 (#10), 2 (#8), 3 (#11) closed.
-Phase 2.5 §12 bug-fix sprint in progress — **2 of 13 bugs fixed** (#1
-`complete_pti_labels` PR #56; #5 `get_adm_levels` PR #57). Phase 4
-(#12, vignettes & pkgdown) and Phase 5 (#13, hex ingestion) yet to
-start. R-CMD-check workflow gates merge with `error-on: '"error"'`.
-Suite holds at **0 fail / 1 skip / 682 PASS** (summary-reporter
-`PASS` count).
+Phase 2.5 §12 bug-fix sprint in progress — **3 of 13 bugs fixed** (#1
+`complete_pti_labels` PR #56; #5 `get_adm_levels` PR #57; #6
+`get_scores_data` PR #59). Phase 4 (#12, vignettes & pkgdown) and
+Phase 5 (#13, hex ingestion) yet to start. R-CMD-check workflow
+gates merge with `error-on: '"error"'`. Suite holds at **0 fail /
+1 skip / 682 PASS** (summary-reporter `PASS` count).
 
 | Concern | Source of truth |
 |---|---|
@@ -72,10 +72,11 @@ Phase 3  Roxygen2 docs for all permanent fns       (#11)       │  ✓ done
    ├─ Batch 6a PTI rendering & display stack             ✓ #52 │
    └─ Batch 6b Closes Phase 3                            ✓ #53 │
             ▼                                                  │
-Phase 2.5  §12 bug-fix sprint (concurrent)         (—)         │  in progress (2/13)
+Phase 2.5  §12 bug-fix sprint (concurrent)         (—)         │  in progress (3/13)
    ├─ #1 complete_pti_labels (silent data corruption)    ✓ #56 │
    ├─ #5 get_adm_levels lex sort (silent corruption)     ✓ #57 │
-   └─ #6 #7 #10 #2 #4 #8 #9 #11 #13 #3 #12              ◌ next │
+   ├─ #6 get_scores_data 1-row -> NA (silent corrup)     ✓ #59 │
+   └─ #7 #10 #2 #4 #8 #9 #11 #13 #3 #12                  ◌ next │
             ▼                                                  │
 Phase 4  Vignettes + pkgdown deploy                (#12)       │
             ▼                                                  │
@@ -699,6 +700,7 @@ Lifted from arch-00 §"End-State Goals":
 | [#56](https://github.com/worldbank/devPTIpack/pull/56) | 2026-05-06 | **Phase 2.5 §12 (bug-fix #1)** | §12 bug #1 fixed -- `R/plot_pti_helpers.R::complete_pti_labels` now assigns its `purrr::map()` result back to `dta`, so popups receive the `<strong>{priority_rank}</strong>` suffix the function was already computing but discarding. Test pin in `tests/testthat/test-plot-helpers.R` flipped from no-op (asserting the bug) to contract assertion (each output label equals the original concatenated with `<strong>{recode_function(pti_score)}</strong>`). Stripped the `@note Pinned bug (PR #25)` block from the function's roxygen. Confirmed no caller depended on the broken behaviour: production caller `R/mod_plot_pti2.R:64` already piped through expecting the augmented labels; test setup `tests/testthat/test-map-render.R:16` only asserts `s3_class(g, "gg")` and never inspects label text. Folded in the Batch 6b `TBD -> #53` swap on the §6 row above and the §11 row above. Suite stays at 682 PASS -- no regression. |
 | [#57](https://github.com/worldbank/devPTIpack/pull/57) | 2026-05-06 | **Phase 2.5 §12 (bug-fix #5)** | §12 bug #5 fixed -- `R/calc_pti_helpers.R::get_adm_levels` now sorts admin-level identifiers numerically (`admin1 < admin2 < admin10`) instead of lexicographically (`admin1 < admin10 < admin2`). Body rewritten from `dta %>% names() %>% str_extract("admin\\d{1,2}") %>% sort() %>% set_names(.)` to a 4-line form that filters NAs first, then permutes by `as.integer(str_extract(ids, "\\d{1,2}"))` via `order()`. Test pin in `tests/testthat/test-calc-pipeline.R` flipped from `c("admin1", "admin10", "admin2")` (lex) to `c("admin1", "admin2", "admin10")` (numeric); `test_that()` description renamed from `"sort is lexicographic, not numeric (PINNED)"` -> `"sort is numeric across mixed-digit levels"`. Stripped the 5-line `@note Pinned bug` block + retitled function description from "sorted" to "numerically-sorted" + clarified `@return` to mention NA dropping. Caller-graph audit confirmed no production caller depended on the lex order: `R/mod_plot_init_leaf.R:86` (`%in%`) and `R/fct_validate_metadata.R:51` are order-agnostic; `R/calc_pti_expander.R:44`'s outer `imap()` iteration order doesn't affect the inner per-pair logic. For the only data ever shipped (`ukr_shp` admin0/1/2/4, all single-digit), lex and numeric sort produce identical results -- this fix is a no-op on production data and only changes behaviour at ≥10 admin levels (the bug case). Out of scope: the separate first-digit-only quirks in `expand_adm_levels` (`str_extract(col, "\\d")` -- single digit not `\\d{1,2}`) and `agg_pti_scores` (`max(level)` as a string) -- pre-existing latent issues, not §12 row #5; could be added as new §12 rows in a follow-up. Folded in the PR-#56 `TBD -> #56` swap on the §11 row above and on the §12 row #1. Suite stays at 682 PASS -- one expect_equal swapped 1-for-1, no count delta. |
 | [#58](https://github.com/worldbank/devPTIpack/pull/58) | 2026-05-06 | **chore (PLAN scaffold)** | Phase-2.5 sprint scaffold — added a "Status snapshot" prose paragraph at the top of §1 calling out current focus + 2/13 progress; expanded §2 execution-order tree with the closed Phase-3 batch list (Batches 1, 2, 3, 4, 5, 6a, 6b → ✓ done) and inserted a new "Phase 2.5 §12 bug-fix sprint (concurrent)" node between Phase 3 and Phase 4 listing fixed (#1 #56, #5 #57) and queued (#6 next, then #7 #10, then user-facing #2 #4 #8 #9 #11 #13, last #3 #12) bugs; added a "Status: 2 of 13 fixed" rollup paragraph above the §12 table summarising done + triage queue. Folded in the PR-#57 `TBD -> #57` swap on the §11 progress-log row dated 2026-05-06 and on the §12 row #5 in the same commit. Pure-docs PR (no R/ or tests/ touched); R-CMD-check workflow gates merge. Suite stays at 682 PASS -- not invoked, no test code touched. |
+| [#59](https://github.com/worldbank/devPTIpack/pull/59) | 2026-05-06 | **Phase 2.5 §12 (bug-fix #6)** | §12 bug #6 fixed -- `R/calc_pti_helpers.R::get_scores_data` now treats singleton `(year, var_code)` groups as zero-variance (no scale to apply): non-`NA` values are set to the neutral score `0` instead of falling through `sd()`-of-length-1 -> `NA`. Body kept the existing standardise step but added a precomputed `.was_na` flag plus a `dplyr::if_else(dplyr::n() == 1L & !.was_na, 0, value)` patch before the `is.nan` -> `0` rewrite (input-`NA` rows are preserved as `NA`). First attempt used a single nested `dplyr::if_else` on `dplyr::n() == 1L` directly but failed strict size-checking (scalar condition rejected vector branches in `vec_check_size`); restructured to length-`n` condition. Test pin in `tests/testthat/test-calc-pipeline.R` flipped from `expect_true(is.na(out$scheme$adm$value))` to `expect_equal(out$scheme$adm$value, 0)`; `test_that()` description renamed from `"1-row groups produce NA, not 0 (PINNED)"` -> `"1-row groups produce 0 (no variance to scale)"` and the inline pinned-bug comment replaced with a one-line rationale. Stripped the 5-line `@note Pinned bug` block from the function's roxygen + tightened the description prose to enumerate both no-variance paths (singleton + `n>1` all-identical). Caller-graph audit confirmed no production caller depended on the `NA` behaviour: `R/mod_calc_pti2.R:81`, `R/run_pti_pipeline.R:64`, and `R/fct_validate_metadata.R:59` are pipe links that don't inspect cardinalities; `tests/testthat/helper-test-data.R:39` builds the `test_scored` fixture which fed the existing `mean ~= 0` test (line 172) — its `is.na(means$m)` filter now becomes a no-op rather than masking the bug. NAMESPACE delta: added `dplyr::if_else` and `dplyr::n` `importFrom` lines (qualified-call convention). Out of scope (interpretation Y at the design gate): "effectively `n=1`" groups (`n>1` with only one non-`NA`) -- `sd()` is still `NA` there, so the lone value comes out `NA`. Pinned test only constrains literal `n=1`; could be a follow-up §12 row if a consumer needs it. Folded in the PR-#58 `TBD -> #58` swap on the §11 row above as commit 1. Suite stays at 682 PASS (FAIL=0, SKIP=1) -- one expect_equal swapped 1-for-1, no count delta. |
 
 Suite total after this branch: **0 failures / 1 skip / 682 PASS** (`testthat::test_local()`; bug-fix PR, one expect_equal swapped 1-for-1, no test count delta).
 
@@ -734,10 +736,11 @@ Suite total after this branch: **0 failures / 1 skip / 682 PASS** (`testthat::te
 > have no test pin yet; pinning is a sub-task of the eventual fix PR.
 > All entries are cleanup-phase candidates regardless of pin status.
 
-**Status: 2 of 13 fixed.** Done: #1 `complete_pti_labels` (PR #56),
-#5 `get_adm_levels` (PR #57). Triage queue (silent data corruption →
-user-facing errors → spec asymmetry): #6 next, then #7 #10, then #2
-#4 #8 #9 #11 #13, last #3 #12.
+**Status: 3 of 13 fixed.** Done: #1 `complete_pti_labels` (PR #56),
+#5 `get_adm_levels` (PR #57), #6 `get_scores_data` (PR #59). Triage
+queue (silent data corruption → user-facing errors → spec
+asymmetry): #7 next, then #10, then #2 #4 #8 #9 #11 #13, last #3
+#12.
 
 | Loc | Bug | Pin (test) |
 |---|---|---|
@@ -746,7 +749,7 @@ user-facing errors → spec asymmetry): #6 next, then #7 #10, then #2
 | [`R/plot_pti_helpers.R::filter_admin_levels`](R/plot_pti_helpers.R#L60) | Asymmetry: the if-branch enters when `to_fltr` matches *names* of admin levels (e.g. `"admin1"`), but the inner `keep()` predicate compares values (e.g. `"Oblast"`). Passing a name returns 0 entries. Pinned, not a bug per se but worth normalising in the cleanup phase. | [test-plot-helpers.R:filter_admin_levels: name-only filter returns 0 entries (PINNED)](tests/testthat/test-plot-helpers.R) |
 | [`R/validators.R::validate_read_shp`](R/validators.R) | Empty-pattern `str_detect` when no admin codes are extra (i.e. the shape file is "perfect") — error caught by the function's internal `test_that`. Refactor target under issue #7. | [test-validators.R:validate_read_shp: round-trips through an .rds path (PINNED BUG)](tests/testthat/test-validators.R) |
 | [`R/calc_pti_helpers.R::get_adm_levels`](R/calc_pti_helpers.R#L34) | Lexicographic `sort()` produced `admin1 < admin10 < admin2`, breaking the iteration order of any deployment with ≥10 admin levels. One-line fix: replace `sort()` with an integer-keyed `order()` permutation (`ids[order(as.integer(str_extract(ids, "\\d{1,2}")))]`), filtering NAs first to preserve existing behaviour. **FIXED in PR #57 (2026-05-06).** Out of scope: separate first-digit-only quirks remain in `expand_adm_levels` (`str_extract(col, "\\d")` — single digit) and `agg_pti_scores` (`max(level)` as a string). | [test-calc-pipeline.R:get_adm_levels: sort is numeric across mixed-digit levels](tests/testthat/test-calc-pipeline.R) |
-| [`R/calc_pti_helpers.R::get_scores_data`](R/calc_pti_helpers.R) | 1-row `year × var_code` group produces `NA` (not `0`) because `sd()` of length-1 returns `NA` (not `NaN`), so the `is.nan` filter misses. | [test-calc-pipeline.R:get_scores_data: 1-row groups produce NA, not 0 (PINNED)](tests/testthat/test-calc-pipeline.R) |
+| [`R/calc_pti_helpers.R::get_scores_data`](R/calc_pti_helpers.R#L218) | 1-row `(year, var_code)` group produced `NA` (not `0`) because `sd()` of length-1 returns `NA` (not `NaN`), so the `is.nan` filter missed. Singleton groups have no variance to scale, so non-`NA` values are now set to the neutral score `0` (matching the existing zero-variance branch); `NA` inputs remain `NA`. Implemented by precomputing a `.was_na` flag, standardising as before, then patching `dplyr::n() == 1L & !.was_na` rows to `0` before the `is.nan` -> `0` rewrite. **FIXED in PR #59 (2026-05-06).** Out of scope (interpretation Y): "effectively n=1" groups (n>1 with all but one row `NA`) — `sd()` over the single non-`NA` is also `NA`, so the lone usable value still comes out `NA`. Could be a follow-up §12 row if a downstream consumer needs it. | [test-calc-pipeline.R:get_scores_data: 1-row groups produce 0 (no variance to scale)](tests/testthat/test-calc-pipeline.R) |
 | [`R/calc_pti_expander.R::expand_adm_levels`](R/calc_pti_expander.R) | When >1 list element name matches an admin level (`length(...) == 1` guard fails), the entire source-loop iteration returns nested `NULL`s. Silent data loss. | [test-calc-pipeline.R:expand_adm_levels: >1 element matches (PINNED)](tests/testthat/test-calc-pipeline.R) |
 | [`R/fct_inp_for_exp.R::fct_internal_wt_to_exp`](R/fct_inp_for_exp.R#L51) | Errors with "Join columns in `x` must be present" when called with an empty `weights_clean = list()`. Cause: `imap_dfr(list())` yields a 0×0 tibble that has no `var_code` column for the downstream `left_join`. Should early-return on length-0 input. | [test-export.R:fct_internal_wt_to_exp: empty list errors at left_join (PINNED)](tests/testthat/test-export.R) |
 | [`R/mod_dta_explorer2.R::get_var_choices`](R/mod_dta_explorer2.R#L302) | Errors with "attempt to set an attribute on NULL" when called with an empty `indicators_list`. The fallback branch `names(out) <- "Indicators"` runs even when `out` is `NULL`. A length-0 list output would be more useful. | [test-explorer-helpers.R:get_var_choices: empty indicators tibble errors (PINNED)](tests/testthat/test-explorer-helpers.R) |

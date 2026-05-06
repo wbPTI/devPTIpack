@@ -194,25 +194,21 @@ get_weighted_data <- function(wt_list, vars_dta_list, indicators_list) {
 #' Z-score standardise weighted PTI data within (year, var_code)
 #'
 #' For every `(year, var_code)` group in each leaf tibble, replaces
-#' `value` with `(value - mean) / sd`, treating `NA` as missing. When
-#' the resulting score is `NaN` (zero variance), it is replaced with
-#' `0`. Empty leaf tibbles are passed through unchanged.
+#' `value` with `(value - mean) / sd`, treating `NA` as missing.
+#' Singleton groups (group size 1) and zero-variance groups (n>1, all
+#' identical) have no variance to scale, so their non-`NA` values are
+#' set to the neutral score `0`; `NA` inputs remain `NA`. Empty leaf
+#' tibbles are passed through unchanged.
 #'
 #' @param wt_dta_list Nested named list as returned by
 #'   [get_weighted_data()] (outer = scheme, inner = admin level).
 #'
 #' @return A list of the same shape as `wt_dta_list` with `value`
-#'   replaced by per-`(year, var_code)` z-scores (zero-variance groups
-#'   become 0).
-#'
-#' @note 1-row `(year, var_code)` groups produce `NA` (not `0`)
-#'   because `sd()` of length-1 returns `NA` rather than `NaN`, so
-#'   the `is.nan` filter misses. Pinned in `test-calc-pipeline.R`
-#'   ("get_scores_data: 1-row groups produce NA, not 0 (PINNED)") —
-#'   see PLAN.md §12.
+#'   replaced by per-`(year, var_code)` z-scores; singleton and
+#'   zero-variance groups become `0` for non-`NA` rows.
 #'
 #' @importFrom purrr map
-#' @importFrom dplyr group_by_at mutate ungroup vars any_of
+#' @importFrom dplyr group_by_at mutate ungroup vars any_of if_else n
 #'
 #' @noRd
 get_scores_data <- function(wt_dta_list) {
@@ -224,9 +220,14 @@ get_scores_data <- function(wt_dta_list) {
             .x <-
               .x %>%
               dplyr::group_by_at(vars(any_of(c("year", "var_code")))) %>%
-              dplyr::mutate(value = (value - mean(value, na.rm = T)) / sd(value, na.rm = T)) %>%
-              dplyr::mutate(value = ifelse(is.nan(value), 0, value)) %>%
-              dplyr::ungroup()
+              dplyr::mutate(
+                .was_na = is.na(value),
+                value   = (value - mean(value, na.rm = T)) / sd(value, na.rm = T),
+                value   = dplyr::if_else(dplyr::n() == 1L & !.was_na, 0, value),
+                value   = ifelse(is.nan(value), 0, value)
+              ) %>%
+              dplyr::ungroup() %>%
+              dplyr::select(-.was_na)
           }
           .x
         })
