@@ -37,24 +37,20 @@ get_mt <- function(country_shapes) {
     dplyr::filter_all(dplyr::all_vars(!is.na(.)))
 }
 
-#' Extract sorted admin-level identifiers from a names vector
+#' Extract numerically-sorted admin-level identifiers from a names vector
 #'
-#' Pulls all `admin\\d{1,2}` substrings from `names(dta)`, sorts them
-#' lexicographically, and returns them as a self-named character
-#' vector ready for [purrr::imap()] iteration.
+#' Pulls all `admin\\d{1,2}` substrings from `names(dta)` and returns
+#' them as a self-named character vector sorted by the embedded
+#' integer (so `admin1 < admin2 < admin10`), ready for
+#' [purrr::imap()] iteration.
 #'
 #' @param dta Any object whose `names()` contain `admin{N}*` columns
 #'   (typically a `country_shapes` element or the mapping table from
 #'   [get_mt()]).
 #'
 #' @return A self-named character vector of admin level identifiers
-#'   (e.g. `c(admin0 = "admin0", admin1 = "admin1", ...)`).
-#'
-#' @note Sort is **lexicographic**, so `admin1 < admin10 < admin2`.
-#'   Internally consistent with downstream comparisons (which extract
-#'   only the first digit) but wrong for any deployment with ≥10 admin
-#'   levels. Pinned in `test-calc-pipeline.R` ("get_adm_levels: sort is
-#'   lexicographic, not numeric (PINNED)") — see PLAN.md §12.
+#'   (e.g. `c(admin0 = "admin0", admin1 = "admin1", ...)`), sorted
+#'   numerically. `NA` matches are dropped.
 #'
 #' @importFrom stringr str_extract
 #' @importFrom rlang set_names
@@ -62,11 +58,12 @@ get_mt <- function(country_shapes) {
 #' @noRd
 get_adm_levels <-
   function(dta) {
-    dta %>%
+    ids <- dta %>%
       names() %>%
-      str_extract("admin\\d{1,2}") %>%
-      sort() %>%
-      set_names(.)
+      str_extract("admin\\d{1,2}")
+    ids <- ids[!is.na(ids)]
+    ids[order(as.integer(str_extract(ids, "\\d{1,2}")))] %>%
+      set_names()
   }
 
 
