@@ -38,7 +38,7 @@ To do this we follow a workflow:
 
 ## Package Summary
 
-**devPTIpack** is a `golem`-based Shiny R package for computing, visualizing, and exploring **Priority Targeting Indices (PTI)** — composite scores from weighted indicators mapped across hierarchical administrative boundaries.
+**devPTIpack** is a `golem`-based Shiny R package for computing, visualizing, and exploring **Project Targeting Index (PTI)** scores — composite scores from weighted indicators mapped across hierarchical administrative boundaries.
 
 ---
 

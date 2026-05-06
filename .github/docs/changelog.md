@@ -5,6 +5,23 @@
 
 ---
 
+## 2026-05-05
+
+| Scope   | Change                                                                                                                                                         |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Config  | Rewrote `_pkgdown.yml` — new Bootstrap 5 flatly theme, World-Bank-blue navbar, structured reference sections, and four-tab navbar (Methodology / Build / Past Projects / References). |
+| Docs    | Created `vignettes/articles/methodology.qmd`, `build-pti.qmd`, `past-projects.qmd` — placeholder Quarto articles for the three navbar sections.               |
+| Docs    | Fixed `vignettes/dataprep.Rmd` — corrected malformed `VignetteIndexEntry` title and set `eval = FALSE` on `library(devPTIpack)` setup chunk.                   |
+| Config  | Updated `DESCRIPTION` URL from `ebukin.github.io` → `worldbank.github.io` to match `_pkgdown.yml`.                                                            |
+| Code    | Ran `devtools::document()` — generated all 35 `.Rd` files from roxygen comments (none existed previously).                                                     |
+| Docs    | Corrected PTI full name throughout: "Priority Targeting Indices" and "Precise Index Targeting" → canonical **"Project Targeting Index (PTI)"**.                 |
+| Config  | Updated `DESCRIPTION` Title and Description to use "Project Targeting Index"; fixed "PIT related" → "PTI" typo in Description.                                 |
+| Docs    | Updated `.claude/CLAUDE.md` PTI definition line to "Project Targeting Index (PTI)".                                                                            |
+| Docs    | Updated `.github/docs/arch-00-overview.md` PTI expansion from "Priority Targeting Indices" to "Project Targeting Index".                                       |
+| Docs    | Converted three pkgdown article vignettes from `.Rmd` to `.qmd`; pkgdown now renders them via `quarto render` instead of `rmarkdown::render`.                 |
+
+---
+
 ## 2026-04-29
 
 | Scope | Change                                                                                                                                           |

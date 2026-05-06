@@ -1,0 +1,28 @@
+---
+title: "Past Projects"
+---
+
+> **This page is a placeholder.** A gallery of PTI applications built for
+> World Bank projects will be added here.
+
+## Overview
+
+The Project Targeting Index (PTI) framework has been applied in a number of
+World Bank analytical and operational projects. Each entry below (once
+completed) will include a brief description of the context, the indicators
+used, the administrative levels covered, and a link to the live application
+where available.
+
+---
+
+## Ukraine
+
+*(Placeholder — description of the Ukraine PTI dashboard, context, indicators,
+and links.)*
+
+---
+
+## Project Template
+
+*(Placeholder — additional past project entries will appear here.)*
+

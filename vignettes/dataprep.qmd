@@ -2,7 +2,7 @@
 title: "Data preparation for the PTI app"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{"Data preparation for the PTI app}
+  %\VignetteIndexEntry{Data preparation for the PTI app}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
+```{r setup, eval = FALSE}
 library(devPTIpack)
 ```
 

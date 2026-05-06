@@ -1,6 +1,6 @@
 # Project: devPTIpack
 
-A golem-based Shiny R package for computing, visualizing, and exploring Priority Targeting Indices (PTI).
+A golem-based Shiny R package for computing, visualizing, and exploring Project Targeting Indices (PTI).
 
 ## Architecture
 
@@ -40,13 +40,13 @@ A golem-based Shiny R package for computing, visualizing, and exploring Priority
 
 Project-scoped tooling under `.claude/`:
 
-| Tool | Type | Purpose |
-|---|---|---|
-| `tdd-permanent-fn` | skill | Scaffold Tier-1 tests for a permanent function per arch-03 / arch-02.01 |
-| `cleanup-batch` | skill | Execute one arch-01 cleanup batch end-to-end (delete, document, test, check) |
-| `roxygen-document` | skill | Add/upgrade roxygen2 per `.claude/rules/roxygen-documentation.md` |
-| `issue-progress-comment` | skill | Draft a status comment for a GitHub issue from the recent diff/work |
-| `r-package-reviewer` | sub-agent | Review diffs for R-package conventions (NAMESPACE, exports, examples, no `browser()`) |
+| Tool                     | Type      | Purpose                                                                               |
+| ------------------------ | --------- | ------------------------------------------------------------------------------------- |
+| `tdd-permanent-fn`       | skill     | Scaffold Tier-1 tests for a permanent function per arch-03 / arch-02.01               |
+| `cleanup-batch`          | skill     | Execute one arch-01 cleanup batch end-to-end (delete, document, test, check)          |
+| `roxygen-document`       | skill     | Add/upgrade roxygen2 per `.claude/rules/roxygen-documentation.md`                     |
+| `issue-progress-comment` | skill     | Draft a status comment for a GitHub issue from the recent diff/work                   |
+| `r-package-reviewer`     | sub-agent | Review diffs for R-package conventions (NAMESPACE, exports, examples, no `browser()`) |
 
 Invoke skills via the Skill tool by name. Spawn the sub-agent via the Agent tool with `subagent_type: r-package-reviewer`.
 

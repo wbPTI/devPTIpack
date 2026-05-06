@@ -1,0 +1,60 @@
+---
+title: "Build a PTI"
+---
+
+> **This page is a placeholder.** A step-by-step guide to building and deploying a
+> Project Targeting Index (PTI) application will be added here.
+
+## Overview
+
+Building a PTI application with `devPTIpack` involves three high-level steps:
+
+1. **Prepare your data** — shapes (administrative boundaries) and a metadata
+   Excel template describing your indicators.
+2. **Validate your inputs** — run the built-in validators to catch problems
+   before deployment.
+3. **Launch the app** — use `launch_pti()` or `launch_pti_onepage()` to
+   start an interactive Shiny dashboard.
+
+## Step 1 — Scaffold a new project
+
+Use `create_new_pti()` to copy the bundled template into a new directory:
+
+```r
+library(devPTIpack)
+create_new_pti("path/to/my_pti_project")
+```
+
+*(Placeholder — full walkthrough of the project structure will be added here.)*
+
+## Step 2 — Prepare geometries
+
+*(Placeholder — guidance on formatting administrative boundary shapefiles to
+match the `ukr_shp` convention will be added here.)*
+
+## Step 3 — Prepare the metadata template
+
+*(Placeholder — column-by-column description of the Excel metadata template
+and how to fill it in will be added here.)*
+
+## Step 4 — Validate inputs
+
+```r
+validate_geometries(my_shp)
+validate_metadata(shp_path = "shapes.rds", mtdt_path = "metadata.xlsx")
+```
+
+*(Placeholder — interpreting validator output will be described here.)*
+
+## Step 5 — Launch the app
+
+```r
+launch_pti(
+  shp_dta  = my_shp,
+  inp_dta  = my_metadata,
+  app_name = "My Country PTI"
+)
+```
+
+*(Placeholder — configuration options and deployment notes will be added here.)*
+
