@@ -90,13 +90,14 @@ mod_drop_inval_adm <- function(id, dta, wt_dta){
 }
 
 
-#' Identify (variable, admin-level) pairs with no data and no upstream coverage
+#' Identify (variable, admin-level) pairs with no native data
 #'
-#' Walks the indicator availability metadata and returns the admin
-#' levels at which each indicator is missing AND cannot be back-filled
-#' from a more-disaggregated level. Used as the first step in
-#' [mod_drop_inval_adm()] to decide which admin levels must be hidden
-#' for a given weighting.
+#' Returns the `(var_code, admin_level)` pairs for which the indicator
+#' has no native data at that admin level. Pairs are emitted
+#' symmetrically: an indicator with data only at admin1 surfaces as
+#' unavailable at admin2 / admin4 (and vice versa). Used as the first
+#' step in [mod_drop_inval_adm()] to decide which admin levels must be
+#' hidden for a given weighting.
 #'
 #' @param ind_list A tibble shaped like the output of the internal
 #'   indicators-list pipeline -- at minimum a `var_code` column and a
@@ -107,22 +108,12 @@ mod_drop_inval_adm <- function(id, dta, wt_dta){
 #'   sorted unique levels seen in `ind_list`.
 #'
 #' @return A tibble with one row per unavailable
-#'   `(var_code, admin_level)` pair. Contains `var_code`, `admin_level`,
-#'   and a logical `any_larger` column (an intermediate flag carried
-#'   through the pipeline; downstream callers like
-#'   [get_min_admin_wght()] use only `admin_level`).
-#'
-#' @note Asymmetry pinned in PR
-#'   [#34](https://github.com/worldbank/devPTIpack/pull/34): the
-#'   `lag()`-based fill logic treats an indicator that exists only at an
-#'   earlier-sorted admin level as "available" at later-sorted levels,
-#'   so admin2 is never surfaced as unavailable for an admin1-only
-#'   indicator. The reverse direction (admin2-only -> admin1
-#'   unavailable) works. Candidate for the Phase 2.5 / 3.5 bug-fix
-#'   sprint.
+#'   `(var_code, admin_level)` pair, with columns `var_code` and
+#'   `admin_level`.
 #'
 #' @importFrom tidyr unnest
-#' @importFrom dplyr select group_by count ungroup arrange filter mutate left_join rename lead lag
+#' @importFrom tibble as_tibble
+#' @importFrom dplyr select distinct anti_join
 #' @export
 #'
 #' @examples
@@ -150,10 +141,7 @@ get_vars_un_avbil <- function(ind_list, admin_levels = NULL) {
     ind_list %>%
     dplyr::select(var_code, admin_levels_years) %>%
     tidyr::unnest(cols = c(admin_levels_years)) %>%
-    dplyr::group_by(var_code, admin_level) %>%
-    dplyr::count() %>%
-    dplyr::ungroup() %>%
-    rename(value = n)
+    dplyr::distinct(var_code, admin_level)
 
   if (is.null(admin_levels)) {
     admin_levels <- unique(ind_extend$admin_level) %>% sort()
@@ -161,17 +149,11 @@ get_vars_un_avbil <- function(ind_list, admin_levels = NULL) {
 
   expand.grid(
     var_code = unique(ind_extend$var_code),
-    admin_level = admin_levels) %>%
-    left_join(ind_extend, by = c("var_code", "admin_level")) %>%
-    dplyr::arrange(var_code, admin_level) %>%
-    dplyr::group_by(var_code) %>%
-    mutate(any_larger = !is.na(lead(value)) | !is.na(lead(value, n = 2)) | !is.na(lead(value, n = 3))) %>%
-    mutate(value = ifelse(is.na(value & !any_larger), lag(value), value)) %>%
-    mutate(value = ifelse(is.na(value & !any_larger), lag(value), value)) %>%
-    mutate(value = ifelse(is.na(value & !any_larger), lag(value), value)) %>%
-    dplyr::ungroup() %>%
-    dplyr::filter(is.na(value)) %>%
-    dplyr::select(-value)
+    admin_level = admin_levels,
+    stringsAsFactors = FALSE
+  ) %>%
+    tibble::as_tibble() %>%
+    dplyr::anti_join(ind_extend, by = c("var_code", "admin_level"))
 }
 
 
