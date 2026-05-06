@@ -7,17 +7,31 @@ home:
     dashboards. Combine socioeconomic indicators, aggregate them using a
     flexible weighting scheme, and visualise PTI scores across administrative
     levels in an interactive Shiny application.
+  links:
+    - text: Report a bug
+      href: https://github.com/worldbank/devPTIpack/issues/new
+    - text: Browse source code
+      href: https://github.com/worldbank/devPTIpack
+    - text: Cite this package
+      href: authors.html#citation
+    - text: License (MIT)
+      href: LICENSE-text.html
+    - text: World Bank IGO License Rider
+      href: WB-IGO-RIDER.html
 
 authors:
   Eduard Bukin:
     href: https://EBukin.github.io/
-    email: ebukin@worldbank.org
+    comment: Package Author
   Koichi Ito:
     href: https://koichi-ito.github.io/
+    comment: Package Maintainer
   Takaaki Masaki:
     href: https://takaakimasaki.github.io/
+    comment: Contributor
   Arden Finn:
     href: https://www.worldbank.org/
+    comment: Reviewer
 
 template:
   bootstrap: 5
@@ -35,7 +49,7 @@ lang: en
 navbar:
   structure:
     left:  [methodology, build-pti, past-projects, reference]
-    right: [search, github]
+    right: [resources, search, github]
   components:
     methodology:
       text: PTI Methodology
@@ -47,8 +61,22 @@ navbar:
       text: Past Projects
       href: articles/past-projects.html
     reference:
-      text: References
+      text: Reference
       href: reference/index.html
+    resources:
+      text: Resources
+      menu:
+        - text: PTI Apps (GitHub — wbPTI org)
+          href: https://github.com/wbPTI
+        - text: GeoPov — World Bank Internal
+          href: https://worldbankgroup.sharepoint.com/:u:/r/sites/FPG/SitePages/PublishingPages/GeoPov-1770874931043.aspx?csf=1&web=1&e=g2uDT0
+        - text: "---"
+        - text: Report a bug
+          href: https://github.com/worldbank/devPTIpack/issues/new
+        - text: License (MIT)
+          href: LICENSE-text.html
+        - text: World Bank IGO License Rider
+          href: WB-IGO-RIDER.html
     github:
       icon: fab fa-github fa-lg
       href: https://github.com/worldbank/devPTIpack
