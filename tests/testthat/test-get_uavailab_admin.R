@@ -78,9 +78,9 @@ test_that("get unavailable adming levels works", {
   #   ukr_mtdt_full %>% get_indicators_list() %>% get_vars_nabil() ,
   #   "tbl_df")
   
-  # Pre PR #N this asserted 7 (the lag-fill bug under-counted the
+  # Pre PR #61 this asserted 7 (the lag-fill bug under-counted the
   # admin1-only direction). Under the strict no-extrapolation contract
-  # adopted in PR #N, every (var x admin) pair without native data
+  # adopted in PR #61, every (var x admin) pair without native data
   # surfaces; 9 indicators x 3 admin levels - 15 cells with data = 12.
   testthat::expect_equal(
     ukr_mtdt_full %>% get_indicators_list() %>% get_vars_un_avbil() %>% nrow(),

@@ -109,7 +109,7 @@ test_that("mod_drop_inval_adm: indicator missing at admin1 -> admin1 removed", {
 })
 
 test_that("mod_drop_inval_adm: indicator missing at admin2 -> admin2 removed", {
-  # Reverse-direction sibling of the test above. Pre PR #N this was
+  # Reverse-direction sibling of the test above. Pre PR #61 this was
   # the silently-broken case: get_vars_un_avbil's `lag()`-based fill
   # treated an admin1-only indicator as available at admin2.
   inp <- .build_drop_inputs(missing_admin = "admin2")
