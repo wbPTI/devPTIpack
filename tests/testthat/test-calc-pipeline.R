@@ -53,12 +53,13 @@ test_that("get_adm_levels: empty when no admin columns are present", {
   expect_length(out, 0)
 })
 
-test_that("get_adm_levels: sort is lexicographic, not numeric (PINNED)", {
-  # arch-03 §"Known Issues to Pin": result for mixed single/double-digit
-  # admin levels is lexicographic, so admin1 < admin10 < admin2.
-  # Pinned, not skipped — downstream code (`expand_adm_levels`,
-  # `agg_pti_scores`) compares levels by first-digit only, so the
-  # codebase is internally consistent with this quirk.
+test_that("get_adm_levels: sort is numeric across mixed-digit levels", {
+  # Contract: levels are sorted by the embedded integer (so
+  # admin1 < admin2 < admin10), not lexicographically. The lex-sort
+  # behaviour was the bug fixed in PR #57; downstream `expand_adm_levels`
+  # and `agg_pti_scores` still have separate first-digit-only quirks
+  # (they extract `\\d` not `\\d{1,2}` / use string `max(level)`) — out
+  # of scope here, see PLAN.md §12.
   jumbled <- tibble::tibble(
     admin2Pcod  = character(),
     admin10Pcod = character(),
@@ -66,7 +67,7 @@ test_that("get_adm_levels: sort is lexicographic, not numeric (PINNED)", {
   )
   expect_equal(
     unname(get_adm_levels(jumbled)),
-    c("admin1", "admin10", "admin2")
+    c("admin1", "admin2", "admin10")
   )
 })
 
