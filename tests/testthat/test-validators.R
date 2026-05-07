@@ -119,7 +119,7 @@ test_that("validate_geometries: layer with missing Pcod aborts", {
 
 test_that("validate_read_shp: perfect shapefile passes round-trip", {
   # ukr_shp has no extra admin codes (every admin{N}Pcod has a matching
-  # admin{N}_* slot). Pre PR #N this exercised a buggy str_detect on a
+  # admin{N}_* slot). Pre PR #64 this exercised a buggy str_detect on a
   # character(0) pattern inside the function's internal test_that block;
   # that error was swallowed by testthat::test_that and never surfaced
   # to the caller, but it left the inner expectation in a failed state.
