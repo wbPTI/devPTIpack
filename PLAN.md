@@ -12,17 +12,18 @@
 ## 1. Where we are
 
 **Status snapshot (2026-05-06):** Phases 1 (#10), 2 (#8), 3 (#11) closed.
-Phase 2.5 §12 bug-fix sprint in progress — **8 of 14 bugs fixed** (#1
+Phase 2.5 §12 bug-fix sprint in progress — **9 of 14 bugs fixed** (#1
 `complete_pti_labels` PR #56; #5 `get_adm_levels` PR #57; #6
 `get_scores_data` PR #59; #7 `expand_adm_levels` PR #60, bundled
 with the boundary-regex follow-up — the 14th §12 row; #10
 `get_vars_un_avbil` symmetric availability PR #61; #2
 `check_existing_groups` empty-old PR #62; #4 `validate_read_shp`
-empty-pattern PR #64). Phase 4 (#12, vignettes & pkgdown) and
-Phase 5 (#13, hex ingestion) yet to start. R-CMD-check workflow
-gates merge with `error-on: '"error"'`. Suite at **0 fail / 1
-skip / 684 PASS** (PR #4 rename-only on the existing pinned
-test, no count delta).
+empty-pattern PR #64; #8 `fct_internal_wt_to_exp` empty list PR
+TBD). Phase 4 (#12, vignettes & pkgdown) and Phase 5 (#13, hex
+ingestion) yet to start. R-CMD-check workflow gates merge with
+`error-on: '"error"'`. Suite at **0 fail / 1 skip / 686 PASS** (PR
+#8 net +2 expectations: pinned `expect_error` flipped to three
+contract assertions).
 
 | Concern | Source of truth |
 |---|---|
@@ -77,7 +78,7 @@ Phase 3  Roxygen2 docs for all permanent fns       (#11)       │  ✓ done
    ├─ Batch 6a PTI rendering & display stack             ✓ #52 │
    └─ Batch 6b Closes Phase 3                            ✓ #53 │
             ▼                                                  │
-Phase 2.5  §12 bug-fix sprint (concurrent)         (—)         │  in progress (8/14)
+Phase 2.5  §12 bug-fix sprint (concurrent)         (—)         │  in progress (9/14)
    ├─ #1 complete_pti_labels (silent data corruption)    ✓ #56 │
    ├─ #5 get_adm_levels lex sort (silent corruption)     ✓ #57 │
    ├─ #6 get_scores_data 1-row -> NA (silent corrup)     ✓ #59 │
@@ -86,7 +87,8 @@ Phase 2.5  §12 bug-fix sprint (concurrent)         (—)         │  in progre
    ├─ #10 get_vars_un_avbil asymmetric lag-fill          ✓ #61 │
    ├─ #2 check_existing_groups empty-old vctrs error     ✓ #62 │
    ├─ #4 validate_read_shp empty-pattern str_detect      ✓ #64 │
-   └─ #8 #9 #11 #13 #3 #12                               ◌ next │
+   ├─ #8 fct_internal_wt_to_exp empty list left_join     ✓ #65 │
+   └─ #9 #11 #13 #3 #12                                  ◌ next │
             ▼                                                  │
 Phase 4  Vignettes + pkgdown deploy                (#12)       │
             ▼                                                  │
@@ -719,7 +721,9 @@ Lifted from arch-00 §"End-State Goals":
 
 | [#64](https://github.com/worldbank/devPTIpack/pull/64) | 2026-05-06 | **Phase 2.5 §12 (bug-fix #4)** | §12 bug #4 fixed -- `R/fct_validate_metadata.R::validate_read_shp` no longer hits the `str_detect(names(x), character(0))` vctrs size error when called on a "perfect" shapefile (every `admin{N}Pcod` field has a matching `admin{N}_*` slot). Body refactored: compute `extra_level_vec` first (without the `str_c collapse`), then guard the diagnostic-label construction (`str_c collapse`, `keep`, `str_detect on names`) with `if (length(extra_level_vec) > 0)`; on empty extras, set both label strings to `""` and let the (already correct) `expect_true(all(... %in% ...))` pass cleanly. Stripped the 5-line `@note Issue #7 ...` block from the function's roxygen. Test housekeeping: the existing pin in `tests/testthat/test-validators.R` (`"validate_read_shp: round-trips through an .rds path (PINNED BUG)"`) used `capture_validator()` which mocks `testthat::test_that` to a no-op, so the inner blocks never executed and the test passed trivially both pre- and post-fix; the PR renames it to `"validate_read_shp: perfect shapefile passes round-trip"` and rewrites the comment to drop the misleading PINNED BUG language and explain why the existing infrastructure can't pin the bug rigorously. Surfaced this caveat at the scope-proposal gate -- the user accepted the rename-only test change. The fix is verified by code inspection: only the previously-broken empty-extras branch changed, and the end-to-end `validate_metadata: bundled sample data passes end-to-end` test (which composes both `validate_read_shp` and `validate_read_metadata`) still passes. Caller-graph: only `validate_metadata` at `R/fct_validate_metadata.R:35`. No NAMESPACE delta. Out of scope: the broader arch-01 refactor target -- converting the runtime `testthat::test_that` machinery into ordinary validation calls -- bigger scope, would obsolete `capture_validator()` entirely; left for a future PR. Folded in the PR-#62 `TBD -> #62` swap on the §11 row above and on the §12 row #2 (already complete in upstream). Suite stays at 684 PASS (FAIL=0, SKIP=1) -- rename-only on the existing pin, no test count delta. |
 
-Suite total after this branch: **0 failures / 1 skip / 684 PASS** (`testthat::test_local()`; bug-fix PR; rename-only on the existing pin, no test count delta).
+| [#65](https://github.com/worldbank/devPTIpack/pull/65) | 2026-05-06 | **Phase 2.5 §12 (bug-fix #8)** | §12 bug #8 fixed -- `R/fct_inp_for_exp.R::fct_internal_wt_to_exp` now early-returns a 0-row tibble matching its documented `@return` schema (`var_code`, `var_name`, `weight`, `weight_scheme`) when `weights_clean` is `list()`. Pre-fix: `purrr::imap_dfr(list())` produced a 0x0 tibble (no columns), so the downstream `dplyr::left_join(., indicators_list %>% select(var_code, var_name), by = "var_code")` errored with "Join columns in 'x' must be present in the data: 'var_code'". Test pin in `tests/testthat/test-export.R` flipped from `expect_error(..., regexp = "var_code")` (1 expectation, asserting the bug) to three contract assertions: `expect_s3_class(out, "tbl_df")`, `expect_equal(nrow(out), 0L)`, `expect_setequal(names(out), c("var_code", "var_name", "weight", "weight_scheme"))`. `test_that()` description renamed from `"empty list errors at left_join (PINNED)"` -> `"empty list returns a 0-row tibble with the full schema"`. Stripped the 7-line `@note PINNED BUG (PLAN.md §12) ...` block from the function's roxygen. Caller-graph: single call site at `R/mod_wt_inp.R:914` inside `mod_wt_dwnload_newsrv`; production never feeds an empty list (download button only fires after at least one scheme is saved) -- this fix is a no-op on the deployed app and only changes behaviour for direct callers. NAMESPACE delta: added `tibble::tibble` to the function's `@importFrom` (used by the early-return constructor). The sibling test `"fct_internal_wt_to_exp: empty scheme tibble -> 0-row tibble"` already covered the n>0-but-each-empty case; this fix completes the empty-input contract by handling the n=0 case symmetrically. Folded in the PR-#64 `TBD -> #64` swap on the §11 row above and on the §12 row #4 (already complete in upstream). Suite goes from 684 PASS -> 686 PASS (FAIL=0, SKIP=1) -- net +2 expectations (1 expect_error swapped for 3 contract assertions). |
+
+Suite total after this branch: **0 failures / 1 skip / 686 PASS** (`testthat::test_local()`; bug-fix PR; pinned `expect_error` flipped to three contract assertions, net +2 expectations).
 
 > **Suite totals revised on 2026-05-02:** prior counts in §11 were
 > derived from `sum(res$nb)` over `as.data.frame(testthat::test_local())`,
@@ -753,15 +757,15 @@ Suite total after this branch: **0 failures / 1 skip / 684 PASS** (`testthat::te
 > have no test pin yet; pinning is a sub-task of the eventual fix PR.
 > All entries are cleanup-phase candidates regardless of pin status.
 
-**Status: 8 of 14 fixed.** Done: #1 `complete_pti_labels` (PR #56),
+**Status: 9 of 14 fixed.** Done: #1 `complete_pti_labels` (PR #56),
 #5 `get_adm_levels` (PR #57), #6 `get_scores_data` (PR #59),
 #7 `expand_adm_levels` (PR #60) plus the boundary-regex follow-up
 on the same function (PR #60; the 14th §12 row), #10
 `get_vars_un_avbil` symmetric availability (PR #61), #2
-`check_existing_groups` empty-old (PR #62), and #4
-`validate_read_shp` empty-pattern (PR #64). Triage queue
-(user-facing errors → spec asymmetry): #8 next, then #9 #11
-#13, last #3 #12.
+`check_existing_groups` empty-old (PR #62), #4 `validate_read_shp`
+empty-pattern (PR #64), and #8 `fct_internal_wt_to_exp` empty
+list (PR #65). Triage queue (user-facing errors → spec
+asymmetry): #9 next, then #11 #13, last #3 #12.
 
 | Loc | Bug | Pin (test) |
 |---|---|---|
@@ -773,7 +777,7 @@ on the same function (PR #60; the 14th §12 row), #10
 | [`R/calc_pti_helpers.R::get_scores_data`](R/calc_pti_helpers.R#L218) | 1-row `(year, var_code)` group produced `NA` (not `0`) because `sd()` of length-1 returns `NA` (not `NaN`), so the `is.nan` filter missed. Singleton groups have no variance to scale, so non-`NA` values are now set to the neutral score `0` (matching the existing zero-variance branch); `NA` inputs remain `NA`. Implemented by precomputing a `.was_na` flag, standardising as before, then patching `dplyr::n() == 1L & !.was_na` rows to `0` before the `is.nan` -> `0` rewrite. **FIXED in PR #59 (2026-05-06).** Out of scope (interpretation Y): "effectively n=1" groups (n>1 with all but one row `NA`) — `sd()` over the single non-`NA` is also `NA`, so the lone usable value still comes out `NA`. Could be a follow-up §12 row if a downstream consumer needs it. | [test-calc-pipeline.R:get_scores_data: 1-row groups produce 0 (no variance to scale)](tests/testthat/test-calc-pipeline.R) |
 | [`R/calc_pti_expander.R::expand_adm_levels`](R/calc_pti_expander.R) | When >1 list element name matched an admin level (the old `length(...) == 1` guard fell through), the entire source-loop iteration returned nested `NULL`s — silent data loss. Now the function `stop()`s loudly, naming the offending slots, since the input contract is one slot per level (`adminN_HumanName`). **FIXED in PR #60 (2026-05-06).** Caller-graph audit confirmed no production caller depended on the `NULL` short-circuit (`R/mod_calc_pti2.R:82`, `R/run_pti_pipeline.R:65`, `R/fct_validate_metadata.R:60` all pipe through to `merge_expandedn_adm_levels()` which would have produced empty merges from the silent NULLs); for the only data ever shipped (`ukr_shp`), `wtd_scrd_dta` always has exactly one slot per level so the new error path is unreachable. | [test-calc-pipeline.R:expand_adm_levels: >1 slot matches a level -> error](tests/testthat/test-calc-pipeline.R) |
 | [`R/calc_pti_expander.R::expand_adm_levels`](R/calc_pti_expander.R#L48-L49) | Slot-name match was substring-based (`stringr::str_detect(names, adm_from)`), so iterating with `adm_from = "admin1"` also picked up slots named `"admin10_..."` / `"admin11_..."` / etc. — same first-digit-only family as the documented quirks at L79-80 and `agg_pti_scores` L237. No-op on bundled `ukr_shp` data (admin0/1/2/4, all single-digit) but a latent failure trigger at ≥10 admin levels: a deployment with both `admin1_*` and `admin10_*` slots would have tripped the new multi-match `stop()` introduced for row 7. Now anchored as `^{adm_from}(_|$)` so `"admin1"` matches only `"admin1_..."`. **FIXED in PR #60 (2026-05-06)** — bundled with the row-7 fix because the two issues live on the same surface (one regex on slot names) and the row-7 multi-match error would have masked the boundary bug as a false positive otherwise. Out of scope: the related single-`\\d` `str_extract` quirks at L79-80 / `agg_pti_scores` L237 remain — candidates for a future "first-digit-only sweep" §12 row. | [test-calc-pipeline.R:expand_adm_levels: slot regex is boundary-anchored (admin1 vs admin10)](tests/testthat/test-calc-pipeline.R) |
-| [`R/fct_inp_for_exp.R::fct_internal_wt_to_exp`](R/fct_inp_for_exp.R#L51) | Errors with "Join columns in `x` must be present" when called with an empty `weights_clean = list()`. Cause: `imap_dfr(list())` yields a 0×0 tibble that has no `var_code` column for the downstream `left_join`. Should early-return on length-0 input. | [test-export.R:fct_internal_wt_to_exp: empty list errors at left_join (PINNED)](tests/testthat/test-export.R) |
+| [`R/fct_inp_for_exp.R::fct_internal_wt_to_exp`](R/fct_inp_for_exp.R) | Errored with "Join columns in `x` must be present in the data: 'var_code'" when called with an empty `weights_clean = list()`. Cause: `purrr::imap_dfr(list())` returns a 0x0 tibble (no columns), so the downstream `dplyr::left_join(., indicators_list, by = "var_code")` couldn't find its join key. Fix: early-return a 0-row tibble matching the documented `@return` schema (`var_code`, `var_name`, `weight`, `weight_scheme`) on length-0 input. **FIXED in PR #65 (2026-05-06).** Caller-graph: single call site at `R/mod_wt_inp.R:914` inside `mod_wt_dwnload_newsrv`; production unlikely to feed an empty list (download button only fires after at least one scheme is saved) -- the new behaviour is strictly more defensive. NAMESPACE delta: added `tibble::tibble` to the function's `@importFrom`. | [test-export.R:fct_internal_wt_to_exp: empty list returns a 0-row tibble with the full schema](tests/testthat/test-export.R) |
 | [`R/mod_dta_explorer2.R::get_var_choices`](R/mod_dta_explorer2.R#L302) | Errors with "attempt to set an attribute on NULL" when called with an empty `indicators_list`. The fallback branch `names(out) <- "Indicators"` runs even when `out` is `NULL`. A length-0 list output would be more useful. | [test-explorer-helpers.R:get_var_choices: empty indicators tibble errors (PINNED)](tests/testthat/test-explorer-helpers.R) |
 | [`R/mod_drop_inval_adm.R::get_vars_un_avbil`](R/mod_drop_inval_adm.R) | Asymmetric availability check — pre-fix the body used `arrange(admin_level)` + triple `lag(value)` to back-fill missing rows from earlier-sorted levels, so an indicator with data only at admin1 was silently treated as available at admin2 / admin4 (admin2 was never surfaced as unavailable). The reverse (admin2-only → admin1 unavailable) worked. The same code also had an operator-precedence typo `is.na(value & !any_larger)` (parsed as `is.na((value & !any_larger))`). Now the function is reduced to a strict no-extrapolation contract: a `(var, admin)` pair is unavailable iff the indicator has no native data at that level. Body shrank from ~25 lines to ~10 lines (`expand.grid` + `anti_join` over the distinct `(var_code, admin_level)` set). The `any_larger` column is no longer in the output (no caller read it; also dropped from `globalVariables()`). **FIXED in PR #61 (2026-05-06).** Out-of-scope decision: the package's two extrapolation paths (`expand_adm_levels`'s upward + downward branches) handle aggregation in the calc pipeline itself, so the availability check doesn't need to encode them — keeping it strict matches the existing `weighting an unavailable var produces drops` test (`var_nval4_small_skewd_adm4` admin4-only → admin1 + admin2 dropped) and avoids re-introducing the buggy lag/lead machinery. | [test-drop-inval-adm.R:get_vars_un_avbil: flags missing levels symmetrically](tests/testthat/test-drop-inval-adm.R) + [test-mod-drop-inval-adm.R:mod_drop_inval_adm: indicator missing at admin2 -> admin2 removed](tests/testthat/test-mod-drop-inval-adm.R) |
 | [`R/mod_dta_explorer2.R::mod_fltr_sel_var2_srv`](R/mod_dta_explorer2.R#L216-L235) | The `add_selected()` observer's predicate `purrr::map_lgl(choices(), ~ { .x %in% c(selected_add, selected_now) | .x %in% names(c(selected_add, selected_now)) })` errors with "Result must be length 1, not N" whenever any pillar holds >1 variable, because `.x` is the length-N character vector for that pillar and `%in%` returns length-N. Should be `map(...) %>% map_lgl(any)`, or use `any(.x %in% ...)` inside the predicate. The Tier-2 test avoids the bug for happy-path coverage by using single-var-per-pillar choices, and pins the underlying predicate failure separately. | [test-mod-var-selector.R: add_selected() with multi-var pillar fails the inner predicate (PINNED BUG)](tests/testthat/test-mod-var-selector.R) |
