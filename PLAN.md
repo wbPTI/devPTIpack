@@ -11,8 +11,8 @@
 
 ## 1. Where we are
 
-**Status snapshot (2026-05-06):** Phases 1 (#10), 2 (#8), 3 (#11) closed.
-Phase 2.5 §12 bug-fix sprint in progress — **12 of 14 bugs fixed**
+**Status snapshot (2026-05-07):** Phases 1 (#10), 2 (#8), 3 (#11) closed.
+Phase 2.5 §12 bug-fix sprint in progress — **13 of 14 bugs fixed**
 (#1 `complete_pti_labels` PR #56; #5 `get_adm_levels` PR #57; #6
 `get_scores_data` PR #59; #7 `expand_adm_levels` PR #60, bundled
 with the boundary-regex follow-up — the 14th §12 row; #10
@@ -22,12 +22,13 @@ empty-pattern PR #64; #8 `fct_internal_wt_to_exp` empty list PR
 #65; #9 `get_var_choices` empty indicators PR #66; #11
 `mod_fltr_sel_var2_srv` multi-var pillar PR #67; #13
 `mod_dwnld_file_server` broken downloads + `launch_pti()` path-
-default API PR #68). Phase 4 (#12, vignettes & pkgdown) and
+default API PR #68; #3 `filter_admin_levels` name-vs-value
+asymmetry PR #69). Phase 4 (#12, vignettes & pkgdown) and
 Phase 5 (#13, hex ingestion) yet to start. R-CMD-check workflow
 gates merge with `error-on: '"error"'`. Suite at **0 fail / 1
-skip / 702 PASS** (PR #13 net +13 expectations from a new
-Tier-1+Tier-2 test file covering the materialize helper and the
-mod_dwnld_file_server validation guard).
+skip / 702 PASS** (PR #3 swaps 1 `expect_equal` for 1
+`expect_equal` -- the bug-asserting "0 entries" pin replaced with
+a sharper symmetric-contract assertion `by_name == by_value`).
 
 | Concern | Source of truth |
 |---|---|
@@ -82,7 +83,7 @@ Phase 3  Roxygen2 docs for all permanent fns       (#11)       │  ✓ done
    ├─ Batch 6a PTI rendering & display stack             ✓ #52 │
    └─ Batch 6b Closes Phase 3                            ✓ #53 │
             ▼                                                  │
-Phase 2.5  §12 bug-fix sprint (concurrent)         (—)         │  in progress (12/14)
+Phase 2.5  §12 bug-fix sprint (concurrent)         (—)         │  in progress (13/14)
    ├─ #1 complete_pti_labels (silent data corruption)    ✓ #56 │
    ├─ #5 get_adm_levels lex sort (silent corruption)     ✓ #57 │
    ├─ #6 get_scores_data 1-row -> NA (silent corrup)     ✓ #59 │
@@ -96,7 +97,8 @@ Phase 2.5  §12 bug-fix sprint (concurrent)         (—)         │  in progre
    ├─ #11 mod_fltr_sel_var2_srv multi-var pillar         ✓ #67 │
    ├─ #13 mod_dwnld_file_server broken downloads +       ✓ #68 │
    │      launch_pti() path-default API (Arch-2)                │
-   └─ #3 #12                                             ◌ next │
+   ├─ #3 filter_admin_levels name-vs-value asymmetry     ✓ #69 │
+   └─ #12                                                ◌ next │
             ▼                                                  │
 Phase 4  Vignettes + pkgdown deploy                (#12)       │
             ▼                                                  │
@@ -737,7 +739,9 @@ Lifted from arch-00 §"End-State Goals":
 
 | [#68](https://github.com/worldbank/devPTIpack/pull/68) | 2026-05-07 | **Phase 2.5 §12 (bug-fix #13 -- Arch-2)** | §12 bug #13 fixed under **Arch-2** (auto-materialize). Two coupled changes: **(1)** `R/mod_dwnld_dta.R::mod_dwnld_file_server` now validates `filepath` at registration; on invalid input calls `shinyjs::disable(outputId)` and ships an explanatory `unavailable-<date>.txt` placeholder via the content callback (not a silent broken `.html`). On valid input the existing `basename(filepath)` filename builder is preserved. **(2)** New private helper `R/launch_pti.R::materialize_dwnld_paths(shp_dta, inp_dta, shapes_path, mtdtpdf_path, data_path)` writes in-memory `shp_dta` / `inp_dta` to session-scoped tempfiles when the corresponding paths are `NULL` (`pti-shapes-<date>.rds` via `saveRDS()`, `pti-data-export-<date>.xlsx` via `writexl::write_xlsx()`); PDF stays `NULL` since there's no in-memory equivalent. Defaults on `launch_pti()` and `launch_pti_onepage()` flipped from `"."` to `NULL` for `shapes_path` and `mtdtpdf_path`. Added new `data_path` parameter on `launch_pti()` and threaded it to `mod_dta_explorer2_server` -- closes a separate latent bug where `data_path` defaulted to NULL in the server but `launch_pti` never plumbed it through, making the explorer's "Download data" button unreachable. Architectural rationale (raised by the user at the scope-proposal gate): "users shouldn't need to know about disk paths to deploy an app -- if we have the data in memory, we should be able to serve it." Iteration history: an interim attempt used `shinyjs::hide()` plus `setdiff()`-ing `"metadata"` from `wt_dwnld_options` / `map_dwnld_options` to also clean up the orphaned " and ." connector text; the connector logic lives in three side-panel renderers (PTI / compare / explorer) and the conditionals didn't reach all of them cleanly, so reverted to plain `disable()` + placeholder. Cosmetic " and ." sentence quirk remains when no PDF is supplied; flagged as out-of-scope follow-up. New Tier-1 + Tier-2 test file `tests/testthat/test-mod-dwnld-file.R` (6 test_that blocks, 13 expectations): two cover `materialize_dwnld_paths()` (NULL fallbacks vs. explicit paths), four cover `mod_dwnld_file_server` (valid file leaves link enabled; NULL / directory / nonexistent paths trigger `shinyjs::disable`). NAMESPACE delta: added `importFrom(writexl, write_xlsx)`. Manually verified by the user via `launch_pti(shp_dta = ukr_shp, inp_dta = ukr_mtdt_full)` -- shapes + data downloads work, metadata-PDF link is greyed out. Folded in the PR-#67 `TBD -> #67` swap on the §11 row above and on the §12 row #11 (already complete in upstream). Suite goes from 689 PASS -> 702 PASS (FAIL=0, SKIP=1) -- net +13 expectations from the new test file. |
 
-Suite total after this branch: **0 failures / 1 skip / 702 PASS** (`testthat::test_local()`; bug-fix PR adds a new Tier-1+Tier-2 test file covering `materialize_dwnld_paths` and the `mod_dwnld_file_server` validation guard; net +13 expectations).
+| [#69](https://github.com/worldbank/devPTIpack/pull/69) | 2026-05-07 | **Phase 2.5 §12 (bug-fix #3)** | §12 bug #3 fixed -- `R/plot_pti_helpers.R::filter_admin_levels` now treats admin keys and display values symmetrically inside the `keep()` predicate. Pre-fix: the gating branch (L116-117) entered when `to_fltr` matched either keys or values, but the inner `keep(function(x) {x$admin_level %in% to_fltr})` predicate compared `x$admin_level` (the display value, e.g. `"Oblast"`) against `to_fltr` only -- so `to_fltr = "admin1"` (a bare key) entered the branch but selected 0 entries. Fix: extend the predicate to `x$admin_level %in% to_fltr | names(x$admin_level) %in% to_fltr`. Mirrors how `mod_get_admin_levels_srv` already filters its own internal state at L237-238 (`names(.) %in% default_adm_level | (.) %in% default_adm_level`). Test pin in `tests/testthat/test-plot-helpers.R` flipped from `expect_equal(length(filter_admin_levels(preplot, "admin1")), 0L)` (1 expectation, asserting the bug) to a sharper symmetric-contract assertion `expect_equal(by_name, by_value)` (1 expectation) -- key-only and value-only filters must produce the *same* result, not just the same length. `test_that()` description renamed from `"name-only filter returns 0 entries (PINNED)"` -> `"name-only filter matches the same entries as value-only"`; comment block rewritten to describe the contract instead of the past bug. Reviewer caution applied: original proposal used a length-check + `for` loop; tightened on r-package-reviewer's nice-to-have to a direct equality check that more sharply expresses the symmetric contract. Stripped the 6-line `@note Pinned bug (PR #25)` block from the function's roxygen. Caller-graph: 2 production call sites (`R/mod_dta_explorer2.R:99`, `R/mod_plot_pti2.R:62`), both pass `sel_adm_levels()` (a named character vector from `mod_get_admin_levels_srv`); the values branch already matched in production so this fix is a no-op on the deployed app and only changes behaviour for direct callers (tests + future callers). No NAMESPACE delta. Folded in nothing -- prior PR #68 self-swapped its TBD before merge. Suite stays at 702 PASS (FAIL=0, SKIP=1) -- 1 `expect_equal` swapped 1-for-1, no count delta. |
+
+Suite total after this branch: **0 failures / 1 skip / 702 PASS** (`testthat::test_local()`; bug-fix PR; 1 `expect_equal` swapped 1-for-1 -- the bug-asserting pin replaced with a sharper symmetric-contract `expect_equal(by_name, by_value)`).
 
 > **Suite totals revised on 2026-05-02:** prior counts in §11 were
 > derived from `sum(res$nb)` over `as.data.frame(testthat::test_local())`,
@@ -771,7 +775,7 @@ Suite total after this branch: **0 failures / 1 skip / 702 PASS** (`testthat::te
 > have no test pin yet; pinning is a sub-task of the eventual fix PR.
 > All entries are cleanup-phase candidates regardless of pin status.
 
-**Status: 12 of 14 fixed.** Done: #1 `complete_pti_labels` (PR #56),
+**Status: 13 of 14 fixed.** Done: #1 `complete_pti_labels` (PR #56),
 #5 `get_adm_levels` (PR #57), #6 `get_scores_data` (PR #59),
 #7 `expand_adm_levels` (PR #60) plus the boundary-regex follow-up
 on the same function (PR #60; the 14th §12 row), #10
@@ -779,16 +783,17 @@ on the same function (PR #60; the 14th §12 row), #10
 `check_existing_groups` empty-old (PR #62), #4 `validate_read_shp`
 empty-pattern (PR #64), #8 `fct_internal_wt_to_exp` empty list
 (PR #65), #9 `get_var_choices` empty indicators (PR #66), #11
-`mod_fltr_sel_var2_srv` multi-var pillar (PR #67), and #13
+`mod_fltr_sel_var2_srv` multi-var pillar (PR #67), #13
 `mod_dwnld_file_server` broken downloads + `launch_pti()`
-path-default API redesign (PR #68; Arch-2). Triage queue (spec
-asymmetry / latent): #3 next, last #12.
+path-default API redesign (PR #68; Arch-2), and #3
+`filter_admin_levels` name-vs-value asymmetry (PR #69). Triage
+queue (latent): #12 last.
 
 | Loc | Bug | Pin (test) |
 |---|---|---|
 | [`R/plot_pti_helpers.R::complete_pti_labels`](R/plot_pti_helpers.R#L186-L206) | The function mapped over `dta` but never assigned the result; returned the original `dta` unchanged, so the deployed app silently missed the `<strong>{priority_label}</strong>` suffix on every popup. One-line fix: assign the `purrr::map()` result back to `dta`. **FIXED in PR #56 (2026-05-06).** | [test-plot-helpers.R:complete_pti_labels: appends <strong>{priority_rank}</strong> per entry](tests/testthat/test-plot-helpers.R) |
 | [`R/plot_pti_helpers.R::check_existing_groups`](R/plot_pti_helpers.R) | Errored with a vctrs size error when `old_grps = character(0)` — `str_detect(string, character(0))` is invalid. arch-03 §1.6 contract is "first of currently shown" on empty input, and the function already had that branch at the bottom; the bug was that the body errored before reaching it. Fix: guard the `check_this_too` / lookup-by-pattern block with `if (length(old_grps) > 0)`, falling through to the existing first-of-remaining branch on empty input. **FIXED in PR #62 (2026-05-06).** Caller `add_pti_poly_controls` is already gated by `isTruthy(old_grps)` (`R/plot_pti_helpers.R:356`) so production never reached the broken path; the fix only changes behaviour for direct callers (tests). | [test-plot-helpers.R:check_existing_groups: empty old -> first of current shown](tests/testthat/test-plot-helpers.R) |
-| [`R/plot_pti_helpers.R::filter_admin_levels`](R/plot_pti_helpers.R#L60) | Asymmetry: the if-branch enters when `to_fltr` matches *names* of admin levels (e.g. `"admin1"`), but the inner `keep()` predicate compares values (e.g. `"Oblast"`). Passing a name returns 0 entries. Pinned, not a bug per se but worth normalising in the cleanup phase. | [test-plot-helpers.R:filter_admin_levels: name-only filter returns 0 entries (PINNED)](tests/testthat/test-plot-helpers.R) |
+| [`R/plot_pti_helpers.R::filter_admin_levels`](R/plot_pti_helpers.R) | Asymmetry: the gating branch entered when `to_fltr` matched either admin keys (e.g. `"admin1"`) or display values (e.g. `"Oblast"`), but the inner `keep()` predicate compared `x$admin_level` (the display value) against `to_fltr` only -- so passing a key alone returned 0 entries. Fix: extend the predicate to also test `names(x$admin_level) %in% to_fltr`, mirroring how `mod_get_admin_levels_srv` already filters its own state at L237-238. **FIXED in PR #69 (2026-05-07).** Caller-graph: 2 production call sites (`R/mod_dta_explorer2.R:99`, `R/mod_plot_pti2.R:62`); both pass `sel_adm_levels()` (a *named* character vector from `mod_get_admin_levels_srv`), so the values branch already matched -- the bug only fired for callers passing bare keys, which production never did. This fix is a no-op on the deployed app and only changes behaviour for direct callers (tests + future callers). | [test-plot-helpers.R:filter_admin_levels: name-only filter matches the same entries as value-only](tests/testthat/test-plot-helpers.R) |
 | [`R/fct_validate_metadata.R::validate_read_shp`](R/fct_validate_metadata.R) | Empty-pattern `str_detect` when no admin codes are extra (i.e. the shape file is "perfect"): `str_c(character(0), collapse = "|")` returned `character(0)`, then `str_detect(names(x), character(0))` errored with vctrs `pattern must have size 1`. The error was swallowed by the surrounding `testthat::test_that()` (registered as an `expectation_error` against the inner reporter), so externally the call returned silently — but the inner expectation was failing. Fix: compute `extra_level_vec` first, guard the diagnostic-label construction (`str_c collapse`, `keep`, `str_detect on names`) with `if (length(extra_level_vec) > 0)`; on empty extras, set `extra_level <- ""` and `probl_ms <- ""` and let the (already correct) `expect_true(all(... %in% ...))` pass cleanly. **FIXED in PR #64 (2026-05-06).** Note: the existing test pin (`test-validators.R::validate_read_shp: round-trips through an .rds path (PINNED BUG)`) used `capture_validator()` which mocks `testthat::test_that` to a no-op, so the inner blocks never executed and the test trivially passed both pre- and post-fix; the PR renames the test to drop the misleading "PINNED BUG" tag and rewrites the comment. The fix is verified by code inspection — only the previously-broken empty-extras branch changed, and all surrounding tests (`validate_metadata: bundled sample data passes end-to-end`, etc.) still pass. Out of scope: the broader arch-01 refactor of the runtime-`testthat::test_that` machinery into ordinary validation calls (which would obsolete `capture_validator()` entirely). | [test-validators.R:validate_read_shp: perfect shapefile passes round-trip](tests/testthat/test-validators.R) |
 | [`R/calc_pti_helpers.R::get_adm_levels`](R/calc_pti_helpers.R#L34) | Lexicographic `sort()` produced `admin1 < admin10 < admin2`, breaking the iteration order of any deployment with ≥10 admin levels. One-line fix: replace `sort()` with an integer-keyed `order()` permutation (`ids[order(as.integer(str_extract(ids, "\\d{1,2}")))]`), filtering NAs first to preserve existing behaviour. **FIXED in PR #57 (2026-05-06).** Out of scope: separate first-digit-only quirks remain in `expand_adm_levels` (`str_extract(col, "\\d")` — single digit) and `agg_pti_scores` (`max(level)` as a string). | [test-calc-pipeline.R:get_adm_levels: sort is numeric across mixed-digit levels](tests/testthat/test-calc-pipeline.R) |
 | [`R/calc_pti_helpers.R::get_scores_data`](R/calc_pti_helpers.R#L218) | 1-row `(year, var_code)` group produced `NA` (not `0`) because `sd()` of length-1 returns `NA` (not `NaN`), so the `is.nan` filter missed. Singleton groups have no variance to scale, so non-`NA` values are now set to the neutral score `0` (matching the existing zero-variance branch); `NA` inputs remain `NA`. Implemented by precomputing a `.was_na` flag, standardising as before, then patching `dplyr::n() == 1L & !.was_na` rows to `0` before the `is.nan` -> `0` rewrite. **FIXED in PR #59 (2026-05-06).** Out of scope (interpretation Y): "effectively n=1" groups (n>1 with all but one row `NA`) — `sd()` over the single non-`NA` is also `NA`, so the lone usable value still comes out `NA`. Could be a follow-up §12 row if a downstream consumer needs it. | [test-calc-pipeline.R:get_scores_data: 1-row groups produce 0 (no variance to scale)](tests/testthat/test-calc-pipeline.R) |
