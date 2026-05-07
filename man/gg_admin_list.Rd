@@ -4,7 +4,7 @@
 \alias{gg_admin_list}
 \title{Build a list of ggplot maps from PTI admin data}
 \usage{
-gg_admin_list(dta, multiply = 1, mt = zam_bounds_simple, metadata = NULL)
+gg_admin_list(dta, multiply = 1, mt = NULL, metadata = NULL)
 }
 \arguments{
 \item{dta}{A tibble with one or more `adminN` identifier columns
@@ -17,7 +17,8 @@ compatibility with caller scripts.}
 
 \item{mt}{Named list of admin geometry tibbles (e.g. `ukr_shp`).
 The element whose name matches the `adminN` column in `dta` is
-joined onto the long-pivoted data via `dplyr::right_join`.}
+joined onto the long-pivoted data via `dplyr::right_join`.
+Required (the function errors if `NULL`).}
 
 \item{metadata}{Optional tibble with `var_code` and `var_name`
 columns used to relabel indicators in the plot title. When
