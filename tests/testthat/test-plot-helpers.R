@@ -79,12 +79,16 @@ test_that("filter_admin_levels: filters by admin_level value (not name)", {
   }
 })
 
-test_that("filter_admin_levels: name-only filter returns 0 entries (PINNED)", {
-  # PINNED quirk: the if-branch is entered (name match), but the
-  # `keep()` predicate compares values. So passing the name alone
-  # produces an empty list rather than the corresponding entries.
-  preplot <- preplot_reshape_wghtd_dta(test_pipeline_out)
-  expect_equal(length(filter_admin_levels(preplot, "admin1")), 0L)
+test_that("filter_admin_levels: name-only filter matches the same entries as value-only", {
+  # Pre PR #N this returned 0 entries because the keep() predicate
+  # compared `x$admin_level` (the display value, e.g. "Oblast")
+  # against `to_fltr` (here the admin key "admin1"). The fix extends
+  # the predicate to also match `names(x$admin_level)`, so passing
+  # "admin1" filters to the same entries as passing "Oblast".
+  preplot  <- preplot_reshape_wghtd_dta(test_pipeline_out)
+  by_name  <- filter_admin_levels(preplot, "admin1")
+  by_value <- filter_admin_levels(preplot, "Oblast")
+  expect_equal(by_name, by_value)
 })
 
 test_that("filter_admin_levels: NULL filter -> NULL output", {

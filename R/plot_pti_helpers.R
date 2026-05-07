@@ -93,13 +93,6 @@ get_current_levels <- function(dta) {
 #' @return Filtered plotting list, or `NULL` when `to_fltr` is empty
 #'   / not truthy.
 #'
-#' @note Pinned bug (PR #25): when `to_fltr` matches admin keys (e.g.
-#'   `"admin1"`) the gating branch enters, but the inner `keep()`
-#'   predicate compares against admin display values
-#'   (e.g. `"Oblast"`), so a key-only filter returns 0 entries. The
-#'   value-only path works as expected. Tier-1 test pin:
-#'   tests/testthat/test-plot-helpers.R.
-#'
 #' @importFrom purrr keep
 #' @importFrom shiny isTruthy
 #' @importFrom stringr str_detect regex
@@ -115,7 +108,10 @@ filter_admin_levels <- function(dta, to_fltr = "all") {
 
     if (any(to_fltr %in% get_current_levels(dta)) |
         any(to_fltr %in% names(get_current_levels(dta)))) {
-      out <- dta %>% keep(function(x) {x$admin_level %in% to_fltr})
+      out <- dta %>% keep(function(x) {
+        x$admin_level %in% to_fltr |
+          names(x$admin_level) %in% to_fltr
+      })
     }
 
   }
