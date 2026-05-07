@@ -45,6 +45,5 @@ utils::globalVariables(c(
   "var_name",
   "var_order",
   "var_years",
-  "width",
-  "zam_bounds_simple"
+  "width"
 ))

@@ -12,7 +12,7 @@
 ## 1. Where we are
 
 **Status snapshot (2026-05-07):** Phases 1 (#10), 2 (#8), 3 (#11) closed.
-Phase 2.5 §12 bug-fix sprint in progress — **13 of 14 bugs fixed**
+**Phase 2.5 §12 bug-fix sprint COMPLETE — all 14 of 14 bugs fixed**
 (#1 `complete_pti_labels` PR #56; #5 `get_adm_levels` PR #57; #6
 `get_scores_data` PR #59; #7 `expand_adm_levels` PR #60, bundled
 with the boundary-regex follow-up — the 14th §12 row; #10
@@ -23,12 +23,12 @@ empty-pattern PR #64; #8 `fct_internal_wt_to_exp` empty list PR
 `mod_fltr_sel_var2_srv` multi-var pillar PR #67; #13
 `mod_dwnld_file_server` broken downloads + `launch_pti()` path-
 default API PR #68; #3 `filter_admin_levels` name-vs-value
-asymmetry PR #69). Phase 4 (#12, vignettes & pkgdown) and
-Phase 5 (#13, hex ingestion) yet to start. R-CMD-check workflow
-gates merge with `error-on: '"error"'`. Suite at **0 fail / 1
-skip / 702 PASS** (PR #3 swaps 1 `expect_equal` for 1
-`expect_equal` -- the bug-asserting "0 entries" pin replaced with
-a sharper symmetric-contract assertion `by_name == by_value`).
+asymmetry PR #69; #12 `gg_admin_list` undefined-default PR TBD).
+Phase 4 (#12, vignettes & pkgdown) and Phase 5 (#13, hex ingestion)
+are next. R-CMD-check workflow gates merge with `error-on:
+'"error"'`. Suite at **0 fail / 1 skip / 710 PASS** (PR #12 adds a
+new Tier-1 test file with 2 test_that blocks / 8 expectations
+covering the missing-`mt` error and the bundled-data success path).
 
 | Concern | Source of truth |
 |---|---|
@@ -83,7 +83,7 @@ Phase 3  Roxygen2 docs for all permanent fns       (#11)       │  ✓ done
    ├─ Batch 6a PTI rendering & display stack             ✓ #52 │
    └─ Batch 6b Closes Phase 3                            ✓ #53 │
             ▼                                                  │
-Phase 2.5  §12 bug-fix sprint (concurrent)         (—)         │  in progress (13/14)
+Phase 2.5  §12 bug-fix sprint (concurrent)         (—)         │  ✓ done (14/14)
    ├─ #1 complete_pti_labels (silent data corruption)    ✓ #56 │
    ├─ #5 get_adm_levels lex sort (silent corruption)     ✓ #57 │
    ├─ #6 get_scores_data 1-row -> NA (silent corrup)     ✓ #59 │
@@ -98,7 +98,7 @@ Phase 2.5  §12 bug-fix sprint (concurrent)         (—)         │  in progre
    ├─ #13 mod_dwnld_file_server broken downloads +       ✓ #68 │
    │      launch_pti() path-default API (Arch-2)                │
    ├─ #3 filter_admin_levels name-vs-value asymmetry     ✓ #69 │
-   └─ #12                                                ◌ next │
+   └─ #12 gg_admin_list undefined-default                ✓ TBD │
             ▼                                                  │
 Phase 4  Vignettes + pkgdown deploy                (#12)       │
             ▼                                                  │
@@ -741,7 +741,25 @@ Lifted from arch-00 §"End-State Goals":
 
 | [#69](https://github.com/worldbank/devPTIpack/pull/69) | 2026-05-07 | **Phase 2.5 §12 (bug-fix #3)** | §12 bug #3 fixed -- `R/plot_pti_helpers.R::filter_admin_levels` now treats admin keys and display values symmetrically inside the `keep()` predicate. Pre-fix: the gating branch (L116-117) entered when `to_fltr` matched either keys or values, but the inner `keep(function(x) {x$admin_level %in% to_fltr})` predicate compared `x$admin_level` (the display value, e.g. `"Oblast"`) against `to_fltr` only -- so `to_fltr = "admin1"` (a bare key) entered the branch but selected 0 entries. Fix: extend the predicate to `x$admin_level %in% to_fltr | names(x$admin_level) %in% to_fltr`. Mirrors how `mod_get_admin_levels_srv` already filters its own internal state at L237-238 (`names(.) %in% default_adm_level | (.) %in% default_adm_level`). Test pin in `tests/testthat/test-plot-helpers.R` flipped from `expect_equal(length(filter_admin_levels(preplot, "admin1")), 0L)` (1 expectation, asserting the bug) to a sharper symmetric-contract assertion `expect_equal(by_name, by_value)` (1 expectation) -- key-only and value-only filters must produce the *same* result, not just the same length. `test_that()` description renamed from `"name-only filter returns 0 entries (PINNED)"` -> `"name-only filter matches the same entries as value-only"`; comment block rewritten to describe the contract instead of the past bug. Reviewer caution applied: original proposal used a length-check + `for` loop; tightened on r-package-reviewer's nice-to-have to a direct equality check that more sharply expresses the symmetric contract. Stripped the 6-line `@note Pinned bug (PR #25)` block from the function's roxygen. Caller-graph: 2 production call sites (`R/mod_dta_explorer2.R:99`, `R/mod_plot_pti2.R:62`), both pass `sel_adm_levels()` (a named character vector from `mod_get_admin_levels_srv`); the values branch already matched in production so this fix is a no-op on the deployed app and only changes behaviour for direct callers (tests + future callers). No NAMESPACE delta. Folded in nothing -- prior PR #68 self-swapped its TBD before merge. Suite stays at 702 PASS (FAIL=0, SKIP=1) -- 1 `expect_equal` swapped 1-for-1, no count delta. |
 
-Suite total after this branch: **0 failures / 1 skip / 702 PASS** (`testthat::test_local()`; bug-fix PR; 1 `expect_equal` swapped 1-for-1 -- the bug-asserting pin replaced with a sharper symmetric-contract `expect_equal(by_name, by_value)`).
+| [TBD](https://github.com/worldbank/devPTIpack/pull/TBD) | 2026-05-07 | **Phase 2.5 §12 (bug-fix #12 -- closes the sprint)** | §12 bug #12 fixed -- `R/supporting-goe-prep.R::gg_admin_list` default `mt = zam_bounds_simple` flipped to `mt = NULL` with an explicit `stop("'mt' is required: ...", call. = FALSE)` guard at the top of the function (option A from the scope-proposal gate; B = make `mt` required-no-default; C = default to `ukr_shp` -- both rejected, A gives the clearest failure mode without coupling to a bundled dataset). Pre-fix: calling `gg_admin_list(dta, metadata)` without explicit `mt` errored at runtime with `object 'zam_bounds_simple' not found` because `zam_bounds_simple` doesn't exist anywhere in `R/`, `data/`, or `inst/`. The broken default was silenced via `R/devPTIpack-package.R::globalVariables()` so R CMD check stayed clean -- this PR also drops `"zam_bounds_simple"` from `globalVariables()`. Updated `@param mt` doc to mention required-ness. New Tier-1 test file `tests/testthat/test-gg-admin-list.R` (2 test_that blocks, 8 expectations): missing `mt` -> `expect_error(regexp = "mt.*required")`; with `mt = ukr_shp` -> non-empty list of ggplot objects. Caller-graph: 2 production callers (`inst/metadata.Rmd:129`, `inst/sample_pti/app-data/pti-metadata-pdf.Rmd:108`) both pass `mt = bounds` explicitly -- pure latent bug. Two commented-out demo lines in those Rmds (omitting `mt`) almost certainly date from someone hitting this exact error and commenting them out. **This PR closes the Phase 2.5 §12 bug-fix sprint -- 14 of 14 bugs fixed across 14 PRs (#56, #57, #59, #60 [#7 + #14], #61, #62, #64, #65, #66, #67, #68, #69, plus this one).** Folded in nothing -- prior PR #69 self-swapped its TBD before merge. Suite goes from 702 PASS -> 710 PASS (FAIL=0, SKIP=1) -- net +8 expectations from the new test file. |
+
+Suite total after this branch: **0 failures / 1 skip / 710 PASS** (`testthat::test_local()`; bug-fix PR adds a new Tier-1 test file with 2 test_that blocks / 8 expectations covering the `mt`-required error and the bundled-data success path).
+
+---
+
+**Phase 2.5 §12 sprint summary** (closed 2026-05-07): 14 bug-fix
+PRs landed across 12 calendar days (2026-05-06 through
+2026-05-07; PR #56 to PR #70). Every pinned bug from §12 has been
+resolved with a contract-asserting test in place of the original
+bug-asserting pin. Suite grew from a 682 PASS baseline to 710
+PASS via a mix of pin flips and new defensive-input test files
+(`test-mod-dwnld-file.R` +13, `test-gg-admin-list.R` +8). Two
+follow-up cosmetic items remain documented as out-of-scope:
+the orphaned " and ." connector text in the side-panel sentence
+when no `mtdtpdf_path` is supplied (PR #68 narrative), and the
+broader arch-01 refactor target -- converting the runtime
+`testthat::test_that` machinery in `validate_*` helpers into
+ordinary validation calls (PR #64 narrative).
 
 > **Suite totals revised on 2026-05-02:** prior counts in §11 were
 > derived from `sum(res$nb)` over `as.data.frame(testthat::test_local())`,
@@ -775,19 +793,21 @@ Suite total after this branch: **0 failures / 1 skip / 702 PASS** (`testthat::te
 > have no test pin yet; pinning is a sub-task of the eventual fix PR.
 > All entries are cleanup-phase candidates regardless of pin status.
 
-**Status: 13 of 14 fixed.** Done: #1 `complete_pti_labels` (PR #56),
-#5 `get_adm_levels` (PR #57), #6 `get_scores_data` (PR #59),
-#7 `expand_adm_levels` (PR #60) plus the boundary-regex follow-up
-on the same function (PR #60; the 14th §12 row), #10
-`get_vars_un_avbil` symmetric availability (PR #61), #2
-`check_existing_groups` empty-old (PR #62), #4 `validate_read_shp`
-empty-pattern (PR #64), #8 `fct_internal_wt_to_exp` empty list
-(PR #65), #9 `get_var_choices` empty indicators (PR #66), #11
-`mod_fltr_sel_var2_srv` multi-var pillar (PR #67), #13
-`mod_dwnld_file_server` broken downloads + `launch_pti()`
-path-default API redesign (PR #68; Arch-2), and #3
-`filter_admin_levels` name-vs-value asymmetry (PR #69). Triage
-queue (latent): #12 last.
+**Status: 14 of 14 fixed -- sprint complete.** Done: #1
+`complete_pti_labels` (PR #56), #5 `get_adm_levels` (PR #57), #6
+`get_scores_data` (PR #59), #7 `expand_adm_levels` (PR #60) plus
+the boundary-regex follow-up on the same function (PR #60; the
+14th §12 row), #10 `get_vars_un_avbil` symmetric availability
+(PR #61), #2 `check_existing_groups` empty-old (PR #62), #4
+`validate_read_shp` empty-pattern (PR #64), #8
+`fct_internal_wt_to_exp` empty list (PR #65), #9 `get_var_choices`
+empty indicators (PR #66), #11 `mod_fltr_sel_var2_srv` multi-var
+pillar (PR #67), #13 `mod_dwnld_file_server` broken downloads +
+`launch_pti()` path-default API redesign (PR #68; Arch-2), #3
+`filter_admin_levels` name-vs-value asymmetry (PR #69), and #12
+`gg_admin_list` undefined-default (PR TBD). Phase 2.5 closed --
+next track is Phase 4 (#12, vignettes & pkgdown) or Phase 5
+(#13, hex ingestion).
 
 | Loc | Bug | Pin (test) |
 |---|---|---|
@@ -803,7 +823,7 @@ queue (latent): #12 last.
 | [`R/mod_dta_explorer2.R::get_var_choices`](R/mod_dta_explorer2.R) | Errored with "attempt to set an attribute on NULL" when called with an empty `indicators_list`: the `arrange` -> `group_by` -> `nest` -> `pmap` -> `unlist(recursive = F)` chain returned `NULL` on 0-row input, and the rescue branch `names(out) <- "Indicators"` then tried to set a name on `NULL`. Fix: early-return `list()` when `nrow(indicators_list) == 0`. **FIXED in PR #66 (2026-05-06).** Caller-graph: single call site at `R/mod_dta_explorer2.R:76` inside `mod_dta_explorer2_server`, gated by `req(indicators_list())` -- so the empty path never fired in production today; this fix is a no-op on the deployed app and only changes behaviour for direct callers. The downstream consumer `shinyWidgets::updatePickerInput(choices = list())` handles an empty list cleanly (just clears the picker). | [test-explorer-helpers.R:get_var_choices: empty indicators tibble returns an empty list](tests/testthat/test-explorer-helpers.R) |
 | [`R/mod_drop_inval_adm.R::get_vars_un_avbil`](R/mod_drop_inval_adm.R) | Asymmetric availability check — pre-fix the body used `arrange(admin_level)` + triple `lag(value)` to back-fill missing rows from earlier-sorted levels, so an indicator with data only at admin1 was silently treated as available at admin2 / admin4 (admin2 was never surfaced as unavailable). The reverse (admin2-only → admin1 unavailable) worked. The same code also had an operator-precedence typo `is.na(value & !any_larger)` (parsed as `is.na((value & !any_larger))`). Now the function is reduced to a strict no-extrapolation contract: a `(var, admin)` pair is unavailable iff the indicator has no native data at that level. Body shrank from ~25 lines to ~10 lines (`expand.grid` + `anti_join` over the distinct `(var_code, admin_level)` set). The `any_larger` column is no longer in the output (no caller read it; also dropped from `globalVariables()`). **FIXED in PR #61 (2026-05-06).** Out-of-scope decision: the package's two extrapolation paths (`expand_adm_levels`'s upward + downward branches) handle aggregation in the calc pipeline itself, so the availability check doesn't need to encode them — keeping it strict matches the existing `weighting an unavailable var produces drops` test (`var_nval4_small_skewd_adm4` admin4-only → admin1 + admin2 dropped) and avoids re-introducing the buggy lag/lead machinery. | [test-drop-inval-adm.R:get_vars_un_avbil: flags missing levels symmetrically](tests/testthat/test-drop-inval-adm.R) + [test-mod-drop-inval-adm.R:mod_drop_inval_adm: indicator missing at admin2 -> admin2 removed](tests/testthat/test-mod-drop-inval-adm.R) |
 | [`R/mod_dta_explorer2.R::mod_fltr_sel_var2_srv`](R/mod_dta_explorer2.R) | The `add_selected()` observer's predicate `purrr::map_lgl(choices(), ~ { .x %in% c(selected_add, selected_now) | .x %in% names(c(selected_add, selected_now)) })` errored with "Result must be length 1, not N" whenever any pillar held >1 variable, because `.x` is the named character vector for that pillar and `%in%` returns length-N. Fix: wrap each `%in%` test in `any(...)` -- `any(.x %in% c(selected_add, selected_now)) | any(.x %in% names(c(selected_add, selected_now)))`. **FIXED in PR #67 (2026-05-06).** Caller-graph: single call site at `R/mod_dta_explorer2.R:78` inside `mod_dta_explorer2_server`; `add_selected` defaults to `reactive(NULL)` and the observer is gated by `req(add_selected())`, so the path only fires when the caller passes a non-NULL `add_selected` -- which production never did, so this fix is a no-op on the deployed app and only changes behaviour for direct callers (tests + future programmatic pushes). Test pin in `tests/testthat/test-mod-var-selector.R` flipped from a predicate-only `expect_error` (which exercised a copy of the buggy expression, not the function) to a Tier-2 `testServer` block mirroring the existing single-var test, asserting that `updatePickerInput` is called and `selected = list("Pillar A" = ...)` for an `add_selected("var_2")` push against a multi-var-pillar fixture. | [test-mod-var-selector.R: add_selected() with multi-var pillar selects the matching pillar](tests/testthat/test-mod-var-selector.R) |
-| [`R/supporting-goe-prep.R::gg_admin_list`](R/supporting-goe-prep.R#L51) | Default arg `mt = zam_bounds_simple` references a name that doesn't exist anywhere in `R/` or `data/`. Calling `gg_admin_list(dta, metadata)` without explicit `mt` errors at runtime with `object 'zam_bounds_simple' not found`. Discovered by r-package-reviewer during PR #54 (Phase 2.5 R-CMD-check gate); fix is to either change the default to `mt = NULL` with a guard or `mt = ukr_shp` if functionally equivalent, then drop `"zam_bounds_simple"` from `R/devPTIpack-package.R::globalVariables()`. Currently silenced via `globalVariables()` so R CMD check stays clean. | _(no test pin yet — Phase 2.5 discovery)_ |
+| [`R/supporting-goe-prep.R::gg_admin_list`](R/supporting-goe-prep.R) | Default arg `mt = zam_bounds_simple` referenced a name that didn't exist anywhere in `R/` or `data/`. Calling `gg_admin_list(dta, metadata)` without explicit `mt` errored at runtime with `object 'zam_bounds_simple' not found`. Discovered by r-package-reviewer during PR #54 (Phase 2.5 R-CMD-check gate); the broken default was silenced via `R/devPTIpack-package.R::globalVariables()` so R CMD check stayed clean. Fix (option A from the scope-proposal gate): default flipped to `mt = NULL` with an explicit `stop("'mt' is required: provide a named list of sf tibbles (e.g. the bundled 'ukr_shp').", call. = FALSE)` guard at the top of the function. `"zam_bounds_simple"` removed from `globalVariables()`. Updated `@param mt` docs to call out the required-ness. **FIXED in PR TBD (2026-05-07).** Caller-graph: 2 production callers (`inst/metadata.Rmd:129`, `inst/sample_pti/app-data/pti-metadata-pdf.Rmd:108`) both pass `mt = bounds` explicitly -- the default never fired in production, pure latent bug. Two commented-out demo lines in those Rmds (`gg_admin_list(var_to_plot, metadata = metadata_current)` at L242 / L221, both omitting `mt`) almost certainly date from someone hitting this exact error and commenting them out. New Tier-1 test file `tests/testthat/test-gg-admin-list.R` (2 test_that blocks, 8 expectations): missing `mt` -> `expect_error(regexp = "mt.*required")`; with `mt = ukr_shp` -> returns a non-empty list of ggplot objects. | [test-gg-admin-list.R: 2 test_that blocks pinning the error message and the bundled-data success path](tests/testthat/test-gg-admin-list.R) |
 | [`R/mod_dwnld_dta.R::mod_dwnld_file_server`](R/mod_dwnld_dta.R) + [`R/launch_pti.R`](R/launch_pti.R) | Filename builder `function() { basename(filepath) }` produced broken downloads when `filepath` was `NULL`, `"."`, or any path that didn't point to a real file. `launch_pti()`'s defaults `mtdtpdf_path = "."` and `shapes_path = "."` made `basename(".") == "."` ⇒ browser fell back to URL path + content-type sniff and saved the empty response as an `.html` file. **All "Download metadata" and "Download shapes" buttons failed identically across PTI / PTI-compare / Data-explorer tabs** in any `launch_pti()` call that didn't supply paths (the typical demo case). The data-explorer's "Download data" button was additionally *never reachable* from the public API -- `data_path` defaulted to `NULL` in `mod_dta_explorer2_server` but `launch_pti` never threaded it through. **FIXED in PR #68 (2026-05-07)** under **Arch-2** (auto-materialize). Two coupled changes: **(1) `mod_dwnld_file_server` validation guard** -- function now validates `filepath` at registration (truthy character, length-1, exists on disk, not a directory). On invalid input it calls `shinyjs::disable(outputId)` to grey the link out, and the content callback ships an explanatory `unavailable-<date>.txt` placeholder if a click sneaks through. On valid input the existing `basename(filepath)` filename builder is preserved (post-Arch-2, the basename comes from a sensible path either way). Note: an earlier iteration of this PR tried `shinyjs::hide()` plus `setdiff()`-ing `"metadata"` out of `wt_dwnld_options` / `map_dwnld_options` to drop the orphaned " and ." connector text from the surrounding sentence -- but the connector logic in `mod_map_dwnld_ui` lives in three places (PTI / compare / explorer side panels) and the conditionals didn't reach all of them cleanly. Reverted to plain `disable()` + placeholder; the cosmetic " and ." remains when no PDF is supplied but no longer ships a broken file. **(2) `launch_pti()` / `launch_pti_onepage()` API redesign** -- added a private helper `materialize_dwnld_paths(shp_dta, inp_dta, shapes_path, mtdtpdf_path, data_path)` that, when a path is `NULL`, writes the in-memory object to a session-scoped tempfile under a date-stamped name (`pti-shapes-<date>.rds` via `saveRDS()`, `pti-data-export-<date>.xlsx` via `writexl::write_xlsx()`). PDF metadata has no in-memory equivalent so `mtdtpdf_path = NULL` stays NULL and the link is disabled downstream. Path defaults flipped from `"."` to `NULL` on both launchers. New `data_path` parameter on `launch_pti()` (the explorer launcher) plumbs through to `mod_dta_explorer2_server`. The deliberately-distinct filename stems (`pti-shapes-<date>.rds`, `pti-data-export-<date>.xlsx`) signal to users that these are derivatives of the in-memory data, not the original source files; users who want to serve original files pass explicit paths and `basename()` returns those. Caller-graph: 5 `mod_dwnld_file_server` call sites untouched at the call site (paths now arrive valid post-materialization); 3 path-threading call sites in `launch_pti` updated. Tier-1 + Tier-2 test file `tests/testthat/test-mod-dwnld-file.R` added (6 test_that blocks, 13 expectations): two cover `materialize_dwnld_paths()` (NULL fallbacks vs. explicit paths), four cover `mod_dwnld_file_server` (valid file leaves link enabled; NULL/directory/nonexistent paths trigger `shinyjs::disable`). NAMESPACE delta: added `importFrom(writexl, write_xlsx)`. Manually verified by the user via `launch_pti(shp_dta = ukr_shp, inp_dta = ukr_mtdt_full)` -- shapes + data downloads work; metadata-PDF link is greyed out. Out of scope: the cosmetic connector-text sentence in `mod_map_dwnld_ui` (could be rewritten to live-render based on path validity, but the tradeoffs got messy fast -- left for a later UI cleanup PR). Also out of scope: the parallel `mod_dwnld_local_file_server` handler used by `mod_map_dwnld_srv` for map-tab metadata/shapes -- separate code path, not affected by the surgical guard. | [test-mod-dwnld-file.R: 6 test_that blocks for materialize_dwnld_paths + mod_dwnld_file_server](tests/testthat/test-mod-dwnld-file.R) |
 
 ---
