@@ -97,28 +97,66 @@ mod_dwnld_dta_xlsx_server <- function(id,
 #'
 #' Companion to [mod_dwnld_local_file_server()] but parameterised by
 #' output-slot name so it can be wired into download links other than
-#' `output$dwnld_local_file`.
+#' `output$dwnld_local_file`. Validates `filepath` at registration:
+#' when `NULL`, missing on disk, or pointing at a directory, the
+#' download link is visually disabled via `shinyjs::disable()`, and
+#' if a click sneaks through anyway the content callback writes a
+#' short placeholder text file (`unavailable-<date>.txt`) instead of
+#' the silent broken `.html` the function used to ship. When
+#' `filepath` is valid, the handler streams the file under its base
+#' name.
 #'
 #' @param id Character. Shiny module namespace ID.
 #' @param outputId Character. Output slot name registered for the
 #'   `downloadHandler()`. Defaults to `"dta.dwld"`.
-#' @param filepath Character or NULL. Path to the file streamed to the
-#'   client.
+#' @param filepath Character or `NULL`. Path to the file streamed to
+#'   the client. When `NULL`, an empty string, a directory path, or a
+#'   path that does not exist on disk, the download link is disabled
+#'   and the handler ships a text-file placeholder. Callers that want
+#'   a working download must pass a valid file path.
 #' @param ... Unused; retained for forward compatibility.
 #'
 #' @return No explicit return value. Called for side effects (registers
-#'   `output[[outputId]]` within the Shiny session).
+#'   `output[[outputId]]` within the Shiny session, and disables the
+#'   download link via `shinyjs::disable()` when `filepath` is
+#'   invalid).
 #'
-#' @importFrom shiny moduleServer downloadHandler
+#' @importFrom shiny moduleServer downloadHandler isTruthy
 #' @noRd
 mod_dwnld_file_server <- function(id, outputId = "dta.dwld", filepath = NULL, ...) {
   moduleServer(
     id,
     function(input, output, session) {
       ns <- session$ns
+
+      valid_file <-
+        shiny::isTruthy(filepath) &&
+        is.character(filepath) &&
+        length(filepath) == 1L &&
+        file.exists(filepath) &&
+        !dir.exists(filepath)
+
+      if (!valid_file) {
+        shinyjs::disable(id = outputId)
+      }
+
       output[[outputId]] <- downloadHandler(
-        filename = function() {basename(filepath)},
-        content = function(con) {file.copy(filepath, con)}
+        filename = function() {
+          if (!valid_file) {
+            return(paste0("unavailable-", Sys.Date(), ".txt"))
+          }
+          basename(filepath)
+        },
+        content = function(con) {
+          if (!valid_file) {
+            writeLines(
+              "This download is not available -- no file path was provided to launch_pti().",
+              con
+            )
+            return(invisible(NULL))
+          }
+          file.copy(filepath, con)
+        }
       )
     })
 }
