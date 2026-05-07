@@ -446,19 +446,15 @@ reshaped_explorer_dta <- function(long_dta, ind_list) {
 #' @return A named list-of-lists ready for
 #'   `shinyWidgets::updatePickerInput()`.
 #'
-#' @note **Pinned bug (PLAN.md §12, PR #27):** when `indicators_list` is
-#'   empty, the function errors with "attempt to set an attribute on
-#'   NULL" because the fallback branch `names(out) <- "Indicators"`
-#'   runs even when `out` is `NULL`. A length-0 list output would be
-#'   more useful. Pinned in
-#'   [test-explorer-helpers.R](tests/testthat/test-explorer-helpers.R).
-#'
 #' @importFrom dplyr arrange group_by
 #' @importFrom tidyr nest
 #' @importFrom purrr pmap set_names
 #' @importFrom stringr str_c
 #' @noRd
 get_var_choices <- function(indicators_list) {
+  if (!is.data.frame(indicators_list) || nrow(indicators_list) == 0) {
+    return(list())
+  }
   out <-
     indicators_list %>%
     dplyr::arrange(pillar_group, var_order) %>%
