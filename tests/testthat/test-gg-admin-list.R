@@ -1,7 +1,7 @@
 # Tier-1 tests for gg_admin_list (arch-03 §1.X).
 # Source: R/supporting-goe-prep.R. Permanent function per arch-01.
 #
-# Pre PR #N the default `mt = zam_bounds_simple` referenced an object
+# Pre PR #70 the default `mt = zam_bounds_simple` referenced an object
 # that did not exist anywhere in the package -- calling
 # `gg_admin_list(dta, metadata)` without `mt` errored at runtime with
 # `object 'zam_bounds_simple' not found`. The fix changes the default
