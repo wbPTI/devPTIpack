@@ -284,16 +284,6 @@ mod_select_var_ui <- function(id, multi_choice = NULL, max_choice = 3, ...) {
 #' @return A `reactive()` yielding the filtered explorer data (or
 #'   `NULL` when no indicator is selected).
 #'
-#' @note **Pinned bug (PLAN.md §12, PR #37):** the `add_selected()`
-#'   observer's predicate (a `purrr::map_lgl()` over `choices()` that
-#'   tests `.x \%in\% c(selected_add, selected_now) | .x \%in\% names(...)`)
-#'   errors with "Result must be length 1, not N" whenever any pillar
-#'   holds >1 variable, because `.x` is the length-N character vector
-#'   for that pillar and `\%in\%` returns length-N. Should be wrapped
-#'   in `any()`. Tier-2 test
-#'   `tests/testthat/test-mod-var-selector.R` exercises the happy path
-#'   with single-var pillars and pins the broken predicate separately.
-#'
 #' @importFrom shiny moduleServer observeEvent reactive eventReactive
 #'   debounce isTruthy req
 #' @importFrom shinyWidgets updatePickerInput
@@ -345,8 +335,8 @@ mod_fltr_sel_var2_srv <- function(id, preplot_dta, choices, first_open,
             selected =
               choices() %>%
               `[`(purrr::map_lgl(.,  ~ {
-                .x %in% c(selected_add, selected_now) |
-                  .x %in% names(c(selected_add, selected_now))
+                any(.x %in% c(selected_add, selected_now)) |
+                  any(.x %in% names(c(selected_add, selected_now)))
               }))
           )
         },

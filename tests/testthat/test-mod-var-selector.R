@@ -179,12 +179,11 @@ test_that("mod_fltr_sel_var2_srv: first_open(TRUE) -> updatePickerInput selects 
 # add_selected override
 # ---------------------------------------------------------------------------
 #
-# The active code path uses `purrr::map_lgl(., ~ { .x %in% c(...) | .x
-# %in% names(c(...)) })`. When any pillar has >1 variable, `.x` is a
-# length-N character vector and `%in%` returns a length-N logical —
-# violating `map_lgl`'s length-1 contract. So the happy-path test
-# below uses single-var-per-pillar choices; the multi-var failure is
-# pinned in a follow-up test as a discovered bug (PLAN.md §12).
+# The observer's predicate iterates pillars and matches their var_codes
+# against the override. Both single-var and multi-var pillars are
+# exercised below; the multi-var case was the §12 bug #11 pin
+# (predicate evaluated `.x %in% c(...)` without `any()`, which violated
+# `map_lgl`'s length-1 contract on >1-element pillars).
 
 test_that("mod_fltr_sel_var2_srv: add_selected() change triggers updatePickerInput (single-var pillars)", {
   # Each pillar holds exactly one variable, so the buggy map_lgl
@@ -229,26 +228,45 @@ test_that("mod_fltr_sel_var2_srv: add_selected() change triggers updatePickerInp
   )
 })
 
-test_that("mod_fltr_sel_var2_srv: add_selected() with multi-var pillar fails the inner predicate (PINNED BUG)", {
-  # Multi-var-per-pillar choices break the `purrr::map_lgl(., ~ {
-  # .x %in% c(...) | .x %in% names(c(...)) })` predicate — `.x` is a
-  # length-N character vector so each `%in%` returns a length-N
-  # logical, violating map_lgl's length-1 contract. Pinned per arch-03
-  # §"Known issues to pin"; PLAN.md §12.
-  #
-  # Shiny's observeEvent captures the error via its stack-trace
-  # machinery and routes it through reactive log handlers — neither
-  # `expect_error` nor `expect_warning` reliably catches it under
-  # MockShinySession across shiny versions. We pin the underlying
-  # predicate directly: it is the *exact* expression the broken
-  # observer body evaluates.
+test_that("mod_fltr_sel_var2_srv: add_selected() with multi-var pillar selects the matching pillar", {
+  # Pre PR #N the observer body errored with "Result must be length
+  # 1, not N" because `.x %in% c(selected_add, selected_now)` returned
+  # a length-N logical for multi-var pillars, violating map_lgl's
+  # length-1 contract. The fix wraps each `%in%` in `any()`.
   multi_pillar <- list(
-    "Pillar A" = c("Var Name 1" = "var_1", "Var Name 2" = "var_2")
+    "Pillar A" = c("Var Name 1" = "var_1", "Var Name 2" = "var_2"),
+    "Pillar B" = c("Var Name 3" = "var_3")
   )
-  expect_error(
-    purrr::map_lgl(multi_pillar, ~ {
-      .x %in% c("var_2") | .x %in% names(c("var_2"))
-    }),
-    "length 1, not 2"
+  preplot <- .build_var_inputs()$preplot
+
+  upd_calls <- list()
+  local_mocked_bindings(
+    updatePickerInput = function(...) {
+      upd_calls[[length(upd_calls) + 1L]] <<- list(...)
+      invisible(NULL)
+    },
+    .package = "shinyWidgets"
+  )
+
+  add_sel <- reactiveVal(NULL)
+  testServer(
+    mod_fltr_sel_var2_srv,
+    args = list(
+      preplot_dta  = reactive(preplot),
+      choices      = reactive(multi_pillar),
+      first_open   = reactive(NULL),
+      add_selected = reactive(add_sel())
+    ),
+    expr = {
+      session$flushReact()
+      n_init <- length(upd_calls)
+      add_sel("var_2")  # in Pillar A (multi-var)
+      session$flushReact()
+      expect_gt(length(upd_calls), n_init)
+      latest <- upd_calls[[length(upd_calls)]]
+      expect_equal(latest$inputId, "indicators")
+      # Pillar A contains var_2 -> matches; Pillar B does not.
+      expect_named(latest$selected, "Pillar A")
+    }
   )
 })
