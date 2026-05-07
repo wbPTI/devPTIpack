@@ -12,16 +12,17 @@
 ## 1. Where we are
 
 **Status snapshot (2026-05-06):** Phases 1 (#10), 2 (#8), 3 (#11) closed.
-Phase 2.5 §12 bug-fix sprint in progress — **7 of 14 bugs fixed** (#1
+Phase 2.5 §12 bug-fix sprint in progress — **8 of 14 bugs fixed** (#1
 `complete_pti_labels` PR #56; #5 `get_adm_levels` PR #57; #6
 `get_scores_data` PR #59; #7 `expand_adm_levels` PR #60, bundled
 with the boundary-regex follow-up — the 14th §12 row; #10
 `get_vars_un_avbil` symmetric availability PR #61; #2
-`check_existing_groups` empty-old PR #62). Phase 4 (#12, vignettes
-& pkgdown) and Phase 5 (#13, hex ingestion) yet to start.
-R-CMD-check workflow gates merge with `error-on: '"error"'`. Suite
-at **0 fail / 1 skip / 684 PASS** (PR #2 net +1 expectation: pinned
-`expect_error` flipped to two `expect_equal`s).
+`check_existing_groups` empty-old PR #62; #4 `validate_read_shp`
+empty-pattern PR TBD). Phase 4 (#12, vignettes & pkgdown) and
+Phase 5 (#13, hex ingestion) yet to start. R-CMD-check workflow
+gates merge with `error-on: '"error"'`. Suite at **0 fail / 1
+skip / 684 PASS** (PR #4 rename-only on the existing pinned
+test, no count delta).
 
 | Concern | Source of truth |
 |---|---|
@@ -76,7 +77,7 @@ Phase 3  Roxygen2 docs for all permanent fns       (#11)       │  ✓ done
    ├─ Batch 6a PTI rendering & display stack             ✓ #52 │
    └─ Batch 6b Closes Phase 3                            ✓ #53 │
             ▼                                                  │
-Phase 2.5  §12 bug-fix sprint (concurrent)         (—)         │  in progress (7/14)
+Phase 2.5  §12 bug-fix sprint (concurrent)         (—)         │  in progress (8/14)
    ├─ #1 complete_pti_labels (silent data corruption)    ✓ #56 │
    ├─ #5 get_adm_levels lex sort (silent corruption)     ✓ #57 │
    ├─ #6 get_scores_data 1-row -> NA (silent corrup)     ✓ #59 │
@@ -84,7 +85,8 @@ Phase 2.5  §12 bug-fix sprint (concurrent)         (—)         │  in progre
    │     boundary-regex follow-up (latent (d))                  │
    ├─ #10 get_vars_un_avbil asymmetric lag-fill          ✓ #61 │
    ├─ #2 check_existing_groups empty-old vctrs error     ✓ #62 │
-   └─ #4 #8 #9 #11 #13 #3 #12                            ◌ next │
+   ├─ #4 validate_read_shp empty-pattern str_detect      ✓ TBD │
+   └─ #8 #9 #11 #13 #3 #12                               ◌ next │
             ▼                                                  │
 Phase 4  Vignettes + pkgdown deploy                (#12)       │
             ▼                                                  │
@@ -715,7 +717,9 @@ Lifted from arch-00 §"End-State Goals":
 
 | [#62](https://github.com/worldbank/devPTIpack/pull/62) | 2026-05-06 | **Phase 2.5 §12 (bug-fix #2)** | §12 bug #2 fixed -- `R/plot_pti_helpers.R::check_existing_groups` now early-handles `length(old_grps) == 0` instead of erroring inside `stringr::str_detect(., character(0))` with a vctrs `pattern must have size 1` error. Body wraps the existing `check_this_too` / lookup-by-pattern block in an `if (length(old_grps) > 0)` guard; on empty input `grps_in <- character(0)`, falling through to the pre-existing "first of remaining" fallback at L457-459 which arch-03 §1.6 already specified as the empty-`old_grps` contract. Test pin in `tests/testthat/test-plot-helpers.R` flipped from `expect_error(..., regexp = "size")` (asserting the bug) to two `expect_equal`s asserting the contract: `out$out_show == "a (Country)"` (first of current) and `out$out_hide == "b (Oblast)"`. `test_that()` description renamed from `"empty old errors via str_detect (PINNED)"` -> `"empty old -> first of current shown"`; comment block rewritten to describe the contract instead of the past bug. Stripped the 5-line `@note Pinned bug (PR #25)` block from the function's roxygen. Caller-graph audit: only call site is `R/plot_pti_helpers.R:357` inside `add_pti_poly_controls`, gated by `isTruthy(old_grps)` at L356 -- so the empty-input path never fired in production today; this fix is a no-op on the deployed app and only changes behaviour for direct callers (tests). No NAMESPACE delta -- `str_detect` still used inside the guard. Folded in the PR-#61 `TBD -> #61` swap on the §11 row above and on the §12 row #10 (already complete in upstream). Suite goes from 683 PASS -> 684 PASS (FAIL=0, SKIP=1) -- net +1 expectation: 1 expect_error swapped for 2 expect_equal. |
 
-Suite total after this branch: **0 failures / 1 skip / 684 PASS** (`testthat::test_local()`; bug-fix PR; pinned `expect_error` flipped to two `expect_equal`s on the new contract, net +1 expectation).
+| [TBD](https://github.com/worldbank/devPTIpack/pull/TBD) | 2026-05-06 | **Phase 2.5 §12 (bug-fix #4)** | §12 bug #4 fixed -- `R/fct_validate_metadata.R::validate_read_shp` no longer hits the `str_detect(names(x), character(0))` vctrs size error when called on a "perfect" shapefile (every `admin{N}Pcod` field has a matching `admin{N}_*` slot). Body refactored: compute `extra_level_vec` first (without the `str_c collapse`), then guard the diagnostic-label construction (`str_c collapse`, `keep`, `str_detect on names`) with `if (length(extra_level_vec) > 0)`; on empty extras, set both label strings to `""` and let the (already correct) `expect_true(all(... %in% ...))` pass cleanly. Stripped the 5-line `@note Issue #7 ...` block from the function's roxygen. Test housekeeping: the existing pin in `tests/testthat/test-validators.R` (`"validate_read_shp: round-trips through an .rds path (PINNED BUG)"`) used `capture_validator()` which mocks `testthat::test_that` to a no-op, so the inner blocks never executed and the test passed trivially both pre- and post-fix; the PR renames it to `"validate_read_shp: perfect shapefile passes round-trip"` and rewrites the comment to drop the misleading PINNED BUG language and explain why the existing infrastructure can't pin the bug rigorously. Surfaced this caveat at the scope-proposal gate -- the user accepted the rename-only test change. The fix is verified by code inspection: only the previously-broken empty-extras branch changed, and the end-to-end `validate_metadata: bundled sample data passes end-to-end` test (which composes both `validate_read_shp` and `validate_read_metadata`) still passes. Caller-graph: only `validate_metadata` at `R/fct_validate_metadata.R:35`. No NAMESPACE delta. Out of scope: the broader arch-01 refactor target -- converting the runtime `testthat::test_that` machinery into ordinary validation calls -- bigger scope, would obsolete `capture_validator()` entirely; left for a future PR. Folded in the PR-#62 `TBD -> #62` swap on the §11 row above and on the §12 row #2 (already complete in upstream). Suite stays at 684 PASS (FAIL=0, SKIP=1) -- rename-only on the existing pin, no test count delta. |
+
+Suite total after this branch: **0 failures / 1 skip / 684 PASS** (`testthat::test_local()`; bug-fix PR; rename-only on the existing pin, no test count delta).
 
 > **Suite totals revised on 2026-05-02:** prior counts in §11 were
 > derived from `sum(res$nb)` over `as.data.frame(testthat::test_local())`,
@@ -749,13 +753,14 @@ Suite total after this branch: **0 failures / 1 skip / 684 PASS** (`testthat::te
 > have no test pin yet; pinning is a sub-task of the eventual fix PR.
 > All entries are cleanup-phase candidates regardless of pin status.
 
-**Status: 7 of 14 fixed.** Done: #1 `complete_pti_labels` (PR #56),
+**Status: 8 of 14 fixed.** Done: #1 `complete_pti_labels` (PR #56),
 #5 `get_adm_levels` (PR #57), #6 `get_scores_data` (PR #59),
 #7 `expand_adm_levels` (PR #60) plus the boundary-regex follow-up
 on the same function (PR #60; the 14th §12 row), #10
-`get_vars_un_avbil` symmetric availability (PR #61), and #2
-`check_existing_groups` empty-old (PR #62). Triage queue
-(user-facing errors → spec asymmetry): #4 next, then #8 #9 #11
+`get_vars_un_avbil` symmetric availability (PR #61), #2
+`check_existing_groups` empty-old (PR #62), and #4
+`validate_read_shp` empty-pattern (PR TBD). Triage queue
+(user-facing errors → spec asymmetry): #8 next, then #9 #11
 #13, last #3 #12.
 
 | Loc | Bug | Pin (test) |
@@ -763,7 +768,7 @@ on the same function (PR #60; the 14th §12 row), #10
 | [`R/plot_pti_helpers.R::complete_pti_labels`](R/plot_pti_helpers.R#L186-L206) | The function mapped over `dta` but never assigned the result; returned the original `dta` unchanged, so the deployed app silently missed the `<strong>{priority_label}</strong>` suffix on every popup. One-line fix: assign the `purrr::map()` result back to `dta`. **FIXED in PR #56 (2026-05-06).** | [test-plot-helpers.R:complete_pti_labels: appends <strong>{priority_rank}</strong> per entry](tests/testthat/test-plot-helpers.R) |
 | [`R/plot_pti_helpers.R::check_existing_groups`](R/plot_pti_helpers.R) | Errored with a vctrs size error when `old_grps = character(0)` — `str_detect(string, character(0))` is invalid. arch-03 §1.6 contract is "first of currently shown" on empty input, and the function already had that branch at the bottom; the bug was that the body errored before reaching it. Fix: guard the `check_this_too` / lookup-by-pattern block with `if (length(old_grps) > 0)`, falling through to the existing first-of-remaining branch on empty input. **FIXED in PR #62 (2026-05-06).** Caller `add_pti_poly_controls` is already gated by `isTruthy(old_grps)` (`R/plot_pti_helpers.R:356`) so production never reached the broken path; the fix only changes behaviour for direct callers (tests). | [test-plot-helpers.R:check_existing_groups: empty old -> first of current shown](tests/testthat/test-plot-helpers.R) |
 | [`R/plot_pti_helpers.R::filter_admin_levels`](R/plot_pti_helpers.R#L60) | Asymmetry: the if-branch enters when `to_fltr` matches *names* of admin levels (e.g. `"admin1"`), but the inner `keep()` predicate compares values (e.g. `"Oblast"`). Passing a name returns 0 entries. Pinned, not a bug per se but worth normalising in the cleanup phase. | [test-plot-helpers.R:filter_admin_levels: name-only filter returns 0 entries (PINNED)](tests/testthat/test-plot-helpers.R) |
-| [`R/validators.R::validate_read_shp`](R/validators.R) | Empty-pattern `str_detect` when no admin codes are extra (i.e. the shape file is "perfect") — error caught by the function's internal `test_that`. Refactor target under issue #7. | [test-validators.R:validate_read_shp: round-trips through an .rds path (PINNED BUG)](tests/testthat/test-validators.R) |
+| [`R/fct_validate_metadata.R::validate_read_shp`](R/fct_validate_metadata.R) | Empty-pattern `str_detect` when no admin codes are extra (i.e. the shape file is "perfect"): `str_c(character(0), collapse = "|")` returned `character(0)`, then `str_detect(names(x), character(0))` errored with vctrs `pattern must have size 1`. The error was swallowed by the surrounding `testthat::test_that()` (registered as an `expectation_error` against the inner reporter), so externally the call returned silently — but the inner expectation was failing. Fix: compute `extra_level_vec` first, guard the diagnostic-label construction (`str_c collapse`, `keep`, `str_detect on names`) with `if (length(extra_level_vec) > 0)`; on empty extras, set `extra_level <- ""` and `probl_ms <- ""` and let the (already correct) `expect_true(all(... %in% ...))` pass cleanly. **FIXED in PR TBD (2026-05-06).** Note: the existing test pin (`test-validators.R::validate_read_shp: round-trips through an .rds path (PINNED BUG)`) used `capture_validator()` which mocks `testthat::test_that` to a no-op, so the inner blocks never executed and the test trivially passed both pre- and post-fix; the PR renames the test to drop the misleading "PINNED BUG" tag and rewrites the comment. The fix is verified by code inspection — only the previously-broken empty-extras branch changed, and all surrounding tests (`validate_metadata: bundled sample data passes end-to-end`, etc.) still pass. Out of scope: the broader arch-01 refactor of the runtime-`testthat::test_that` machinery into ordinary validation calls (which would obsolete `capture_validator()` entirely). | [test-validators.R:validate_read_shp: perfect shapefile passes round-trip](tests/testthat/test-validators.R) |
 | [`R/calc_pti_helpers.R::get_adm_levels`](R/calc_pti_helpers.R#L34) | Lexicographic `sort()` produced `admin1 < admin10 < admin2`, breaking the iteration order of any deployment with ≥10 admin levels. One-line fix: replace `sort()` with an integer-keyed `order()` permutation (`ids[order(as.integer(str_extract(ids, "\\d{1,2}")))]`), filtering NAs first to preserve existing behaviour. **FIXED in PR #57 (2026-05-06).** Out of scope: separate first-digit-only quirks remain in `expand_adm_levels` (`str_extract(col, "\\d")` — single digit) and `agg_pti_scores` (`max(level)` as a string). | [test-calc-pipeline.R:get_adm_levels: sort is numeric across mixed-digit levels](tests/testthat/test-calc-pipeline.R) |
 | [`R/calc_pti_helpers.R::get_scores_data`](R/calc_pti_helpers.R#L218) | 1-row `(year, var_code)` group produced `NA` (not `0`) because `sd()` of length-1 returns `NA` (not `NaN`), so the `is.nan` filter missed. Singleton groups have no variance to scale, so non-`NA` values are now set to the neutral score `0` (matching the existing zero-variance branch); `NA` inputs remain `NA`. Implemented by precomputing a `.was_na` flag, standardising as before, then patching `dplyr::n() == 1L & !.was_na` rows to `0` before the `is.nan` -> `0` rewrite. **FIXED in PR #59 (2026-05-06).** Out of scope (interpretation Y): "effectively n=1" groups (n>1 with all but one row `NA`) — `sd()` over the single non-`NA` is also `NA`, so the lone usable value still comes out `NA`. Could be a follow-up §12 row if a downstream consumer needs it. | [test-calc-pipeline.R:get_scores_data: 1-row groups produce 0 (no variance to scale)](tests/testthat/test-calc-pipeline.R) |
 | [`R/calc_pti_expander.R::expand_adm_levels`](R/calc_pti_expander.R) | When >1 list element name matched an admin level (the old `length(...) == 1` guard fell through), the entire source-loop iteration returned nested `NULL`s — silent data loss. Now the function `stop()`s loudly, naming the offending slots, since the input contract is one slot per level (`adminN_HumanName`). **FIXED in PR #60 (2026-05-06).** Caller-graph audit confirmed no production caller depended on the `NULL` short-circuit (`R/mod_calc_pti2.R:82`, `R/run_pti_pipeline.R:65`, `R/fct_validate_metadata.R:60` all pipe through to `merge_expandedn_adm_levels()` which would have produced empty merges from the silent NULLs); for the only data ever shipped (`ukr_shp`), `wtd_scrd_dta` always has exactly one slot per level so the new error path is unreachable. | [test-calc-pipeline.R:expand_adm_levels: >1 slot matches a level -> error](tests/testthat/test-calc-pipeline.R) |

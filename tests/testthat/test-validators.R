@@ -117,13 +117,16 @@ test_that("validate_geometries: layer with missing Pcod aborts", {
 # validate_read_shp(shp_path)  +  validate_read_metadata(mtdt_path)
 # ---------------------------------------------------------------------------
 
-test_that("validate_read_shp: round-trips through an .rds path (PINNED BUG)", {
-  # arch-01 candidate refactor target: when no admin codes are extra,
-  # `extra_level` is "" and the downstream str_detect errors. The error
-  # is caught by the function's internal test_that, so externally the
-  # call returns silently. We pin: no external error, but an
-  # expectation_failure was recorded internally. Refactor in #7 should
-  # resolve.
+test_that("validate_read_shp: perfect shapefile passes round-trip", {
+  # ukr_shp has no extra admin codes (every admin{N}Pcod has a matching
+  # admin{N}_* slot). Pre PR #N this exercised a buggy str_detect on a
+  # character(0) pattern inside the function's internal test_that block;
+  # that error was swallowed by testthat::test_that and never surfaced
+  # to the caller, but it left the inner expectation in a failed state.
+  # The fix guards the diagnostic-label construction so the inner
+  # expectation now passes cleanly. arch-01 still flags the broader
+  # runtime-test_that refactor as a future cleanup target -- separate
+  # PR.
   tmp <- withr::local_tempfile(fileext = ".rds")
   saveRDS(ukr_shp, tmp)
   out <- capture_validator(validate_read_shp(tmp))

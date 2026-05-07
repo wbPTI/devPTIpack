@@ -2,7 +2,7 @@
 % Please edit documentation in R/mod_drop_inval_adm.R
 \name{get_vars_un_avbil}
 \alias{get_vars_un_avbil}
-\title{Identify (variable, admin-level) pairs with no data and no upstream coverage}
+\title{Identify (variable, admin-level) pairs with no native data}
 \usage{
 get_vars_un_avbil(ind_list, admin_levels = NULL)
 }
@@ -18,27 +18,16 @@ sorted unique levels seen in `ind_list`.}
 }
 \value{
 A tibble with one row per unavailable
-  `(var_code, admin_level)` pair. Contains `var_code`, `admin_level`,
-  and a logical `any_larger` column (an intermediate flag carried
-  through the pipeline; downstream callers like
-  [get_min_admin_wght()] use only `admin_level`).
+  `(var_code, admin_level)` pair, with columns `var_code` and
+  `admin_level`.
 }
 \description{
-Walks the indicator availability metadata and returns the admin
-levels at which each indicator is missing AND cannot be back-filled
-from a more-disaggregated level. Used as the first step in
-[mod_drop_inval_adm()] to decide which admin levels must be hidden
-for a given weighting.
-}
-\note{
-Asymmetry pinned in PR
-  [#34](https://github.com/worldbank/devPTIpack/pull/34): the
-  `lag()`-based fill logic treats an indicator that exists only at an
-  earlier-sorted admin level as "available" at later-sorted levels,
-  so admin2 is never surfaced as unavailable for an admin1-only
-  indicator. The reverse direction (admin2-only -> admin1
-  unavailable) works. Candidate for the Phase 2.5 / 3.5 bug-fix
-  sprint.
+Returns the `(var_code, admin_level)` pairs for which the indicator
+has no native data at that admin level. Pairs are emitted
+symmetrically: an indicator with data only at admin1 surfaces as
+unavailable at admin2 / admin4 (and vice versa). Used as the first
+step in [mod_drop_inval_adm()] to decide which admin levels must be
+hidden for a given weighting.
 }
 \examples{
 # `ind_b` only has data at admin2 -- the function flags it as
