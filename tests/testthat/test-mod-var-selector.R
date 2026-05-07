@@ -229,7 +229,7 @@ test_that("mod_fltr_sel_var2_srv: add_selected() change triggers updatePickerInp
 })
 
 test_that("mod_fltr_sel_var2_srv: add_selected() with multi-var pillar selects the matching pillar", {
-  # Pre PR #N the observer body errored with "Result must be length
+  # Pre PR #67 the observer body errored with "Result must be length
   # 1, not N" because `.x %in% c(selected_add, selected_now)` returned
   # a length-N logical for multi-var pillars, violating map_lgl's
   # length-1 contract. The fix wraps each `%in%` in `any()`.
