@@ -65,7 +65,7 @@ test_that("get_var_choices: each pillar entry maps var_name -> var_code", {
 })
 
 test_that("get_var_choices: empty indicators tibble returns an empty list", {
-  # Pre PR #N this errored with "attempt to set an attribute on NULL"
+  # Pre PR #66 this errored with "attempt to set an attribute on NULL"
   # because the rescue block at the bottom of the function ran
   # `names(out) <- "Indicators"` against a NULL `out`. The fix
   # early-returns list() on 0-row input -- the consumer
