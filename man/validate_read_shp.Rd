@@ -19,13 +19,6 @@ object is a non-empty named list, and (2) every `admin<N>Pcod` column
 referenced inside any layer has a corresponding top-level `admin<N>_*`
 element. Side effects only -- emits `testthat` reporter output.
 }
-\note{
-Issue [#7](https://github.com/worldbank/devPTIpack/issues/7) is
-  pinned: when the shapes file is "perfect" (no extra admin codes),
-  the internal `str_c(extra_level, collapse = "|")` produces an
-  empty-pattern `str_detect` call that errors. Fix is part of the
-  broader runtime-`test_that` refactor.
-}
 \examples{
 \dontrun{
 validate_read_shp("path/to/shapes.rds")
