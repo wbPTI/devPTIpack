@@ -26,7 +26,7 @@ default API PR #68; #3 `filter_admin_levels` name-vs-value
 asymmetry PR #69; #12 `gg_admin_list` undefined-default PR #70).
 Phase 4 (#12, vignettes & pkgdown) and Phase 5 (#13, hex ingestion)
 are next. R-CMD-check workflow gates merge with `error-on:
-'"error"'`. Suite at **0 fail / 1 skip / 710 PASS** (PR #12 adds a
+'"error"'`. Suite at **0 fail / 1 skip / 710 PASS** (PR #70 adds a
 new Tier-1 test file with 2 test_that blocks / 8 expectations
 covering the missing-`mt` error and the bundled-data success path).
 
