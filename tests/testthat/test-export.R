@@ -95,7 +95,7 @@ test_that("fct_internal_wt_to_exp: row count = vars x schemes", {
 })
 
 test_that("fct_internal_wt_to_exp: empty list returns a 0-row tibble with the full schema", {
-  # Pre PR #N: imap_dfr(list()) yielded a 0x0 tibble, so the downstream
+  # Pre PR #65: imap_dfr(list()) yielded a 0x0 tibble, so the downstream
   # left_join errored with "Join columns in `x` must be present ...
   # var_code". The fix early-returns a 0-row tibble matching the
   # schema documented in the function's @return.
