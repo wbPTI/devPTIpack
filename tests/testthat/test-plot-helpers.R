@@ -80,7 +80,7 @@ test_that("filter_admin_levels: filters by admin_level value (not name)", {
 })
 
 test_that("filter_admin_levels: name-only filter matches the same entries as value-only", {
-  # Pre PR #N this returned 0 entries because the keep() predicate
+  # Pre PR #69 this returned 0 entries because the keep() predicate
   # compared `x$admin_level` (the display value, e.g. "Oblast")
   # against `to_fltr` (here the admin key "admin1"). The fix extends
   # the predicate to also match `names(x$admin_level)`, so passing
