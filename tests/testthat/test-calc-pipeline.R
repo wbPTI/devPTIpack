@@ -53,12 +53,13 @@ test_that("get_adm_levels: empty when no admin columns are present", {
   expect_length(out, 0)
 })
 
-test_that("get_adm_levels: sort is lexicographic, not numeric (PINNED)", {
-  # arch-03 §"Known Issues to Pin": result for mixed single/double-digit
-  # admin levels is lexicographic, so admin1 < admin10 < admin2.
-  # Pinned, not skipped — downstream code (`expand_adm_levels`,
-  # `agg_pti_scores`) compares levels by first-digit only, so the
-  # codebase is internally consistent with this quirk.
+test_that("get_adm_levels: sort is numeric across mixed-digit levels", {
+  # Contract: levels are sorted by the embedded integer (so
+  # admin1 < admin2 < admin10), not lexicographically. The lex-sort
+  # behaviour was the bug fixed in PR #57; downstream `expand_adm_levels`
+  # and `agg_pti_scores` still have separate first-digit-only quirks
+  # (they extract `\\d` not `\\d{1,2}` / use string `max(level)`) — out
+  # of scope here, see PLAN.md §12.
   jumbled <- tibble::tibble(
     admin2Pcod  = character(),
     admin10Pcod = character(),
@@ -66,7 +67,7 @@ test_that("get_adm_levels: sort is lexicographic, not numeric (PINNED)", {
   )
   expect_equal(
     unname(get_adm_levels(jumbled)),
-    c("admin1", "admin10", "admin2")
+    c("admin1", "admin2", "admin10")
   )
 })
 
@@ -189,16 +190,17 @@ test_that("get_scores_data: structure (scheme x admin) is preserved", {
   }
 })
 
-test_that("get_scores_data: 1-row groups produce NA, not 0 (PINNED)", {
-  # arch-03 §"Known Issues to Pin": sd() of a length-1 vector returns NA
-  # (not NaN), so the `is.nan` replacement leaves the value as NA.
+test_that("get_scores_data: 1-row groups produce 0 (no variance to scale)", {
+  # A singleton (year x var_code) group has no variance, so the
+  # standardised score is the neutral value 0 -- same treatment as
+  # the zero-variance case (n>1 with all identical values).
   one_row <- list(scheme = list(adm = tibble::tibble(
     var_code = "x",
     year     = 2020,
     value    = 7
   )))
   out <- get_scores_data(one_row)
-  expect_true(is.na(out$scheme$adm$value))
+  expect_equal(out$scheme$adm$value, 0)
 })
 
 # ---------------------------------------------------------------------------
@@ -279,15 +281,28 @@ test_that("expand_adm_levels: empty input -> all NULL outputs", {
   }
 })
 
-test_that("expand_adm_levels: >1 element matches a level -> NULLs (PINNED)", {
-  # arch-02.01 §A.7 case 10: when two list elements both contain the same
-  # admin level string in their names, the source-loop guard `length(...)
-  # == 1` fails and the entire iteration returns nested NULLs.
+test_that("expand_adm_levels: >1 slot matches a level -> error", {
+  # Contract: one wtd_scrd_dta slot per admin level (`adminN_HumanName`).
+  # Two slots resolving to the same level violates the input shape; the
+  # function now errors loudly instead of silently returning nested NULLs
+  # (the pre-PR-#N behaviour pinned the bug).
   src1 <- test_scored$all_ones$admin1_Oblast
   duped <- list(admin1_a = src1, admin1_b = src1)
-  out <- expand_adm_levels(duped, test_mt)
-  # admin1 source iteration short-circuits because two names match
-  for (tgt in out$admin1) expect_null(tgt)
+  expect_error(
+    expand_adm_levels(duped, test_mt),
+    regexp = "admin1"
+  )
+})
+
+test_that("expand_adm_levels: slot regex is boundary-anchored (admin1 vs admin10)", {
+  # adm_from='admin1' must not also match a slot named 'admin10_...'.
+  # Without the boundary anchor, the substring `str_detect` would pick up
+  # both slots and trip the multi-match error above.
+  src1 <- test_scored$all_ones$admin1_Oblast
+  mixed <- list(admin1_Oblast = src1, admin10_Other = src1)
+  out <- expand_adm_levels(mixed, test_mt)
+  # admin1 iteration succeeds — boundary regex selects only admin1_Oblast.
+  expect_false(all(vapply(out$admin1, is.null, logical(1))))
 })
 
 test_that("expand_adm_levels: missing `year` column errors at all_of()", {

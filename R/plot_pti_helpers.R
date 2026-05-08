@@ -93,13 +93,6 @@ get_current_levels <- function(dta) {
 #' @return Filtered plotting list, or `NULL` when `to_fltr` is empty
 #'   / not truthy.
 #'
-#' @note Pinned bug (PR #25): when `to_fltr` matches admin keys (e.g.
-#'   `"admin1"`) the gating branch enters, but the inner `keep()`
-#'   predicate compares against admin display values
-#'   (e.g. `"Oblast"`), so a key-only filter returns 0 entries. The
-#'   value-only path works as expected. Tier-1 test pin:
-#'   tests/testthat/test-plot-helpers.R.
-#'
 #' @importFrom purrr keep
 #' @importFrom shiny isTruthy
 #' @importFrom stringr str_detect regex
@@ -115,7 +108,10 @@ filter_admin_levels <- function(dta, to_fltr = "all") {
 
     if (any(to_fltr %in% get_current_levels(dta)) |
         any(to_fltr %in% names(get_current_levels(dta)))) {
-      out <- dta %>% keep(function(x) {x$admin_level %in% to_fltr})
+      out <- dta %>% keep(function(x) {
+        x$admin_level %in% to_fltr |
+          names(x$admin_level) %in% to_fltr
+      })
     }
 
   }
@@ -178,12 +174,6 @@ add_legend_paras <- function(dta, nbins = 5) {
 #' @return The input list with `pti_label` augmented per entry. When
 #'   `dta` is not truthy the input is returned unchanged.
 #'
-#' @note Pinned bug (PR #25): the `purrr::map()` result is never
-#'   assigned back, so the function returns the input unchanged. The
-#'   deployed app silently misses the priority-rank suffix on every
-#'   popup. One-line fix (`dta <- dta %>% purrr::map(...)`). Tier-1
-#'   test pin: tests/testthat/test-plot-helpers.R.
-#'
 #' @importFrom purrr map
 #' @importFrom stringr str_c
 #' @importFrom dplyr mutate
@@ -192,7 +182,7 @@ add_legend_paras <- function(dta, nbins = 5) {
 complete_pti_labels <- function(dta) {
 
   if (isTruthy(dta)) {
-    dta %>%
+    dta <- dta %>%
       purrr::map( ~ {
         .x$pti_dta <-
           .x$pti_dta %>%
@@ -424,25 +414,24 @@ clean_pti_poly_controls <- function(leaf_map, poly_dta) {
 #' @return List with two elements: `out_show` (groups to show) and
 #'   `out_hide` (groups to hide).
 #'
-#' @note Pinned bug (PR #25): when `old_grps` is `character(0)`,
-#'   `stringr::str_detect(string, character(0))` errors with a vctrs
-#'   size error. The arch-03 contract is "first of currently shown",
-#'   so the function should early-return that on empty input. Tier-1
-#'   test pin: tests/testthat/test-plot-helpers.R.
-#'
 #' @importFrom stringr str_replace str_trim str_c str_detect
 #' @noRd
 check_existing_groups <- function(cur_grps, old_grps, priority_group) {
-  check_this_too <-
-    old_grps %>%
-    stringr::str_replace(" \\s*\\([^\\)]+\\)", "") %>%
-    stringr::str_trim() %>%
-    stringr::str_c(., " \\(")
 
-  grps_in <- cur_grps %>% `[`((.) %in% old_grps)
+  if (length(old_grps) > 0) {
+    check_this_too <-
+      old_grps %>%
+      stringr::str_replace(" \\s*\\([^\\)]+\\)", "") %>%
+      stringr::str_trim() %>%
+      stringr::str_c(., " \\(")
 
-  if (length(grps_in) == 0) {
-    grps_in <- cur_grps %>% `[`( str_detect(., check_this_too))
+    grps_in <- cur_grps %>% `[`((.) %in% old_grps)
+
+    if (length(grps_in) == 0) {
+      grps_in <- cur_grps %>% `[`(str_detect(., check_this_too))
+    }
+  } else {
+    grps_in <- character(0)
   }
 
   if (length(grps_in) >= 2) {

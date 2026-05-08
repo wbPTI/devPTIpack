@@ -64,16 +64,16 @@ test_that("get_var_choices: each pillar entry maps var_name -> var_code", {
   }
 })
 
-test_that("get_var_choices: empty indicators tibble errors (PINNED)", {
-  # PINNED BUG: when `out` ends up NULL (no pillars to group by), the
-  # rescue block does `names(out) <- "Indicators"`, which errors with
-  # 'attempt to set an attribute on NULL'. A length-0 list-typed
-  # output would be more useful.
+test_that("get_var_choices: empty indicators tibble returns an empty list", {
+  # Pre PR #66 this errored with "attempt to set an attribute on NULL"
+  # because the rescue block at the bottom of the function ran
+  # `names(out) <- "Indicators"` against a NULL `out`. The fix
+  # early-returns list() on 0-row input -- the consumer
+  # (shinyWidgets::updatePickerInput) handles an empty list fine.
   empty <- test_indicators[0, ]
-  expect_error(
-    get_var_choices(empty),
-    regexp = "attribute on NULL"
-  )
+  out <- get_var_choices(empty)
+  expect_type(out, "list")
+  expect_length(out, 0L)
 })
 
 # ---------------------------------------------------------------------------

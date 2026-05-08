@@ -76,17 +76,19 @@ fct_inp_for_exp <- function(dta) {
 #' @return A tibble with columns `var_code`, `var_name`, `weight`,
 #'   `weight_scheme`. One row per (variable, scheme) combination.
 #'
-#' @note PINNED BUG (PLAN.md §12): calling with an empty
-#'   `weights_clean = list()` errors at the `left_join` step --
-#'   `imap_dfr(list())` returns a 0x0 tibble that has no `var_code`
-#'   column for the join key. Should early-return on length-0 input.
-#'   See `tests/testthat/test-export.R` "empty list errors at left_join
-#'   (PINNED)".
-#'
 #' @importFrom dplyr left_join select contains
 #' @importFrom purrr imap_dfr
+#' @importFrom tibble tibble
 #' @noRd
 fct_internal_wt_to_exp <- function(weights_clean, indicators_list) {
+  if (length(weights_clean) == 0) {
+    return(tibble::tibble(
+      var_code      = character(),
+      var_name      = character(),
+      weight        = numeric(),
+      weight_scheme = character()
+    ))
+  }
   weights_clean %>%
     imap_dfr(~{
       .x %>% mutate(weight_scheme = .y)

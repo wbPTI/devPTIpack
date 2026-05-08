@@ -93,12 +93,6 @@ validate_metadata <- function(shp_path, mtdt_path) {
 #'
 #' @return Invisibly `NULL`. Called for side effects.
 #'
-#' @note Issue [#7](https://github.com/worldbank/devPTIpack/issues/7) is
-#'   pinned: when the shapes file is "perfect" (no extra admin codes),
-#'   the internal `str_c(extra_level, collapse = "|")` produces an
-#'   empty-pattern `str_detect` call that errors. Fix is part of the
-#'   broader runtime-`test_that` refactor.
-#'
 #' @importFrom readr read_rds
 #' @importFrom testthat test_that expect_gt expect_true
 #' @importFrom purrr map keep
@@ -138,15 +132,20 @@ validate_read_shp <- function(shp_path) {
       names %>%
       str_extract( "admin\\d")
 
-    extra_level <-
-      all_admin_codes[!all_admin_codes %in% all_admin_levels] %>%
-      str_c(collapse = "|")
+    extra_level_vec <-
+      all_admin_codes[!all_admin_codes %in% all_admin_levels]
 
-    probl_ms <-
-      shp_dta %>%
-      keep(function(x) any(str_detect(names(x), extra_level))) %>%
-      names() %>%
-      str_c(collapse = ", ")
+    if (length(extra_level_vec) > 0) {
+      extra_level <- str_c(extra_level_vec, collapse = "|")
+      probl_ms <-
+        shp_dta %>%
+        keep(function(x) any(str_detect(names(x), extra_level))) %>%
+        names() %>%
+        str_c(collapse = ", ")
+    } else {
+      extra_level <- ""
+      probl_ms <- ""
+    }
 
     testthat::expect_true(
       all(all_admin_codes %in% all_admin_levels),

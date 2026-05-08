@@ -37,24 +37,20 @@ get_mt <- function(country_shapes) {
     dplyr::filter_all(dplyr::all_vars(!is.na(.)))
 }
 
-#' Extract sorted admin-level identifiers from a names vector
+#' Extract numerically-sorted admin-level identifiers from a names vector
 #'
-#' Pulls all `admin\\d{1,2}` substrings from `names(dta)`, sorts them
-#' lexicographically, and returns them as a self-named character
-#' vector ready for [purrr::imap()] iteration.
+#' Pulls all `admin\\d{1,2}` substrings from `names(dta)` and returns
+#' them as a self-named character vector sorted by the embedded
+#' integer (so `admin1 < admin2 < admin10`), ready for
+#' [purrr::imap()] iteration.
 #'
 #' @param dta Any object whose `names()` contain `admin{N}*` columns
 #'   (typically a `country_shapes` element or the mapping table from
 #'   [get_mt()]).
 #'
 #' @return A self-named character vector of admin level identifiers
-#'   (e.g. `c(admin0 = "admin0", admin1 = "admin1", ...)`).
-#'
-#' @note Sort is **lexicographic**, so `admin1 < admin10 < admin2`.
-#'   Internally consistent with downstream comparisons (which extract
-#'   only the first digit) but wrong for any deployment with ≥10 admin
-#'   levels. Pinned in `test-calc-pipeline.R` ("get_adm_levels: sort is
-#'   lexicographic, not numeric (PINNED)") — see PLAN.md §12.
+#'   (e.g. `c(admin0 = "admin0", admin1 = "admin1", ...)`), sorted
+#'   numerically. `NA` matches are dropped.
 #'
 #' @importFrom stringr str_extract
 #' @importFrom rlang set_names
@@ -62,11 +58,12 @@ get_mt <- function(country_shapes) {
 #' @noRd
 get_adm_levels <-
   function(dta) {
-    dta %>%
+    ids <- dta %>%
       names() %>%
-      str_extract("admin\\d{1,2}") %>%
-      sort() %>%
-      set_names(.)
+      str_extract("admin\\d{1,2}")
+    ids <- ids[!is.na(ids)]
+    ids[order(as.integer(str_extract(ids, "\\d{1,2}")))] %>%
+      set_names()
   }
 
 
@@ -197,25 +194,21 @@ get_weighted_data <- function(wt_list, vars_dta_list, indicators_list) {
 #' Z-score standardise weighted PTI data within (year, var_code)
 #'
 #' For every `(year, var_code)` group in each leaf tibble, replaces
-#' `value` with `(value - mean) / sd`, treating `NA` as missing. When
-#' the resulting score is `NaN` (zero variance), it is replaced with
-#' `0`. Empty leaf tibbles are passed through unchanged.
+#' `value` with `(value - mean) / sd`, treating `NA` as missing.
+#' Singleton groups (group size 1) and zero-variance groups (n>1, all
+#' identical) have no variance to scale, so their non-`NA` values are
+#' set to the neutral score `0`; `NA` inputs remain `NA`. Empty leaf
+#' tibbles are passed through unchanged.
 #'
 #' @param wt_dta_list Nested named list as returned by
 #'   [get_weighted_data()] (outer = scheme, inner = admin level).
 #'
 #' @return A list of the same shape as `wt_dta_list` with `value`
-#'   replaced by per-`(year, var_code)` z-scores (zero-variance groups
-#'   become 0).
-#'
-#' @note 1-row `(year, var_code)` groups produce `NA` (not `0`)
-#'   because `sd()` of length-1 returns `NA` rather than `NaN`, so
-#'   the `is.nan` filter misses. Pinned in `test-calc-pipeline.R`
-#'   ("get_scores_data: 1-row groups produce NA, not 0 (PINNED)") —
-#'   see PLAN.md §12.
+#'   replaced by per-`(year, var_code)` z-scores; singleton and
+#'   zero-variance groups become `0` for non-`NA` rows.
 #'
 #' @importFrom purrr map
-#' @importFrom dplyr group_by_at mutate ungroup vars any_of
+#' @importFrom dplyr group_by_at mutate ungroup vars any_of if_else n
 #'
 #' @noRd
 get_scores_data <- function(wt_dta_list) {
@@ -227,9 +220,14 @@ get_scores_data <- function(wt_dta_list) {
             .x <-
               .x %>%
               dplyr::group_by_at(vars(any_of(c("year", "var_code")))) %>%
-              dplyr::mutate(value = (value - mean(value, na.rm = T)) / sd(value, na.rm = T)) %>%
-              dplyr::mutate(value = ifelse(is.nan(value), 0, value)) %>%
-              dplyr::ungroup()
+              dplyr::mutate(
+                .was_na = is.na(value),
+                value   = (value - mean(value, na.rm = T)) / sd(value, na.rm = T),
+                value   = dplyr::if_else(dplyr::n() == 1L & !.was_na, 0, value),
+                value   = ifelse(is.nan(value), 0, value)
+              ) %>%
+              dplyr::ungroup() %>%
+              dplyr::select(-.was_na)
           }
           .x
         })

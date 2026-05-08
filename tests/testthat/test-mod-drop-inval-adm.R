@@ -108,14 +108,25 @@ test_that("mod_drop_inval_adm: indicator missing at admin1 -> admin1 removed", {
   )
 })
 
-# Note on symmetry. arch-03 §2.3 only specifies "missing at admin1 ->
-# admin1 dropped" (covered above). The reverse case ("indicator only at
-# admin1 -> admin2 dropped") fails today: `get_vars_un_avbil`'s fill
-# logic propagates DOWN admin levels (lag from earlier-sorted to
-# later-sorted), so an admin1-only indicator is treated as if it had
-# admin2 data too — and admin2 is never surfaced as unavailable. See
-# PLAN.md §12 for the pin. Not testing it here to avoid coupling this
-# Tier-2 module test to a Tier-1 bug.
+test_that("mod_drop_inval_adm: indicator missing at admin2 -> admin2 removed", {
+  # Reverse-direction sibling of the test above. Pre PR #61 this was
+  # the silently-broken case: get_vars_un_avbil's `lag()`-based fill
+  # treated an admin1-only indicator as available at admin2.
+  inp <- .build_drop_inputs(missing_admin = "admin2")
+  testServer(
+    mod_drop_inval_adm,
+    args = list(
+      dta    = reactive(inp$dta),
+      wt_dta = reactive(inp$wt_dta)
+    ),
+    expr = {
+      session$flushReact()
+      out <- session$getReturned()()
+      expect_identical(names(out), "admin1")
+      expect_identical(out$admin1, inp$dta$admin1)
+    }
+  )
+})
 
 # ---------------------------------------------------------------------------
 # Notification side effect
