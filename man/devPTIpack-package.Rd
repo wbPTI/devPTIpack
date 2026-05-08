@@ -14,17 +14,23 @@ Shiny-free pipeline orchestrator [run_pti_pipeline()].
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://ebukin.github.io/devPTIpack/}
+  \item \url{https://worldbank.github.io/devPTIpack/}
+  \item \url{https://stunning-engine-gzjwl6l.pages.github.io/}
 }
 
 }
 \author{
-\strong{Maintainer}: Eduard Bukin \email{edwardbukin@gmail.com}
+\strong{Maintainer}: Koichi Ito \email{koichi19960406@gmail.com}
 
 Authors:
 \itemize{
-  \item Takaaki Masaki \email{tmasaki@worldbank.org}
-  \item Arden Finn \email{afinn1@worldbank.org}
+  \item Eduard Bukin \email{ebukin@gmail.com}
+}
+
+Other contributors:
+\itemize{
+  \item Takaaki Masaki \email{tmasaki@worldbank.org} [contributor]
+  \item Arden Finn \email{afinn1@worldbank.org} [reviewer]
 }
 
 }

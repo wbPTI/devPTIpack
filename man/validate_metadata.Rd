@@ -4,7 +4,7 @@
 \alias{validate_metadata}
 \title{Verify that a shapes file and metadata file together produce valid PTI scores}
 \usage{
-validate_metadata(shp_path, mtdt_path)
+validate_metadata(shp_path, mtdt_path, error_on_fail = TRUE)
 }
 \arguments{
 \item{shp_path}{Character. Path to an `.rds` file containing the
@@ -12,10 +12,15 @@ shapes list (the on-disk form of objects shaped like [ukr_shp]).}
 
 \item{mtdt_path}{Character. Path to the metadata `.xlsx` template
 (the on-disk form of [ukr_mtdt_full]).}
+
+\item{error_on_fail}{Logical. If `TRUE` (default), throws on any
+`fail`-level issue. Pass `FALSE` to inspect the structured result
+instead.}
 }
 \value{
-Invisibly `NULL`. Called for side effects -- emits validation
-  results via `testthat`.
+Invisibly, a list with components `status` (`"pass"`,
+  `"warn"`, or `"fail"`), `summary` (one-line string), and `issues`
+  (list of issue records).
 }
 \description{
 End-to-end pre-flight validator for a PTI deployment. Calls
@@ -23,14 +28,15 @@ End-to-end pre-flight validator for a PTI deployment. Calls
 then runs the full calculation pipeline ([pivot_pti_dta()] ->
 [get_weighted_data()] -> [get_scores_data()] -> [expand_adm_levels()] ->
 [agg_pti_scores()]) under an all-equal weighting and asserts that the
-number of scored pillars matches `nrow(indicators_list)`. Side effects
-only: emits `testthat` reporter output for each check; does not
-return a structured result.
+number of scored pillars matches `nrow(indicators_list)`. Emits one
+cli alert per check; returns the structured `list(status, summary,
+issues)` result invisibly. With `error_on_fail = TRUE` (default),
+throws if any `fail`-level issue is recorded.
 }
 \examples{
 \dontrun{
 validate_metadata(
-  shp_path = "path/to/shapes.rds",
+  shp_path  = "path/to/shapes.rds",
   mtdt_path = "path/to/metadata.xlsx"
 )
 }
