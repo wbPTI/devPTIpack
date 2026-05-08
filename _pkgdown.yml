@@ -98,7 +98,7 @@ articles:
   - title: Additional Resources
     desc: Supporting technical articles.
     contents:
-      - dataprep
+      - articles/dataprep
 
 reference:
   - title: "Launch PTI Applications"

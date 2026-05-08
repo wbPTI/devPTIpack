@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 
 This is the recipe. If you've never built a PTI app before, follow it top to bottom — at the end you will have a Shiny dashboard running locally that you can deploy to a server.
 
-This page complements [PTI Methodology](methodology.html) (the *why*) and [Data preparation reference](../dataprep.html) (the canonical *what*). The walkthrough below points into the reference whenever a question of input shape comes up; you don't need to read the reference cover-to-cover before starting.
+This page complements [PTI Methodology](methodology.html) (the *why*) and [Data preparation reference](dataprep.html) (the canonical *what*). The walkthrough below points into the reference whenever a question of input shape comes up; you don't need to read the reference cover-to-cover before starting.
 
 **Time estimate.** With clean shapes and a tidy indicator dataset already in hand, a developer who has done this before launches an app in roughly an hour. Most of the time on a new country goes into preparing the data, not configuring the app.
 
@@ -115,7 +115,7 @@ You'll edit `shp_dta`, `inp_dta`, `app_name`, and the path arguments in §6 once
 
 ## 3. Prepare boundary shapes
 
-The package expects a **named list of `sf` tibbles**, one per administrative level, saved as a single `.rds` file. The full shape specification (column requirements, parent-child cascade rule, geometry constraints) is in [Data preparation reference §1](../dataprep.html#boundary-shapes-admin_bounds.rds). Read it before assembling your list — most validator failures originate in that section's invariants.
+The package expects a **named list of `sf` tibbles**, one per administrative level, saved as a single `.rds` file. The full shape specification (column requirements, parent-child cascade rule, geometry constraints) is in [Data preparation reference §1](dataprep.html#boundary-shapes-admin_bounds.rds). Read it before assembling your list — most validator failures originate in that section's invariants.
 
 The minimal recipe, assuming you have raw shapefiles per admin level:
 
@@ -162,15 +162,15 @@ my_shp <- list(
 saveRDS(my_shp, "app-data/admin_bounds.rds", compress = "gz")
 ```
 
-For the column-by-column rules (which columns each layer needs, what the cascade rule says), see [Data preparation reference §1.3–§1.4](../dataprep.html#required-columns-per-layer).
+For the column-by-column rules (which columns each layer needs, what the cascade rule says), see [Data preparation reference §1.3–§1.4](dataprep.html#required-columns-per-layer).
 
 ---
 
 ## 4. Prepare the metadata template
 
-The metadata template is a single `.xlsx` file with one sheet per admin level, plus a `general` sheet, plus a `metadata` sheet describing each indicator. The full sheet-by-sheet and column-by-column reference is in [Data preparation reference §2](../dataprep.html#metadata-excel-template-mtdt.xlsx).
+The metadata template is a single `.xlsx` file with one sheet per admin level, plus a `general` sheet, plus a `metadata` sheet describing each indicator. The full sheet-by-sheet and column-by-column reference is in [Data preparation reference §2](dataprep.html#metadata-excel-template-mtdt.xlsx).
 
-The high-level pattern: build each sheet as a data frame in R, collect them into a named list, write the list to `.xlsx` with `writexl::write_xlsx()`. This is the same pattern documented in the [`zamPTIdata`](https://github.com/wbPTI/zamPTIdata) and `kgzPTIdata` example repositories (private — request access from [Taka Masaki](mailto:tmasaki@worldbank.org) or the package maintainer).
+The high-level pattern: build each sheet as a data frame in R, collect them into a named list, write the list to `.xlsx` with `writexl::write_xlsx()`. This is the same pattern documented in the [`zamPTIdata`](https://github.com/wbPTI/zamPTIdata) and [`kgzPTIdata`](https://github.com/wbPTI/kgzPTIdata) example repositories (both private — request access from [Eduard Bukin](https://github.com/EBukin)).
 
 A skeletal version, joining indicator data onto the boundary list from §3:
 
@@ -215,7 +215,7 @@ sheets <- list(
 writexl::write_xlsx(sheets, "app-data/mtdt.xlsx")
 ```
 
-A few rules of thumb (the full list is in [dataprep §3](../dataprep.html#common-pitfalls)):
+A few rules of thumb (the full list is in [dataprep §3](dataprep.html#common-pitfalls)):
 
 - The `var_code` in `metadata` must equal an indicator column name in at least one admin sheet, exactly.
 - `spatial_level` must equal one of the admin sheet names in this same file (not the geometry list, though they should be identical).
@@ -254,7 +254,7 @@ res$issues     # list of issue records — level, check, message, details
 
 The `error_on_fail = FALSE` argument lets the function return cleanly on a failure instead of throwing; default is `TRUE` so existing pipeline scripts that depended on the validator aborting still work.
 
-For the full list of what the validators do and don't check, see [dataprep §1.7–§1.8](../dataprep.html#what-validate_geometries-catches) and [dataprep §2.6–§2.7](../dataprep.html#what-validate_metadata-catches).
+For the full list of what the validators do and don't check, see [dataprep §1.7–§1.8](dataprep.html#what-validate_geometries-catches) and [dataprep §2.6–§2.7](dataprep.html#what-validate_metadata-catches).
 
 ---
 
@@ -315,7 +315,7 @@ Make sure `app.R`'s paths are *relative* (e.g. `"app-data/admin_bounds.rds"`, no
 
 **Self-hosted Shiny Server** — `scp` the project directory into `/srv/shiny-server/myPTI` (or wherever the server reads). The dependencies on the host need to match what's in `DESCRIPTION`.
 
-For a real-world deployment recipe, see the [`zamPTI`](https://github.com/wbPTI/zamPTI) example app repo (private — request access).
+For a real-world deployment recipe, see the [`zamPTI`](https://github.com/wbPTI/zamPTI) example app repo (private — request access from [Eduard Bukin](https://github.com/EBukin)).
 
 ---
 
@@ -338,7 +338,7 @@ If you hit something not on the list, run the validators with `error_on_fail = F
 ## 9. Next steps
 
 - [PTI Methodology](methodology.html) — the conceptual framing (z-scores, weights, monitoring).
-- [Data preparation reference](../dataprep.html) — the canonical input-shape spec referenced throughout this walkthrough.
+- [Data preparation reference](dataprep.html) — the canonical input-shape spec referenced throughout this walkthrough.
 - [Function reference](../reference/index.html) — every exported function, organised by category.
 - [Past projects](past-projects.html) — what completed PTI deployments look like.
 

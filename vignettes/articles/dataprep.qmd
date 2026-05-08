@@ -1,10 +1,9 @@
 ---
 title: "Data preparation reference"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{Data preparation reference}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+description: >
+  Canonical column-by-column reference for the two data inputs that feed every
+  PTI app — administrative-boundary shapes (`admin_bounds.rds`) and the metadata
+  Excel template (`mtdt.xlsx`).
 ---
 
 ```{r, include = FALSE}
@@ -23,7 +22,7 @@ This is the **reference deep-dive** on the two data inputs that feed every PTI a
 1. A named list of administrative-boundary `sf` tibbles (saved as `admin_bounds.rds`).
 2. A multi-sheet Excel metadata template describing your indicators (`mtdt.xlsx`).
 
-If you just want a recipe, start with [Build a PTI](articles/build-pti.html). This page is for when that walkthrough refers you here for a data-shape question, or when a validator tells you something specific is wrong with your inputs.
+If you just want a recipe, start with [Build a PTI](build-pti.html). This page is for when that walkthrough refers you here for a data-shape question, or when a validator tells you something specific is wrong with your inputs.
 
 The package's own `validate_geometries()` and `validate_metadata()` functions encode every rule on this page. If you're unsure whether your data conforms, run them — they're authoritative.
 
@@ -348,12 +347,14 @@ launch_pti(
 
 ## See also
 
-- [Build a PTI](articles/build-pti.html) — the task-oriented walkthrough this page is referenced from.
-- [PTI Methodology](articles/methodology.html) — the conceptual framing (what PTI is, why it exists, the math).
-- [`?validate_geometries`](reference/validate_geometries.html), [`?validate_metadata`](reference/validate_metadata.html) — the authoritative validator references.
-- [`?ukr_shp`](reference/ukr_shp.html), [`?ukr_mtdt_full`](reference/ukr_mtdt_full.html) — the bundled sample inputs that all examples on this page use.
+- [Build a PTI](build-pti.html) — the task-oriented walkthrough this page is referenced from.
+- [PTI Methodology](methodology.html) — the conceptual framing (what PTI is, why it exists, the math).
+- [`?validate_geometries`](../reference/validate_geometries.html), [`?validate_metadata`](../reference/validate_metadata.html) — the authoritative validator references.
+- [`?ukr_shp`](../reference/ukr_shp.html), [`?ukr_mtdt_full`](../reference/ukr_mtdt_full.html) — the bundled sample inputs that all examples on this page use.
 
-External worked-example repositories (private — request access from the listed maintainers):
+External worked-example repositories (private — request access from the listed maintainer):
 
-- [`zamPTIdata`](https://github.com/wbPTI/zamPTIdata) — Zambia data-prep pipeline. Contact: [Taka Masaki](mailto:tmasaki@worldbank.org).
-- `kgzPTIdata` — Kyrgyz Republic data-prep pipeline. Contact the package maintainer.
+- [`zamPTIdata`](https://github.com/wbPTI/zamPTIdata) — Zambia data-prep pipeline.
+- [`kgzPTIdata`](https://github.com/wbPTI/kgzPTIdata) — Kyrgyz Republic data-prep pipeline.
+
+Both private; request access from [Eduard Bukin](https://github.com/EBukin).
