@@ -33,6 +33,39 @@ test_that("get_vars_un_avbil: respects an explicit admin_levels argument", {
   expect_true(all(scoped$admin_level %in% c("admin1", "admin2", "admin4")))
 })
 
+test_that("get_vars_un_avbil: flags missing levels symmetrically", {
+  # Contract: a (var, admin) pair is unavailable iff the indicator has
+  # no native data at that admin level. Both directions must surface --
+  # the prior `lag()`-based fill silently treated admin1-only indicators
+  # as available at admin2/admin4 (PR #34's pinned asymmetry).
+  ind_list <- tibble::tibble(
+    var_code = c("only_admin1", "only_admin2", "everywhere"),
+    admin_levels_years = list(
+      tibble::tibble(
+        admin_level = "admin1", admin_level_name = "Oblast",
+        years = list(2020)
+      ),
+      tibble::tibble(
+        admin_level = "admin2", admin_level_name = "Rayon",
+        years = list(2020)
+      ),
+      tibble::tibble(
+        admin_level = c("admin1", "admin2"),
+        admin_level_name = c("Oblast", "Rayon"),
+        years = list(2020, 2020)
+      )
+    )
+  )
+  out <- get_vars_un_avbil(ind_list, admin_levels = c("admin1", "admin2"))
+
+  # only_admin1 must surface at admin2 (the previously-broken direction).
+  expect_true(any(out$var_code == "only_admin1" & out$admin_level == "admin2"))
+  # only_admin2 must surface at admin1 (the previously-working direction).
+  expect_true(any(out$var_code == "only_admin2" & out$admin_level == "admin1"))
+  # everywhere must not surface at all.
+  expect_false(any(out$var_code == "everywhere"))
+})
+
 # ---------------------------------------------------------------------------
 # get_min_admin_wght
 # ---------------------------------------------------------------------------
@@ -50,12 +83,13 @@ test_that("get_min_admin_wght: zero-weight schemes drop nothing", {
 
 test_that("get_min_admin_wght: a fully-available var drops nothing", {
   unavail <- get_vars_un_avbil(test_indicators)
-  # var_nval3_skewd_adm1 is available at every admin level in the
-  # bundled fixture (cross-checked via probing).
+  # var_nvalinf_unif_adm124 is the only fixture indicator with native
+  # data at every admin level (admin1, admin2, admin4). Weighting it
+  # alone must produce no drops.
   fully_available <- list(scheme = tibble::tibble(
     var_code = test_indicators$var_code,
     weight   = ifelse(
-      test_indicators$var_code == "var_nval3_skewd_adm1", 1, 0
+      test_indicators$var_code == "var_nvalinf_unif_adm124", 1, 0
     )
   ))
   out <- get_min_admin_wght(unavail, fully_available)

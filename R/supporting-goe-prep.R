@@ -19,6 +19,7 @@
 #' @param mt Named list of admin geometry tibbles (e.g. `ukr_shp`).
 #'   The element whose name matches the `adminN` column in `dta` is
 #'   joined onto the long-pivoted data via `dplyr::right_join`.
+#'   Required (the function errors if `NULL`).
 #' @param metadata Optional tibble with `var_code` and `var_name`
 #'   columns used to relabel indicators in the plot title. When
 #'   `NULL`, indicator codes are used verbatim.
@@ -48,8 +49,15 @@
 #' inherits(maps[[1]], "ggplot")
 gg_admin_list <- function(dta,
                           multiply = 1,
-                          mt = zam_bounds_simple,
+                          mt = NULL,
                           metadata = NULL) {
+  if (is.null(mt)) {
+    stop(
+      "`mt` is required: provide a named list of sf tibbles ",
+      "(e.g. the bundled `ukr_shp`).",
+      call. = FALSE
+    )
+  }
   spat_agg <-
     dta %>%
     names() %>%

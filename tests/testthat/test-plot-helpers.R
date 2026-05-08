@@ -79,12 +79,16 @@ test_that("filter_admin_levels: filters by admin_level value (not name)", {
   }
 })
 
-test_that("filter_admin_levels: name-only filter returns 0 entries (PINNED)", {
-  # PINNED quirk: the if-branch is entered (name match), but the
-  # `keep()` predicate compares values. So passing the name alone
-  # produces an empty list rather than the corresponding entries.
-  preplot <- preplot_reshape_wghtd_dta(test_pipeline_out)
-  expect_equal(length(filter_admin_levels(preplot, "admin1")), 0L)
+test_that("filter_admin_levels: name-only filter matches the same entries as value-only", {
+  # Pre PR #69 this returned 0 entries because the keep() predicate
+  # compared `x$admin_level` (the display value, e.g. "Oblast")
+  # against `to_fltr` (here the admin key "admin1"). The fix extends
+  # the predicate to also match `names(x$admin_level)`, so passing
+  # "admin1" filters to the same entries as passing "Oblast".
+  preplot  <- preplot_reshape_wghtd_dta(test_pipeline_out)
+  by_name  <- filter_admin_levels(preplot, "admin1")
+  by_value <- filter_admin_levels(preplot, "Oblast")
+  expect_equal(by_name, by_value)
 })
 
 test_that("filter_admin_levels: NULL filter -> NULL output", {
@@ -125,25 +129,24 @@ test_that("add_legend_paras: respects nbins for the continuous branch", {
 })
 
 # ---------------------------------------------------------------------------
-# complete_pti_labels  (PINNED no-op: see source — see follow-up note)
+# complete_pti_labels
 # ---------------------------------------------------------------------------
 
-test_that("complete_pti_labels: returns input unchanged (PINNED BUG)", {
-  # arch-03 §1.6 expects pti_label enriched with the priority-rank
-  # category. Source bug in plot_pti_helpers.R::complete_pti_labels:
-  # the `dta %>% purrr::map(...)` result is computed but never assigned;
-  # the function returns the original `dta`. The fix is one line, but
-  # is out of scope for the pure test-coverage phase (see PLAN.md
-  # §"Discovered bugs"). Pinning the current no-op so a future fix
-  # surfaces this test as failing and the contract gets re-stated.
+test_that("complete_pti_labels: appends <strong>{priority_rank}</strong> per entry", {
+  # arch-03 §1.6: pti_label is enriched with the priority-rank category
+  # by concatenating the entry's legend `recode_function(pti_score)`
+  # inside <strong>...</strong>.
   preplot <- preplot_reshape_wghtd_dta(test_pipeline_out)
   with_leg <- add_legend_paras(preplot, nbins = 3)
   out <- complete_pti_labels(with_leg)
   for (i in seq_along(with_leg)) {
-    expect_equal(
-      out[[i]]$pti_dta$pti_label,
-      with_leg[[i]]$pti_dta$pti_label
+    expected <- stringr::str_c(
+      with_leg[[i]]$pti_dta$pti_label,
+      "<strong>",
+      with_leg[[i]]$leg$recode_function(with_leg[[i]]$pti_dta$pti_score),
+      "</strong>"
     )
+    expect_equal(out[[i]]$pti_dta$pti_label, expected)
   }
 })
 
@@ -166,18 +169,17 @@ test_that("check_existing_groups: prior selection is kept when still present", {
   )
 })
 
-test_that("check_existing_groups: empty old errors via str_detect (PINNED)", {
-  # arch-03 §1.6 expects empty old -> "first of current" shown. The
-  # current implementation passes character(0) into str_detect's
-  # `pattern` argument, which raises a vctrs size error.
-  expect_error(
-    check_existing_groups(
-      c("a (Country)", "b (Oblast)"),
-      character(0),
-      priority_group = "Oblast"
-    ),
-    regexp = "size"
+test_that("check_existing_groups: empty old -> first of current shown", {
+  # arch-03 §1.6 contract: empty old_grps -> first currently rendered
+  # group is shown, the rest hidden. Pre-fix this errored in
+  # `str_detect(., character(0))` with a vctrs size error.
+  out <- check_existing_groups(
+    c("a (Country)", "b (Oblast)"),
+    character(0),
+    priority_group = "Oblast"
   )
+  expect_equal(out$out_show, "a (Country)")
+  expect_equal(out$out_hide, "b (Oblast)")
 })
 
 test_that("check_existing_groups: disjoint old -> first current shown", {

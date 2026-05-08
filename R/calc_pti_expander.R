@@ -22,15 +22,12 @@
 #' @return A nested named list: outer names are admin source levels,
 #'   inner names are admin target levels; each leaf is a wide tibble
 #'   with `<var_code>._._.<adm_from>` columns at the target level.
-#'   Leaves are `NULL` when the source-level data is missing or the
-#'   `adm_from` slot has more than one element matching its level
-#'   pattern.
+#'   Leaves are `NULL` when no `wtd_scrd_dta` slot matches the source
+#'   level, or when the matched slot is empty (zero rows).
 #'
-#' @note When `length(adm_from_dta_full) > 1` (more than one slot
-#'   name matches an admin level), the entire source-loop iteration
-#'   returns nested `NULL`s — silent data loss. Pinned in
-#'   `test-calc-pipeline.R` ("expand_adm_levels: >1 element matches
-#'   (PINNED)") — see PLAN.md §12.
+#'   Errors when more than one `wtd_scrd_dta` slot matches a single
+#'   admin level — the input contract is one slot per level
+#'   (`adminN_HumanName`).
 #'
 #' @importFrom purrr imap
 #' @importFrom dplyr select contains all_of distinct pull rename_at vars any_of everything full_join filter_at group_by_at summarise_all
@@ -45,8 +42,19 @@ expand_adm_levels <- function(wtd_scrd_dta, mt) {
 
   purrr::imap(adm_lvls, ~ {
     adm_from <- .x
+    # Boundary-anchored: adm_from='admin1' must not match 'admin10_...'.
+    adm_pattern <- paste0("^", adm_from, "(_|$)")
     adm_from_dta_full <-
-      wtd_scrd_dta[stringr::str_detect(names(wtd_scrd_dta), adm_from)]
+      wtd_scrd_dta[stringr::str_detect(names(wtd_scrd_dta), adm_pattern)]
+
+    if (length(adm_from_dta_full) > 1) {
+      stop(
+        "more than one slot in `wtd_scrd_dta` matches admin level '",
+        adm_from, "': ",
+        paste(names(adm_from_dta_full), collapse = ", "),
+        call. = FALSE
+      )
+    }
 
     if (length(adm_from_dta_full) == 1 &&
         nrow(adm_from_dta_full[[1]]) > 0) {

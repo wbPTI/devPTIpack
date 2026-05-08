@@ -94,13 +94,17 @@ test_that("fct_internal_wt_to_exp: row count = vars x schemes", {
   )
 })
 
-test_that("fct_internal_wt_to_exp: empty list errors at left_join (PINNED)", {
-  # PINNED: imap_dfr(list()) yields a 0x0 tibble, so the downstream
-  # left_join cannot find its `var_code` join key. Worth normalising
-  # later (early return on length-0 input) but pinned for now.
-  expect_error(
-    fct_internal_wt_to_exp(list(), test_indicators),
-    regexp = "var_code"
+test_that("fct_internal_wt_to_exp: empty list returns a 0-row tibble with the full schema", {
+  # Pre PR #65: imap_dfr(list()) yielded a 0x0 tibble, so the downstream
+  # left_join errored with "Join columns in `x` must be present ...
+  # var_code". The fix early-returns a 0-row tibble matching the
+  # schema documented in the function's @return.
+  out <- fct_internal_wt_to_exp(list(), test_indicators)
+  expect_s3_class(out, "tbl_df")
+  expect_equal(nrow(out), 0L)
+  expect_setequal(
+    names(out),
+    c("var_code", "var_name", "weight", "weight_scheme")
   )
 })
 
