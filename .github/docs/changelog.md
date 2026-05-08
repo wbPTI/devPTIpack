@@ -11,6 +11,12 @@
 | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Config | Resolved PR #63 ↔ `koichi-arch-redesign` merge conflicts in `DESCRIPTION` (took the pkgdown overhaul, dropped redundant hand-rolled `Author:`/`Maintainer:` fields, fixed Koichi's email typo, kept R ≥ 4.1.0).    |
 | Docs   | Resolved PR #63 ↔ `koichi-arch-redesign` merge conflicts in `PLAN.md` by taking the redesign-branch content (canonical source of truth — pkgdown PR's whitespace re-alignment was cosmetic and would re-conflict). |
+| Docs   | Added `.github/docs/arch-06-build-pti-vignette.md` — planning doc for build-pti.qmd + dataprep.qmd content + methodology.qmd slim + minimal validator UX pass.                                                     |
+| Docs   | Replaced `vignettes/dataprep.qmd` stub with the full data-prep reference (boundary-shape and metadata-template column-by-column reference, common pitfalls, worked example using bundled `ukr_shp` / `ukr_mtdt_full`). |
+| Docs   | Replaced `vignettes/articles/build-pti.qmd` placeholder with a 9-section task-oriented walkthrough (scaffold → shapes → metadata → validate → launch → deploy → troubleshoot → next steps).                       |
+| Code   | Refactored four exported validators (`validate_geometries`, `validate_metadata`, `validate_read_shp`, `validate_read_metadata`) to emit cli alerts and return `invisible(list(status, summary, issues))` with stable per-issue `check` identifiers; added `error_on_fail` parameter (default `TRUE` preserves abort semantics). New internal helper module `R/utils-validation.R`. |
+| Tests  | Added `tests/testthat/test-validators-structured-return.R` (16 expectations) pinning the new contract; refreshed `test-validators.R` to drop the obsolete `capture_validator()` helper and inspect the structured return directly. Suite stays at 0 fail / 1 skip.                                                |
+| Docs   | Updated PLAN.md §7 (Phase 4) to tick `dataprep.qmd` + `build-pti.qmd` + pkgdown deploy + validator UX pass; added explicit row for [#73](https://github.com/worldbank/devPTIpack/issues/73) (methodology.qmd slim, deferred per arch-06 §5).                                                                  |
 
 ## 2026-05-05
 
