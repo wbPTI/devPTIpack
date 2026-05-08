@@ -74,3 +74,4 @@ _site/*
 
 .DS_Store
 docs
+man/
