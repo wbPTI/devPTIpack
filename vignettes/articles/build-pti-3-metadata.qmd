@@ -1,0 +1,19 @@
+---
+title: "Step 3 — Metadata Excel"
+---
+
+Build the metadata Excel workbook that holds the indicator dictionary and per-admin-level values consumed by the PTI calculation pipeline.
+
+## What the Excel file is
+
+## Sheet structure
+
+## Column-by-column reference
+
+## Simple case walkthrough
+
+## Multi-level case
+
+## Validate metadata
+
+## How and where to save

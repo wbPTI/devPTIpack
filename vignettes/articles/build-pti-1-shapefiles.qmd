@@ -1,0 +1,15 @@
+---
+title: "Step 1 — Shapefiles"
+---
+
+Prepare the administrative-boundary shapefiles that anchor every other input to the PTI app — load, validate, fix, and save them to `app-data/`.
+
+## A. Requirements
+
+## B. Load pre-existing official shapefiles (PLACEHOLDER)
+
+## C. Validate your shapefile
+
+## D. Fix problems & save
+
+## E. Advanced: multiple admin levels

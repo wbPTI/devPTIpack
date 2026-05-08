@@ -1,0 +1,23 @@
+---
+title: "Step 6 — Deploy"
+---
+
+> **Note:** The template ships `06-deploy.R` (a plain R script, not a `.qmd`),
+> not rendered by `00-master.R`. The website vignette covers the same content
+> in tutorial form.
+
+## What gets deployed
+
+## WB deployment targets
+
+## Permissions setup
+
+## CLI deployment code
+
+## UI deployment walkthroughs
+
+## Post-deployment
+
+## Optional GitHub Pages
+
+## Where to ask for help

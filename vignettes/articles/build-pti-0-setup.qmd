@@ -1,0 +1,17 @@
+---
+title: "Step 0 — Setup new project"
+---
+
+Stand up a new PTI project on disk: install the package, scaffold the project folder, and understand the layout you'll be filling in over Steps 1–6.
+
+## Install devPTIpack
+
+## create_new_pti
+
+## Annotated folder structure
+
+## Note on 00-master.R
+
+## Note on app-data/ and git
+
+## Note on sample data
