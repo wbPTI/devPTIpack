@@ -73,5 +73,6 @@ rsconnect/
 _site/*
 
 .DS_Store
-docs
+/docs/
+!.github/docs/
 man/
