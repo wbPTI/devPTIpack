@@ -7,9 +7,19 @@
 
 ## 2026-05-08
 
-| Scope  | Change                                                                                                                                                                                                            |
-| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Config | Resolved PR #63 ↔ `koichi-arch-redesign` merge conflicts in `DESCRIPTION` (took the pkgdown overhaul, dropped redundant hand-rolled `Author:`/`Maintainer:` fields, fixed Koichi's email typo, kept R ≥ 4.1.0).    |
+| Scope   | Change                                                                                                                                                                                                            |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Data    | Added Rwanda sample shapefiles (`inst/template_pti/sample-data/rwa_adm{0,1,2}.geojson` -- geoBoundaries CC-BY 4.0, Adm0=1 / Adm1=5 / Adm2=30 polygons) for the arch-09 §5 / §9 template scaffold (issue #79).      |
+| Tooling | Added `inst/template_pti/data-raw/generate-synthetic-metadata.R` -- seeded (`set.seed(42)`) reproducible generator that writes `sample-metadata-adm1.xlsx` and `sample-metadata-adm1-adm2.xlsx` deterministically. |
+| Data    | Added committed synthetic Rwanda metadata workbooks under `inst/template_pti/sample-data/` (3 indicators: poverty_rate, literacy_rate, road_density; Adm1-only and Adm1+Adm2 multi-level variants).               |
+| Code    | Added `inst/template_pti/00-master.R` pipeline orchestrator -- renders Steps 01 + 03 by default; 02a / 04 / 05 / 06 commented with explicit TODO markers (#83 for compile, HEX API for #04).                       |
+| Code    | Added template `.qmd` step files: `01-shapes.qmd` (working Rwanda load + `validate_geometries` + saveRDS), `02a-user-zonal-stats.qmd` (optional stub), `03-metadata.qmd` (`fct_template_reader` + `validate_metadata` + stage `metadata-user.xlsx`), `04-hex-data.qmd` (HEX API stub), `05-compile.qmd` (`compile_pti_data()` stub pending #83), `06-deploy.R` (manual rsconnect script). |
+| Code    | Updated `inst/template_pti/app.R` to load shapes from `app-data/shapes.rds` and metadata via `fct_template_reader("app-data/metadata.xlsx")`; bundled-package-data alternative shown in commented lines.          |
+| Docs    | Added `inst/template_pti/README.md` -- file order, links to all 7 website tutorials, `app-data/` git-tracking warning, explicit list of TODOs deferred to #80 / #81 / #83.                                          |
+| Config  | Updated `inst/template_pti/.gitignore` to track `app-data/` and `data-raw/` by default (with commented lines explaining when to flip them).                                                                       |
+| Config  | Added force-include exception to top-level `.gitignore` so `inst/template_pti/data-raw/` regeneration scripts ship with the package (overrides the package-wide `data-raw/` ignore).                              |
+| Docs    | Divergence note: validator app calls in 01/03 commented pending #80 / #81; Step 5 commented in 00-master.R pending #83.                                                                                            |
+| Config  | Resolved PR #63 ↔ `koichi-arch-redesign` merge conflicts in `DESCRIPTION` (took the pkgdown overhaul, dropped redundant hand-rolled `Author:`/`Maintainer:` fields, fixed Koichi's email typo, kept R ≥ 4.1.0).    |
 | Docs   | Resolved PR #63 ↔ `koichi-arch-redesign` merge conflicts in `PLAN.md` by taking the redesign-branch content (canonical source of truth — pkgdown PR's whitespace re-alignment was cosmetic and would re-conflict). |
 | Docs   | Added `.github/docs/arch-06-build-pti-vignette.md` — planning doc for build-pti.qmd + dataprep.qmd content + methodology.qmd slim + minimal validator UX pass.                                                     |
 | Docs   | Replaced `vignettes/dataprep.qmd` stub with the full data-prep reference (boundary-shape and metadata-template column-by-column reference, common pitfalls, worked example using bundled `ukr_shp` / `ukr_mtdt_full`). |

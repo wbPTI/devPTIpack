@@ -1,0 +1,68 @@
+---
+title: "Step 5 -- Compile and finalise"
+format: html
+---
+
+<!-- For detailed instructions, see:
+     https://worldbank.github.io/devPTIpack/articles/build-pti-5-compile.html -->
+
+::: {.callout-warning}
+**Function not yet implemented.** `compile_pti_data()` is delivered by
+issue #83 (branch `feat/compile-pti-data`). Until that PR merges, this
+step is a stub: the call below is commented out, and `00-master.R`
+does **not** render this file by default.
+:::
+
+## What this step will do
+
+Once `compile_pti_data()` lands, this step will:
+
+1. Read every `metadata-*.xlsx` intermediate file produced by Steps 3
+   and 4 from `app-data/`.
+2. Merge them into a single canonical `app-data/metadata.xlsx`.
+3. Re-run `validate_geometries()` and `validate_metadata()` on the
+   combined inputs.
+4. Render `app-data/pti-metadata.pdf` -- the printable indicator
+   reference, mapping each indicator at its most-disaggregated admin
+   level (or at the explicit `spatial_level` you set in metadata).
+5. Export `app-data/shapefiles.zip` -- a GeoJSON archive (one file per
+   admin level) for download from the deployed app.
+6. Print a verbose CLI summary (admin levels, polygon counts,
+   indicator and pillar counts, files produced).
+
+## Run
+
+```{r}
+#| eval: false
+# TODO #83 -- compile_pti_data() not yet implemented.
+# Uncomment after issue #83 lands.
+#
+# compile_pti_data(
+#   shp_path       = "app-data/shapes.rds",
+#   metadata_paths = c(
+#     "app-data/metadata-user.xlsx"
+#     # "app-data/metadata-hex.xlsx"  # add when Step 4 produces output
+#   ),
+#   output_dir     = "app-data"
+# )
+```
+
+## Pre-launch checklist
+
+After `compile_pti_data()` completes you should see all of:
+
+- `app-data/shapes.rds`
+- `app-data/metadata.xlsx`
+- `app-data/pti-metadata.pdf`
+- `app-data/shapefiles.zip`
+
+Edit `landing-page.md` (in the project root) to describe your app, then
+launch locally with:
+
+```{r}
+#| eval: false
+# devPTIpack::launch_pti(
+#   shp_dta = readRDS("app-data/shapes.rds"),
+#   inp_dta = devPTIpack::fct_template_reader("app-data/metadata.xlsx")
+# )
+```
