@@ -21,7 +21,6 @@
 #'   deployer can see what is wrong instead of getting a console error.
 #' @param app_name Character. Title shown in the browser tab and the
 #'   page header. Defaults to `"Validate shapefiles"`.
-#' @param ... Reserved for forward compatibility; currently unused.
 #'
 #' @return A [shiny::shinyApp()] object. Called primarily for its side
 #'   effect of starting an interactive Shiny app.
@@ -35,6 +34,7 @@
 #' @importFrom leaflet leaflet leafletOutput renderLeaflet
 #'   addProviderTiles addPolygons addLayersControl layersControlOptions
 #'   providers fitBounds highlightOptions
+#' @importFrom htmltools HTML
 #' @importFrom rlang is_missing
 #' @importFrom sf st_bbox
 #' @importFrom grDevices hcl.colors
@@ -51,7 +51,7 @@
 #' broken$admin1_Oblast$admin1Pcod <- NULL
 #' app_validate_shp(broken)
 #' }
-app_validate_shp <- function(shp, app_name = "Validate shapefiles", ...) {
+app_validate_shp <- function(shp, app_name = "Validate shapefiles") {
 
   if (rlang::is_missing(shp) || is.null(shp)) {
     stop(
@@ -203,10 +203,16 @@ build_validation_leaflet <- function(shp) {
     name_col <- grep("Name$", names(layer), value = TRUE)
     pcod_col <- grep("Pcod$", names(layer), value = TRUE)
 
-    name_vec <- if (length(name_col) > 0L)
-      as.character(layer[[name_col[1]]]) else seq_len(nrow(layer))
-    pcod_vec <- if (length(pcod_col) > 0L)
-      as.character(layer[[pcod_col[1]]]) else rep("", nrow(layer))
+    name_vec <- if (length(name_col) > 0L) {
+      as.character(layer[[name_col[1]]])
+    } else {
+      as.character(seq_len(nrow(layer)))
+    }
+    pcod_vec <- if (length(pcod_col) > 0L) {
+      as.character(layer[[pcod_col[1]]])
+    } else {
+      rep("", nrow(layer))
+    }
 
     labels <- paste0(
       "<strong>", slot, "</strong><br/>",

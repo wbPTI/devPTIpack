@@ -74,8 +74,9 @@ test_that("app_validate_shp renders even when validate_geometries() fails", {
 test_that("app_validate_shp_server: renders leaflet map and summary text", {
   testServer(app_validate_shp_server, args = list(shp = ukr_shp), expr = {
     session$flushReact()
+    expect_false(is.null(output$map))             # cheap non-null guard
     expect_s3_class(output$map, "json")           # leaflet output is JSON-encoded
-    expect_match(output$validation_status, "pass|warn|fail")
+    expect_true(output$validation_status %in% c("pass", "warn", "fail"))
     expect_match(output$validation_summary, "layer|admin")
   })
 })
