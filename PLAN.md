@@ -650,6 +650,12 @@ Per arch-04. Concrete cuts:
       (PR-B, per arch-06 §6 — minimal subset of issue
       [#7](https://github.com/worldbank/devPTIpack/issues/7); CSV /
       auto-metadata / Shiny upload module deferred).
+- [x] arch-09 PR #B — `app_validate_shp(shp)` exported (issue
+      [#80](https://github.com/worldbank/devPTIpack/issues/80)):
+      standalone Shiny launcher for visual shapefile inspection,
+      renders leaflet map with one toggleable layer per admin level
+      and the `validate_geometries()` summary in a sidebar; 12-test
+      Tier-1+Tier-2 file (`tests/testthat/test-app-validate-shp.R`).
 - [ ] Confirm `R CMD check` builds vignettes cleanly.
 - [ ] **After this phase:** add `shinytest2` automation for Tier 3.
 
