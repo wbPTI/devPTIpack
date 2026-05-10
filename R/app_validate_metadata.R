@@ -1,4 +1,4 @@
-#' Standalone validation app — geometry + metadata + Data Explorer
+#' Standalone validation app -- geometry + metadata + Data Explorer
 #'
 #' Launches a Shiny app that runs both [validate_geometries()] and
 #' [validate_metadata()] on the supplied in-memory inputs, displays the
@@ -17,7 +17,7 @@
 #' The app renders even when the validators report `status = "fail"`
 #' so the deployer can see *what* is wrong instead of getting an R
 #' error and no UI. The Data Explorer is wrapped in `tryCatch()` so a
-#' single broken indicator does not take the whole launcher down — if
+#' single broken indicator does not take the whole launcher down -- if
 #' the explorer fails to construct, only its tab area shows an error
 #' message and the validation summary is still readable.
 #'
@@ -52,7 +52,7 @@
 #' # Inspect the bundled Ukraine shapefile + synthetic metadata.
 #' app_validate_metadata(ukr_shp, ukr_mtdt_full)
 #'
-#' # Renders even when the geometry validator fails — useful for
+#' # Renders even when the geometry validator fails -- useful for
 #' # visualising *what* is broken rather than only *that* something is.
 #' broken_shp <- ukr_shp
 #' broken_shp$admin1_Oblast$admin1Pcod <- NULL
@@ -113,7 +113,7 @@ validate_validation_inputs <- function(shp_dta, inp_dta) {
   }
   if (is.null(names(shp_dta)) || any(!nzchar(names(shp_dta)))) {
     stop(
-      "'shp_dta' must be a named list — slots should follow the ",
+      "'shp_dta' must be a named list -- slots should follow the ",
       "'admin<N>_HumanName' convention.",
       call. = FALSE
     )
@@ -168,7 +168,7 @@ app_validate_metadata_ui <- function(id, app_name = "Validate metadata") {
         # The validator server is wrapped in `moduleServer(id, ...)`, so
         # the embedded explorer's server-side namespace ends up nested
         # as `<id>-explorer`. Mirror that here on the UI side via
-        # `ns("explorer")` — otherwise the output IDs don't bind and
+        # `ns("explorer")` -- otherwise the output IDs don't bind and
         # the leaflet + picker render but never populate.
         mod_dta_explorer2_ui(
           ns("explorer"),
@@ -241,7 +241,7 @@ app_validate_metadata_server <- function(id, shp_dta, inp_dta) {
     # validate_metadata; on a "fail" input that pipeline aborts inside
     # the explorer's reactive (where Shiny's default error handler
     # sometimes propagates the error all the way up and crashes the R
-    # process — we hit this on PR #92 visual review). Embedding only
+    # process -- we hit this on PR #92 visual review). Embedding only
     # when validators are healthy avoids the crash.
     #
     # The validation summary in the sidebar is the actionable output
@@ -276,7 +276,7 @@ app_validate_metadata_server <- function(id, shp_dta, inp_dta) {
       shiny::showNotification(
         paste0(
           "Validation failed (", geom_diag$status, " / ",
-          mtdt_diag$status, ") — Data Explorer disabled. Fix the ",
+          mtdt_diag$status, ") -- Data Explorer disabled. Fix the ",
           "issues listed in the sidebar and relaunch."
         ),
         type = "error", duration = NULL

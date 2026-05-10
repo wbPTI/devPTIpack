@@ -713,8 +713,15 @@ Per arch-04. Concrete cuts:
       / `launch_pti()` tab tour); Step 6 written end-to-end (deployment-target
       table, permissions setup, CLI + UI walkthroughs, post-deploy permissions
       + custom URL, optional GitHub Pages, help links).
-- [ ] arch-09 final integration audit — pkgdown links, R CMD check,
+- [x] arch-09 final integration audit — pkgdown links, R CMD check,
       user sign-off (issue [#86](https://github.com/worldbank/devPTIpack/issues/86)).
+      Automated checks: `pkgdown::build_site()` clean; all cross-references
+      resolve; 26/26 R code blocks across 8 vignettes parse; NAMESPACE consistent;
+      `R CMD check` 0 errors / 0 warnings / 3 notes (down from 1/2/4 — remaining
+      notes pre-existing). Real bug found and fixed: `inst/template_pti/05-compile.qmd`
+      had `#| eval: false` so `00-master.R`'s Step 05 silently no-op'd despite
+      PR #98's claim. End-to-end smoke now produces all 4 expected `app-data/`
+      artefacts. **Pending user sign-off on rendered site.**
 
 ---
 

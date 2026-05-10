@@ -5,7 +5,7 @@
 #' boundaries, or geometry artefacts before running the calculation
 #' pipeline. Internally calls [validate_geometries()] with
 #' `error_on_fail = FALSE` and surfaces the structured diagnostic
-#' summary alongside the map. The app is read-only — it never mutates
+#' summary alongside the map. The app is read-only -- it never mutates
 #' the inputs.
 #'
 #' Use this in tutorial Step 1 (`build-pti-1-shapefiles.qmd`) or any
@@ -45,7 +45,7 @@
 #' # Inspect the bundled Ukraine shapefile.
 #' app_validate_shp(ukr_shp)
 #'
-#' # The app still renders if a layer is structurally broken — useful
+#' # The app still renders if a layer is structurally broken -- useful
 #' # for spotting *what* is wrong rather than only *that* something is.
 #' broken <- ukr_shp
 #' broken$admin1_Oblast$admin1Pcod <- NULL
@@ -71,7 +71,7 @@ app_validate_shp <- function(shp, app_name = "Validate shapefiles") {
   }
   if (is.null(names(shp)) || any(!nzchar(names(shp)))) {
     stop(
-      "'shp' must be a named list — slots should follow the ",
+      "'shp' must be a named list -- slots should follow the ",
       "'admin<N>_HumanName' convention (e.g. 'admin1_Province').",
       call. = FALSE
     )

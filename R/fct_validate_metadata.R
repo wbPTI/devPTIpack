@@ -85,7 +85,7 @@ validate_metadata <- function(shp_path, mtdt_path, error_on_fail = TRUE) {
       issues <<- emit_issue(
         issues, "fail", "pillar-count-mismatch",
         sprintf(
-          "Pipeline produced %d scored pillar(s) but metadata declares %d indicator(s). Some indicators were silently dropped — check var_code consistency between metadata and admin sheets.",
+          "Pipeline produced %d scored pillar(s) but metadata declares %d indicator(s). Some indicators were silently dropped -- check var_code consistency between metadata and admin sheets.",
           nrow_pti, expected
         )
       )
@@ -277,7 +277,7 @@ validate_read_metadata <- function(mtdt_path, error_on_fail = TRUE) {
       issues <- emit_issue(
         issues, "fail", "fltr-cols-logical",
         sprintf(
-          "Filter column(s) [%s] in 'metadata' are not logical. Excel sometimes saves TRUE/FALSE as strings — write the .xlsx from R with `writexl::write_xlsx()` so the cells are true booleans.",
+          "Filter column(s) [%s] in 'metadata' are not logical. Excel sometimes saves TRUE/FALSE as strings -- write the .xlsx from R with `writexl::write_xlsx()` so the cells are true booleans.",
           paste(bad_cols, collapse = ", ")
         )
       )

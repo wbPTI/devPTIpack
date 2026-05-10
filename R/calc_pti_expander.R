@@ -254,7 +254,7 @@ agg_pti_scores <- function(extrap_dta, adm_ids, na_rm_pti2 = NULL) {
             dplyr::mutate(
               pti_score = dta %>%
                 dplyr::select(!any_of(nonsum_cols)) %>%
-                dplyr::select(any_of(foreign_coll), naitive_col) %>%
+                dplyr::select(any_of(foreign_coll), all_of(naitive_col)) %>%
                 rowSums(na.rm = na_rm_pti),
               pti_name = pti_name
             ) %>%

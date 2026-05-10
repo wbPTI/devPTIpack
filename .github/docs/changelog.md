@@ -5,6 +5,31 @@
 
 ---
 
+## 2026-05-10 (afternoon — final integration audit)
+
+| Scope | Change                                                                                                                                                                                                                                |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Code  | `inst/template_pti/05-compile.qmd` — dropped `#| eval: false` from the `compile_pti_data()` chunk and replaced with `#| message: false`. Pre-fix the chunk was rendered to HTML but never executed, so `quarto::quarto_render("05-compile.qmd")` from `00-master.R` (uncommented in PR #98) silently produced nothing under `app-data/` for Step 5. Real bug introduced by PR #94 (issue #83); end-to-end smoke now produces all 4 expected artefacts (`metadata.xlsx`, `shapefiles.zip`, `pti-metadata.pdf` (or NA when LaTeX absent), plus the Step 1 `shapes.rds`). |
+| Code  | ASCII-cleaned 4 R files (`app_validate_shp.R`, `app_validate_metadata.R`, `fct_validate_metadata.R`, `validators.R`) — replaced 13 em-dashes (`—` U+2014) with double-hyphens (`--`) across roxygen comments and user-facing error / cli messages. Eliminates `R CMD check` "Found the following files with non-ASCII characters" WARNING. |
+| Code  | `R/calc_pti_expander.R::expand_pti` — `dplyr::select(any_of(foreign_coll), naitive_col)` → `dplyr::select(any_of(foreign_coll), all_of(naitive_col))`. Eliminates the tidyselect 1.1.0 deprecation warning that bubbled up to a test failure during R CMD check (`Using an external vector in selections was deprecated`). Pre-existing latent issue surfaced during arch-09 final integration audit (issue #86). |
+| Config | `.Rbuildignore` — added `^vignettes/\.quarto$` (Quarto build cache) and `^vignettes/articles$` (pkgdown articles directory; pkgdown reads from source tree, not the installed package, so excluding from the source tarball is safe). Eliminates two pre-existing `R CMD check` WARNINGs (non-vignette `.qmd` files in `vignettes/`, plus the cache directory) and one NOTE (vignettes subdirectory but no vignettes). |
+| Docs  | Updated PLAN.md §7 (Phase 4 / arch-09 documentation redesign) — ticked the final arch-09 checkbox for issue #86. arch-09 chain (#77/#78–#86) closed pending user sign-off. |
+
+### R CMD check delta
+
+| Before audit | After audit |
+| ------------ | ----------- |
+| 1 ERROR (testthat — environmental, see below) | 0 ERROR |
+| 2 WARNINGS (non-ASCII; vignettes/ artefacts) | 0 WARNINGS |
+| 4 NOTES (hidden files; license stub; unused Imports; vignettes subdir) | 3 NOTES (license stub; unused Imports; one hidden file) |
+
+### Remaining items (pre-existing; out of arch-09 scope; flag as follow-ups)
+
+- 3 `R CMD check` NOTES, all pre-existing: License stub invalid DCF; 7 unused Imports (`bsplus`, `config`, `here`, `pkgload`, `quarto`, `testthat`, `tippy`); the `inst/template_pti/app-data/.gitkeep` placeholder (kept on purpose — exclusion would orphan the empty `app-data/` directory in scaffolded projects).
+- 12 environmental test failures in `test-mod-{drop-inval-adm,dwnld-file,var-selector}.R` from `local_mocked_bindings()` — this box runs testthat 3.1.2; the helper landed in 3.2.0. CI runs newer testthat; suite is green there.
+
+---
+
 ## 2026-05-10
 
 | Scope | Change                                                                                                                                                                                                                                |

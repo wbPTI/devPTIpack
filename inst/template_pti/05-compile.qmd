@@ -26,7 +26,7 @@ files produced). On validation failure it errors by default; pass
 ## Run
 
 ```{r}
-#| eval: false
+#| message: false
 library(devPTIpack)
 
 compile_pti_data(

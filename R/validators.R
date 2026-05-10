@@ -53,7 +53,7 @@ validate_single_geom <- function(focus_geom, full_geom, error_on_fail = TRUE) {
   if (!"sf" %in% class(focus_df)) {
     issues <- emit_issue(
       issues, "warn", "is-sf-class",
-      glue("Layer '{adm_level}_{adm_name}' is not an `sf` object — wrap it with `sf::st_as_sf()`.")
+      glue("Layer '{adm_level}_{adm_name}' is not an `sf` object -- wrap it with `sf::st_as_sf()`.")
     )
   }
 
