@@ -703,8 +703,16 @@ Per arch-04. Concrete cuts:
       to `dataprep.qmd`, advanced multi-level subsection in Step 1,
       simple + multi-level walkthroughs in Step 3, both validator UX
       flows (`validate_*` + `app_validate_*`) wired into Steps 1 and 3.
-- [ ] arch-09 PR #F — rewrite `build-pti.qmd` overview + write Steps 5–6
-      vignettes (issue [#85](https://github.com/worldbank/devPTIpack/issues/85)).
+- [x] arch-09 PR #F — rewrite `build-pti.qmd` overview + write Steps 5–6 vignettes
+      (issue [#85](https://github.com/worldbank/devPTIpack/issues/85)):
+      `build-pti.qmd` collapsed from 9-section walkthrough to short journey-map
+      overview (input contract table, < 5-line Rwanda quickstart, 7-step journey
+      table linking out, `00-master.R` pointer, where-to-start FAQ); Step 5
+      written against the merged `compile_pti_data()` (inputs / outputs / CLI
+      summary / structured return / failure-recovery flow / pre-launch checklist
+      / `launch_pti()` tab tour); Step 6 written end-to-end (deployment-target
+      table, permissions setup, CLI + UI walkthroughs, post-deploy permissions
+      + custom URL, optional GitHub Pages, help links).
 - [ ] arch-09 final integration audit — pkgdown links, R CMD check,
       user sign-off (issue [#86](https://github.com/worldbank/devPTIpack/issues/86)).
 

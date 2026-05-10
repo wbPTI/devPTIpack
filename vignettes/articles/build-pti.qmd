@@ -1,355 +1,66 @@
 ---
 title: "Build a PTI"
 description: >
-  A step-by-step walkthrough of taking raw country data through to a deployed
-  Project Targeting Index (PTI) Shiny dashboard with `devPTIpack`.
+  Overview of the seven-step pipeline that takes raw country data through to
+  a deployed Project Targeting Index (PTI) Shiny dashboard with `devPTIpack`.
 ---
 
-```{r setup_lib, include=FALSE}
-knitr::opts_chunk$set(
-  message = FALSE,
-  warning = FALSE,
-  collapse = TRUE,
-  comment = "#>"
-)
-```
+A **Project Targeting Index (PTI)** is a composite map ranking sub-national administrative units against a set of weighted indicators — useful for guiding the spatial allocation of programmes and investments. `devPTIpack` is the toolkit that turns your country's shapes + indicator data into a deployed Shiny dashboard.
 
-This is the recipe. If you've never built a PTI app before, follow it top to bottom — at the end you will have a Shiny dashboard running locally that you can deploy to a server.
+This page is the **journey map**. Each step is a focused tutorial; this overview tells you which one to read when, and how the pieces fit together. Pair it with [PTI Methodology](methodology.html) (the conceptual *why*) and [Data preparation reference](dataprep.html) (the canonical column-by-column *what*).
 
-This page complements [PTI Methodology](methodology.html) (the *why*) and [Data preparation reference](dataprep.html) (the canonical *what*). The walkthrough below points into the reference whenever a question of input shape comes up; you don't need to read the reference cover-to-cover before starting.
+## What data does a PTI app need?
 
-**Time estimate.** With clean shapes and a tidy indicator dataset already in hand, a developer who has done this before launches an app in roughly an hour. Most of the time on a new country goes into preparing the data, not configuring the app.
+Two inputs are mandatory; one is optional:
 
----
+| Input              | Format                                                            | Step that produces it                                            |
+| ------------------ | ----------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Boundary shapes    | Named list of `sf` tibbles, one per admin level.                  | [Step 1](build-pti-1-shapefiles.html)                            |
+| Metadata workbook  | Multi-sheet `.xlsx` — indicator dictionary + per-admin values.    | [Step 3](build-pti-3-metadata.html)                              |
+| HEX gridded data   | H3 res-6 polygons + indicator values. *Optional.*                 | [Step 4](build-pti-4-hex.html) (under development)               |
 
-## 0. What you'll build
+The full column contract for both lives in [Data preparation reference](dataprep.html).
 
-By the end of this guide you will have a project directory shaped roughly like this:
+## Reproducible quickstart — the bundled Rwanda app in < 5 lines
 
-```
-myPTI/
-├── app.R                           # the launcher
-├── app-data/
-│   ├── admin_bounds.rds            # boundary shapes (this is what you build)
-│   ├── mtdt.xlsx                   # metadata template (this is what you build)
-│   ├── metadata.pdf                # auto-rendered indicator catalogue (optional)
-│   └── shapefiles.zip              # raw shapes for download (optional)
-├── R/
-│   └── _disable_autoload.R         # golem boilerplate
-├── landing-page.md                 # info-modal content (optional)
-└── myPTI.Rproj
-```
-
-Running `app.R` launches a multi-tab Shiny dashboard with an interactive map of every administrative level you ship, weighted PTI scores per polygon, a Data Explorer tab, and a Compare tab.
-
----
-
-## 1. Prerequisites
-
-You'll need:
-
-- R `>= 4.1.0`.
-- The `devPTIpack` package (and its dependencies — `sf`, `shiny`, `golem`, `leaflet`, etc., installed transitively).
-- Administrative-boundary shapefiles for every level you want to display (typically admin0–admin2 or admin0–admin3).
-- One or more indicator datasets, each indicator measured at one specific admin level.
-
-Install the package from GitHub:
+The fastest way to see a working PTI app is the Rwanda template that ships with the package:
 
 ```r
-remotes::install_github("worldbank/devPTIpack")
-```
-
-Smoke-test the install with the bundled Ukraine sample data — if this command opens a working dashboard, your environment is ready:
-
-```r
+#| eval: false
+install.packages("pak"); pak::pak("worldbank/devPTIpack")
 library(devPTIpack)
-launch_pti_onepage(
-  shp_dta  = ukr_shp,
-  inp_dta  = ukr_mtdt_full,
-  app_name = "Smoke test"
-)
+create_new_pti("~/projects/rwa_pti")           # scaffold
+source("~/projects/rwa_pti/00-master.R")       # Steps 1 + 3 (+ 5 once enabled)
+shiny::runApp("~/projects/rwa_pti/app.R")      # local launch
 ```
 
-Once that works, you can move on to building your own.
+Five Rwandan provinces, 30 districts, 3 synthetic indicators, two pillars — a complete dashboard in under five minutes. Once that runs, swap in your country's data and re-run the same pipeline.
 
----
+## The journey
 
-## 2. Scaffold the project
+The pipeline is seven steps. Steps 1–5 produce files in `app-data/`; the deployed app consumes them.
 
-`create_new_pti()` drops a minimal app skeleton into a new directory:
+| # | Step                                                  | What it does                                                                                | Required?     |
+| - | ----------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------- |
+| 0 | [Setup](build-pti-0-setup.html)                       | Install `devPTIpack`, scaffold the project folder via `create_new_pti()`.                   | Always        |
+| 1 | [Shapefiles](build-pti-1-shapefiles.html)             | Load + validate administrative boundaries; save `app-data/shapes.rds`.                       | Always        |
+| 2 | [Zonal stats](build-pti-2-zonal-stats.html)           | Extract polygon-level indicators from raster surfaces.                                       | Optional      |
+| 3 | [Metadata Excel](build-pti-3-metadata.html)           | Build the indicator workbook; validate against shapes; save `app-data/metadata-user.xlsx`.    | Always        |
+| 4 | [HEX data](build-pti-4-hex.html)                      | Pull H3 res-6 indicator values from the HEX API. *Order-flexible* — before or after Step 3.   | Optional      |
+| 5 | [Compile & finalise](build-pti-5-compile.html)        | Merge metadata + re-validate + render PDF + zip GeoJSONs.                                    | Always        |
+| 6 | [Deploy](build-pti-6-deploy.html)                     | Publish `app.R` + `landing-page.md` + `app-data/` to Posit Connect or shinyapps.io.           | When sharing  |
 
-```r
-library(devPTIpack)
-create_new_pti("path/to/myPTI")
-```
+**Step 4 is order-flexible** — it produces an independent `app-data/metadata-hex.xlsx` that Step 5 merges with the user metadata. You can do it before or after Step 3. The other steps run sequentially.
 
-This creates the directory, copies in `app.R`, an empty `R/` folder, a `landing-page.md` placeholder, and (if you're in RStudio) opens the new project automatically. The skeleton's `app.R` is wired up to the bundled Ukraine data initially — change those references to your own paths once you have your inputs.
+## The `00-master.R` shortcut
 
-You will also want an `app-data/` sub-directory inside the project. Create it manually — the scaffolder doesn't create it because the contents are entirely yours to provide:
+Each scaffolded project ships [`00-master.R`](https://github.com/worldbank/devPTIpack/blob/main/inst/template_pti/00-master.R) — a pipeline orchestrator that calls `quarto::quarto_render()` on the step `.qmd` files top-to-bottom, populates `app-data/`, and (optionally) writes the rendered Quarto trail under `docs/`. After your first walkthrough, **`source("00-master.R")` is the everyday command** — it re-runs Steps 1, (3), 5 every time your raw inputs change. Comment / uncomment lines to skip optional steps (Step 2, 4) or pause work.
 
-```r
-dir.create(file.path("path/to/myPTI", "app-data"))
-```
+The website tutorials (this page and Steps 0–6) are how you *learn* the pipeline. `00-master.R` is how you *operate* it once you know it.
 
-The scaffolded `app.R` looks like this:
+## Where to start
 
-```r
-library(shiny)
-library(devPTIpack)
-
-options("golem.app.prod" = TRUE)
-launch_pti(
-  shp_dta         = devPTIpack::ukr_shp,
-  inp_dta         = devPTIpack::ukr_mtdt_full,
-  app_name        = "{{COUNTRY NAME}}",
-  show_waiter     = TRUE,
-  show_adm_levels = NULL,
-  shapes_path     = ".",
-  mtdtpdf_path    = "."
-)
-```
-
-You'll edit `shp_dta`, `inp_dta`, `app_name`, and the path arguments in §6 once your data is ready.
-
----
-
-## 3. Prepare boundary shapes
-
-The package expects a **named list of `sf` tibbles**, one per administrative level, saved as a single `.rds` file. The full shape specification (column requirements, parent-child cascade rule, geometry constraints) is in [Data preparation reference §1](dataprep.html#boundary-shapes-admin_bounds.rds). Read it before assembling your list — most validator failures originate in that section's invariants.
-
-The minimal recipe, assuming you have raw shapefiles per admin level:
-
-```r
-library(sf)
-library(dplyr)
-library(units)
-
-# Read every level. For your country, replace these paths.
-admin1 <- read_sf("data-raw/admin1.shp")
-admin2 <- read_sf("data-raw/admin2.shp")
-
-# Re-project to a metric CRS for area; here we use UTM 36N (Ukraine).
-# Pick a projection appropriate for your country.
-to_metric <- function(x) st_transform(x, 32636)
-
-admin1 <- admin1 |> to_metric() |> st_make_valid()
-admin2 <- admin2 |> to_metric() |> st_make_valid()
-
-# Compute area in km².
-admin1$area <- as.numeric(set_units(st_area(admin1), "km^2"))
-admin2$area <- as.numeric(set_units(st_area(admin2), "km^2"))
-
-# Derive admin0 from admin1 by dissolving on the country code.
-admin0 <- admin1 |>
-  mutate(admin0Pcod = "UA", admin0Name = "Ukraine") |>
-  group_by(admin0Pcod, admin0Name) |>
-  summarise(area = sum(area), .groups = "drop") |>
-  st_make_valid()
-
-# Each layer must contain its own Pcod/Name plus all parent Pcods.
-# admin1 must carry admin0Pcod; admin2 must carry admin0Pcod and admin1Pcod.
-# (Your raw shapefiles usually do — verify column names match the package
-# convention exactly; rename if needed.)
-
-# Assemble the named list. Names follow `admin<N>_<HumanName>` exactly.
-my_shp <- list(
-  admin0_Country = admin0,
-  admin1_Oblast  = admin1,
-  admin2_Rayon   = admin2
-)
-
-# Save it.
-saveRDS(my_shp, "app-data/admin_bounds.rds", compress = "gz")
-```
-
-For the column-by-column rules (which columns each layer needs, what the cascade rule says), see [Data preparation reference §1.3–§1.4](dataprep.html#required-columns-per-layer).
-
----
-
-## 4. Prepare the metadata template
-
-The metadata template is a single `.xlsx` file with one sheet per admin level, plus a `general` sheet, plus a `metadata` sheet describing each indicator. The full sheet-by-sheet and column-by-column reference is in [Data preparation reference §2](dataprep.html#metadata-excel-template-mtdt.xlsx).
-
-The high-level pattern: build each sheet as a data frame in R, collect them into a named list, write the list to `.xlsx` with `writexl::write_xlsx()`. This is the same pattern documented in the [`zamPTIdata`](https://github.com/wbPTI/zamPTIdata) and [`kgzPTIdata`](https://github.com/wbPTI/kgzPTIdata) example repositories (both private — request access from [Eduard Bukin](https://github.com/EBukin)).
-
-A skeletal version, joining indicator data onto the boundary list from §3:
-
-```r
-library(dplyr)
-library(sf)
-library(writexl)
-
-# Suppose you have indicator tibbles already aggregated to the right level —
-# one indicator per column, plus the keys.
-poverty_admin2 <- ...        # cols: admin2Pcod, admin2Name, year, poverty_rate
-literacy_admin1 <- ...       # cols: admin1Pcod, admin1Name, year, literacy_rate
-
-# 1. Build the per-admin sheets by joining indicators onto the boundary keys.
-admin1_sheet <- my_shp$admin1_Oblast |>
-  st_drop_geometry() |>
-  left_join(literacy_admin1, by = c("admin1Pcod", "admin1Name"))
-
-admin2_sheet <- my_shp$admin2_Rayon |>
-  st_drop_geometry() |>
-  left_join(poverty_admin2, by = c("admin2Pcod", "admin2Name"))
-
-# 2. Build the metadata sheet — one row per indicator. See dataprep §2.3 for
-#    the full column reference.
-metadata <- tibble::tribble(
-  ~var_code,        ~var_name,             ~var_description,                       ~var_order, ~var_units, ~spatial_level,    ~pillar_group, ~pillar_name,         ~pillar_description, ~fltr_exclude_pti, ~fltr_exclude_explorer, ~fltr_overlay_pti, ~fltr_overlay_explorer, ~legend_revert_colours,
-  "literacy_rate",  "Literacy rate",       "Adult literacy rate, latest census.",  1L,         "%",        "admin1_Oblast",    1,             "Human capital",      NA,                  FALSE,             FALSE,                  FALSE,             FALSE,                  FALSE,
-  "poverty_rate",   "Poverty headcount",   "Share of population below the line.",  2L,         "%",        "admin2_Rayon",     1,             "Human capital",      NA,                  FALSE,             FALSE,                  FALSE,             FALSE,                  TRUE
-)
-
-# 3. The general sheet.
-general <- tibble::tibble(country = "Ukraine")
-
-# 4. Collect into a named list and write.
-sheets <- list(
-  general       = general,
-  metadata      = metadata,
-  admin1_Oblast = admin1_sheet,
-  admin2_Rayon  = admin2_sheet
-)
-
-writexl::write_xlsx(sheets, "app-data/mtdt.xlsx")
-```
-
-A few rules of thumb (the full list is in [dataprep §3](dataprep.html#common-pitfalls)):
-
-- The `var_code` in `metadata` must equal an indicator column name in at least one admin sheet, exactly.
-- `spatial_level` must equal one of the admin sheet names in this same file (not the geometry list, though they should be identical).
-- All `fltr_*` columns and `legend_revert_colours` are *booleans*, not strings.
-- Don't put `:` in `var_name` or `pillar_name`.
-
----
-
-## 5. Validate the inputs
-
-Before launching the app, run the two exported validators. They emit pass/warn/fail messages and (since the validator UX pass) return an invisible structured result you can inspect.
-
-```r
-library(devPTIpack)
-
-my_shp <- readRDS("app-data/admin_bounds.rds")
-
-validate_geometries(my_shp)
-validate_metadata(
-  shp_path  = "app-data/admin_bounds.rds",
-  mtdt_path = "app-data/mtdt.xlsx"
-)
-```
-
-`validate_geometries()` walks every layer and reports per-layer findings (geometry types, P-code uniqueness, name uniqueness, parent-child cascade). `validate_metadata()` runs both file-readability checks and a dry-run of the calculation pipeline under all-equal weights.
-
-A clean run prints a list of pass alerts. Warnings are non-blocking (the app will still launch but something is suspect). Fails are blocking (the pipeline will not run). Each issue includes the offending layer / column / value so you can fix it surgically.
-
-If you're scripting validation programmatically (for example inside CI), capture the structured return:
-
-```r
-res <- validate_geometries(my_shp, error_on_fail = FALSE)
-res$status     # "pass", "warn", or "fail"
-res$issues     # list of issue records — level, check, message, details
-```
-
-The `error_on_fail = FALSE` argument lets the function return cleanly on a failure instead of throwing; default is `TRUE` so existing pipeline scripts that depended on the validator aborting still work.
-
-For the full list of what the validators do and don't check, see [dataprep §1.7–§1.8](dataprep.html#what-validate_geometries-catches) and [dataprep §2.6–§2.7](dataprep.html#what-validate_metadata-catches).
-
----
-
-## 6. Launch locally
-
-Edit `app.R` to point at your inputs:
-
-```r
-library(shiny)
-library(devPTIpack)
-
-options("golem.app.prod" = TRUE)
-launch_pti(
-  shp_dta         = readRDS("app-data/admin_bounds.rds"),
-  inp_dta         = fct_template_reader("app-data/mtdt.xlsx"),
-  app_name        = "My Country PTI",
-  show_waiter     = TRUE,
-  show_adm_levels = c("admin1", "admin2"),
-  shapes_path     = "app-data/shapefiles.zip",
-  mtdtpdf_path    = "app-data/metadata.pdf"
-)
-```
-
-Then click *Run App* in RStudio (or `shiny::runApp("path/to/myPTI")`). The app should open in a browser tab.
-
-The most useful `launch_pti()` arguments:
-
-| Argument          | Meaning                                                                                                                                                       |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `shp_dta`         | Required. The shapes list (or its on-disk RDS read with `readRDS()`).                                                                                          |
-| `inp_dta`         | Required. The parsed metadata list (run your `mtdt.xlsx` through `fct_template_reader()`).                                                                     |
-| `app_name`        | Display title in the navbar and downloads.                                                                                                                     |
-| `ui_type`         | `"twocol"` (default — full multi-tab dashboard) or `"box"` (compact single-card embedding for putting PTI inside another Shiny app).                           |
-| `show_adm_levels` | Vector like `c("admin1", "admin2")` controlling which levels users can compute PTI at. `NULL` (default) shows all levels with data.                            |
-| `tabs`            | Subset of `c("info", "compare", "explorer")`. Drop `"info"` to skip the landing-page modal; drop `"compare"` to hide the side-by-side comparison view.         |
-| `shapes_path`     | Path to a zip archive of raw shapefiles served as a download from the app. If `NULL`, the app generates one from `shp_dta` on the fly.                         |
-| `mtdtpdf_path`    | Path to a pre-rendered PDF of the metadata catalogue, served as a download. If `NULL`, the app does not offer a PDF download.                                  |
-| `show_waiter`     | `TRUE` to show a loading splash on cold start. Set `FALSE` when embedding the PTI as a tab inside a multi-tab dashboard.                                       |
-| `pti_landing_page` | Path to a markdown file rendered as the landing-page modal. If omitted, the modal is skipped.                                                                  |
-
-For one-page embedding (no navbar, no Compare/Explorer tabs), use `launch_pti_onepage()` — same `shp_dta` / `inp_dta` arguments, simpler UI.
-
----
-
-## 7. Deploy
-
-Three common targets. Pick whichever your team already runs.
-
-**shinyapps.io** — easiest for a public demo.
-
-```r
-rsconnect::deployApp(appDir = "path/to/myPTI", appName = "myPTI")
-```
-
-Make sure `app.R`'s paths are *relative* (e.g. `"app-data/admin_bounds.rds"`, not `"~/projects/myPTI/app-data/..."`). Absolute paths break on the server.
-
-**Posit Connect** — for internal-network deployments. Use the *Publish* blue-arrow button in RStudio with a Connect server configured.
-
-**Self-hosted Shiny Server** — `scp` the project directory into `/srv/shiny-server/myPTI` (or wherever the server reads). The dependencies on the host need to match what's in `DESCRIPTION`.
-
-For a real-world deployment recipe, see the [`zamPTI`](https://github.com/wbPTI/zamPTI) example app repo (private — request access from [Eduard Bukin](https://github.com/EBukin)).
-
----
-
-## 8. Troubleshooting
-
-| Symptom                                                                       | Likely cause                                                                                              | Fix                                                                                                          |
-| ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| App launches but the indicator dropdown is empty                              | `var_code` in `metadata` doesn't match a column name in any `admin<N>_*` sheet                            | Verify column names letter-for-letter; remember case sensitivity                                              |
-| `validate_read_metadata()` warns "filter columns are not read as logical"     | `fltr_*` cells stored as `"TRUE"` / `"FALSE"` strings                                                     | Re-write the `.xlsx` from R with `writexl::write_xlsx()` — the columns will then be true booleans            |
-| `validate_geometries()` warns "values in `admin1Pcod` of `admin2_X` not in admin1_Y" | Orphan child P-codes — the cascade rule (dataprep §1.4) is broken                                          | Fix the upstream join, or filter the orphan rows out                                                          |
-| Map renders but some polygons are blank (no colour)                           | The polygon has `NA` for every selected indicator                                                          | `get_vars_un_avbil()` lists unavailable admins. Either fill the data or accept the gap.                       |
-| `launch_pti()` aborts with "indicator column type"                            | An indicator column is character / factor / Date instead of numeric                                       | Cast in the source pipeline; the package does not coerce silently                                             |
-| Deployed app shows a 404 for the PDF download                                 | `mtdtpdf_path` is absolute or the file was not uploaded                                                    | Use a relative path; verify `app-data/metadata.pdf` exists in the deployed bundle                            |
-| `validate_metadata()` complains about pillar count                            | Two indicators with the same `pillar_group` have different `pillar_name` strings                          | Make `pillar_name` consistent within each group                                                              |
-
-If you hit something not on the list, run the validators with `error_on_fail = FALSE` and inspect `res$issues` — every check the package enforces is named in the `check` field.
-
----
-
-## 9. Next steps
-
-- [PTI Methodology](methodology.html) — the conceptual framing (z-scores, weights, monitoring).
-- [Data preparation reference](dataprep.html) — the canonical input-shape spec referenced throughout this walkthrough.
-- [Function reference](../reference/index.html) — every exported function, organised by category.
-- [Past projects](past-projects.html) — what completed PTI deployments look like.
-
----
-
-```{r, include=FALSE}
-# Verify the bundled-data smoke test from §1 actually works (without
-# launching the app — we only want to confirm the inputs parse).
-library(devPTIpack)
-data(ukr_shp)
-data(ukr_mtdt_full)
-stopifnot(is.list(ukr_shp), length(ukr_shp) > 0)
-stopifnot(is.list(ukr_mtdt_full), "metadata" %in% names(ukr_mtdt_full))
-```
+- **First time?** Begin with [Step 0 — Setup](build-pti-0-setup.html) and follow the steps top to bottom.
+- **Already familiar with `devPTIpack`?** Jump straight to the step you're working on. Each tutorial has a "Next" pointer back into the chain.
+- **Reference question** ("what columns does the metadata sheet need?") — go to [Data preparation reference](dataprep.html).
+- **Method question** ("how is the PTI score computed?") — go to [PTI Methodology](methodology.html).

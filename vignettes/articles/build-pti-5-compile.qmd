@@ -2,16 +2,177 @@
 title: "Step 5 — Compile & finalise"
 ---
 
-Merge the intermediate metadata files, validate the combined inputs, and produce the deployment-ready artefacts in `app-data/`.
+Merge the intermediate metadata files, validate the combined inputs, and produce the deployment-ready artefacts in `app-data/`. After this step your project has everything Posit Connect (or shinyapps.io) needs.
 
 ## What "compile" means
 
-## Run compile_pti_data()
+Steps 1, 3 and (optionally) 4 each leave one or more files under `app-data/`:
 
-## Landing page
+- `app-data/shapes.rds` from Step 1.
+- `app-data/metadata-user.xlsx` from Step 3.
+- `app-data/metadata-hex.xlsx` from Step 4 (when the HEX feature lands).
+
+`compile_pti_data()` is the final pass that:
+
+1. **Merges** all intermediate metadata workbooks into a single canonical `metadata.xlsx`.
+2. **Re-validates** the combined inputs end-to-end via `validate_geometries()` + `validate_metadata()` — this catches issues that only surface after merge (a HEX indicator's `var_code` colliding with a user one, mismatched `spatial_level` references, missing `admin<N>Pcod` cascades).
+3. **Renders** a printable indicator atlas PDF — one map per indicator at the most disaggregated admin level (or at the explicit `spatial_level` you set in the metadata).
+4. **Exports** a GeoJSON archive of every admin layer for the dashboard's "Download shapes" button.
+
+The output goes back into `app-data/` and replaces the intermediates as the canonical inputs the deployed app reads.
+
+## Run `compile_pti_data()`
+
+```r
+#| eval: false
+library(devPTIpack)
+
+result <- compile_pti_data(
+  shp_path       = "app-data/shapes.rds",
+  metadata_paths = c("app-data/metadata-user.xlsx"
+                     # , "app-data/metadata-hex.xlsx"   # uncomment when Step 4 lands
+                     ),
+  output_dir     = "app-data"
+)
+```
+
+### Inputs
+
+| Argument          | Type        | Purpose                                                                                                                            |
+| ----------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `shp_path`        | character   | Path to `app-data/shapes.rds` written by Step 1.                                                                                   |
+| `metadata_paths`  | character vector | One or more `.xlsx` paths. At least one must exist. Typical: `metadata-user.xlsx` (Step 3) ± `metadata-hex.xlsx` (Step 4).      |
+| `output_dir`      | character   | Where to write the three artefacts. Almost always `"app-data"` for a real project.                                                  |
+| `error_on_fail`   | logical     | Default `TRUE` — abort on `status = "fail"`. Set `FALSE` to inspect the structured result instead (handy when iterating).         |
+
+### Outputs (under `output_dir/`)
+
+| File                  | What it is                                                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `metadata.xlsx`       | Canonical merged metadata workbook. Round-trips cleanly through `fct_template_reader()`.                            |
+| `shapefiles.zip`      | One GeoJSON file per admin layer (filename = slot name from `shapes.rds`). Served by the dashboard's download tab.   |
+| `pti-metadata.pdf`    | Printable indicator atlas, one map per indicator. **Skipped with a warning when LaTeX is unavailable** — the rest of the artefacts still produce. |
+
+### CLI summary
+
+The function prints a structured `cli` summary as it runs — admin levels, polygon counts, indicator + pillar counts, metadata sources ingested, files produced. Example for the Rwanda template:
+
+```
+── Compiling PTI deployment artefacts ──
+ℹ Read shapes: 4 layers (66 polygons total).
+ℹ Read metadata: 1 input file.
+ℹ Merged metadata: 3 indicators across 2 pillars.
+✔ Wrote metadata.xlsx.
+✔ Wrote shapefiles.zip.
+── Validating combined inputs ──
+✔ validate_geometries: all checks passed.
+✔ validate_metadata: all checks passed.
+── Rendering pti-metadata.pdf ──
+✔ Wrote pti-metadata.pdf.
+── Summary ──
+* Layers: 4
+* Polygons (total): 66
+* Indicators: 3
+* Pillars: 2
+* Metadata sources: 1
+✔ compile_pti_data: all checks passed.
+```
+
+### Return value
+
+`compile_pti_data()` returns the same structured result as the validators:
+
+```r
+#| eval: false
+list(
+  status          = "pass",       # or "warn" / "fail"
+  summary         = character(),
+  issues          = list(),
+  metadata_path   = "app-data/metadata.xlsx",
+  shapefiles_path = "app-data/shapefiles.zip",
+  pdf_path        = "app-data/pti-metadata.pdf"   # NA_character_ if LaTeX skipped
+)
+```
+
+Returned invisibly when `error_on_fail = TRUE`. Capture and inspect when you're iterating.
+
+### When validation fails
+
+If `validate_geometries()` or `validate_metadata()` reports `status = "fail"`, `compile_pti_data()` aborts before writing the merged xlsx. To see *what* failed without crashing the call:
+
+```r
+#| eval: false
+result <- compile_pti_data(
+  shp_path       = "app-data/shapes.rds",
+  metadata_paths = "app-data/metadata-user.xlsx",
+  output_dir     = "app-data",
+  error_on_fail  = FALSE
+)
+
+result$status      # "fail"
+result$issues      # the structured issue list, ready to print or filter
+```
+
+For the visual inspector, drop back to [Step 1's `app_validate_shp()`](build-pti-1-shapefiles.html) or [Step 3's `app_validate_metadata()`](build-pti-3-metadata.html) and fix at the source. `compile_pti_data()` is *not* the place to fix — it is the place to confirm.
+
+## Edit the landing page
+
+`landing-page.md` lives in the project root. Its contents render on the dashboard's **Info** tab. Edit it to describe your country, the data sources, and any contact information stakeholders need:
+
+```markdown
+# Rwanda PTI
+
+This dashboard compiles 3 indicators across two pillars …
+
+Contact <yourname@worldbank.org> for questions or feedback.
+```
+
+Plain Markdown — headings, paragraphs, links, bold/italic. The default content shipped with `create_new_pti()` describes the methodology and a placeholder contact; replace both before deploying.
 
 ## Final pre-launch checklist
 
+Before launching locally — and definitely before deploying — confirm all of:
+
+- [ ] `compile_pti_data()` returned `status = "pass"`.
+- [ ] `app-data/metadata.xlsx` exists and round-trips through `fct_template_reader()`.
+- [ ] `app-data/shapes.rds` exists and `validate_geometries()` is happy with it.
+- [ ] `app-data/pti-metadata.pdf` exists (or you have explicitly accepted that LaTeX is unavailable).
+- [ ] `app-data/shapefiles.zip` exists and contains one `.geojson` per admin layer.
+- [ ] `landing-page.md` describes *your* app, not the placeholder template.
+
 ## Launch locally
 
-## Pointer to 00-master.R
+Once the checklist is green:
+
+```r
+#| eval: false
+library(devPTIpack)
+
+shp_dta <- readRDS("app-data/shapes.rds")
+inp_dta <- fct_template_reader("app-data/metadata.xlsx")
+
+launch_pti(
+  shp_dta  = shp_dta,
+  inp_dta  = inp_dta,
+  app_name = "Rwanda PTI"
+)
+```
+
+A browser tab opens with the multi-tab dashboard. The four user-facing tabs:
+
+| Tab          | What it shows                                                                                                                               |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Info**     | Renders `landing-page.md`. Use it for context, methodology, contact info.                                                                    |
+| **PTI**      | The composite-index map. Sliders pick admin level + weighting scheme; the map updates reactively. Always rendered.                          |
+| **Compare**  | Side-by-side maps of two saved weighting schemes. Useful for sensitivity analysis.                                                          |
+| **Explorer** | Per-indicator choropleth + tabular data. Lets stakeholders scan raw values without committing to a PTI weighting yet.                        |
+
+Click through every tab. Hover popups should appear on every polygon; download buttons should produce non-empty files; weights sliders should re-render the PTI map within a second or two.
+
+## The `00-master.R` shortcut
+
+The template ships [`00-master.R`](https://github.com/worldbank/devPTIpack/blob/main/inst/template_pti/00-master.R) — a pipeline orchestrator that renders Steps 1, (3), and 5 in order. After your one-time tutorial walkthrough, **`source("00-master.R")` is the everyday command** to refresh `app-data/` whenever your raw inputs change. Edit comments to enable Step 4 (HEX) once it lands, or to skip Step 3 if your data lives entirely in HEX.
+
+## Next
+
+When you're satisfied with the local launch, continue with [Step 6 — Deploy](build-pti-6-deploy.html) to publish the app.
