@@ -150,7 +150,9 @@ reference:
     desc: >
       Pre-flight validators for geometry layers, metadata templates,
       and data file paths. Run these before deploying a PTI app to
-      catch input problems early.
+      catch input problems early. The `app_validate_*` launchers wrap
+      the headless validators in standalone Shiny apps for visual
+      inspection.
     contents:
       - validate_geometries
       - validate_metadata
@@ -158,6 +160,7 @@ reference:
       - validate_read_shp
       - drop_inval_adm
       - mod_drop_inval_adm
+      - app_validate_metadata
 
   - title: "Visualisation Helpers"
     desc: >
