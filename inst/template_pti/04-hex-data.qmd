@@ -1,0 +1,44 @@
+---
+title: "Step 4 -- HEX data"
+format: html
+---
+
+<!-- For detailed instructions, see:
+     https://worldbank.github.io/devPTIpack/articles/build-pti-4-hex.html -->
+
+::: {.callout-warning}
+**Feature not ready.** This step depends on the HEX data API, which is
+under active development. Content will be added when the API and
+integration functions are production-ready. This is **not** merely
+unwritten documentation -- the underlying infrastructure does not yet
+exist.
+
+This file ships as a stub. `00-master.R` does **not** render it.
+:::
+
+## What this step will do
+
+Once the HEX track lands, this step will:
+
+1. Fetch pre-computed H3 res-6 hex data for your country via
+   `fetch_hex_data()`.
+2. Let you explore and select variables interactively via
+   `app_explore_hex()` (a standalone mini Shiny app).
+3. Match selected hex variables to your shapefile polygons and
+   generate a standalone metadata workbook via
+   `create_hex_metadata(shp, vars)`.
+4. Save the result to `app-data/metadata-hex.xlsx` so Step 5's
+   `compile_pti_data()` can merge it with the user workbook from
+   Step 3.
+
+## Ordering note
+
+This step is **order-flexible** -- it can be run before or after
+Step 3. The two outputs (`metadata-user.xlsx` and `metadata-hex.xlsx`)
+are independent intermediate files merged together in Step 5.
+
+## Tracking
+
+The HEX integration is tracked under the arch-09 design document
+([`.github/docs/arch-09-documentation.md`](https://github.com/worldbank/devPTIpack/blob/main/.github/docs/arch-09-documentation.md))
+section 4.5 / 6, and the corresponding feature branch is `feat/hex-integration`.
