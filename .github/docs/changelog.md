@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-05-10
+
+| Scope | Change                                                                                                                                                                                                                                |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Docs  | Wrote `vignettes/articles/build-pti-0-setup.qmd` — Step 0 tutorial: install, `create_new_pti()`, annotated folder structure, `00-master.R` recipe, `app-data/` git warning, "render Rwanda first" sanity check (issue [#84](https://github.com/worldbank/devPTIpack/issues/84) per arch-09 §4.2). |
+| Docs  | Wrote `vignettes/articles/build-pti-1-shapefiles.qmd` — Step 1 tutorial: condensed requirements table + link to `dataprep.html`, Rwanda walkthrough A→C→D (load, validate via `validate_geometries()` + `app_validate_shp()`, fix + save), advanced multi-level subsection §E with explicit `{#sec-advanced-multi-level}` anchor (arch-09 §4.3). |
+| Docs  | Wrote `vignettes/articles/build-pti-2-zonal-stats.qmd` — Step 2 optional stub: when to use, `exactextractr` / `terra::extract()` recipe, output-format contract feeding Step 3 (arch-09 §4.3a). |
+| Docs  | Wrote `vignettes/articles/build-pti-3-metadata.qmd` — Step 3 tutorial: condensed sheet-inventory + 14-column `metadata` reference + admin-sheet contract (links to `dataprep.html`), simple Adm1-only walkthrough using `sample-metadata-adm1.xlsx`, multi-level Adm1+Adm2 walkthrough using `sample-metadata-adm1-adm2.xlsx`, structural validator + visual `app_validate_metadata()` flow, save to `app-data/metadata-user.xlsx` (arch-09 §4.4). |
+| Docs  | Updated PLAN.md §7 (Phase 4 / arch-09) — ticked the new arch-09 PR #E checkbox for issue #84 (Steps 0–3 vignettes); added explicit pending rows for #85 (PR #F) and #86 (final integration audit). |
+
+---
+
 ## 2026-05-09
 
 | Scope | Change                                                                                                                                                                                                                                |
