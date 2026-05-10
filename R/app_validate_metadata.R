@@ -42,7 +42,7 @@
 #'
 #' @importFrom shiny shinyApp fluidPage titlePanel sidebarLayout
 #'   sidebarPanel mainPanel h4 hr verbatimTextOutput renderText tags
-#'   NS moduleServer reactive
+#'   NS moduleServer reactive showNotification
 #' @importFrom rlang is_missing
 #' @importFrom golem with_golem_options
 #' @export
@@ -233,7 +233,10 @@ app_validate_metadata_server <- function(id, shp_dta, inp_dta) {
 
     # Embed the Data Explorer. Wrap in tryCatch so a malformed input
     # does not take down the whole launcher — the validation summary
-    # remains readable in the sidebar.
+    # remains readable in the sidebar. Surface the failure both in the
+    # R console (`message()`) and in the running app
+    # (`showNotification`) so a deployer doesn't see a silently blank
+    # right pane.
     tryCatch(
       mod_dta_explorer2_server(
         "explorer",
@@ -246,7 +249,11 @@ app_validate_metadata_server <- function(id, shp_dta, inp_dta) {
         mtdtpdf_path = paths$mtdtpdf_path
       ),
       error = function(e) {
-        message("Data Explorer failed to construct: ", conditionMessage(e))
+        msg <- paste0(
+          "Data Explorer failed to construct: ", conditionMessage(e)
+        )
+        message(msg)
+        shiny::showNotification(msg, type = "error", duration = NULL)
       }
     )
   })

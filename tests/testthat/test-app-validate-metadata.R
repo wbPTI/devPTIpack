@@ -58,13 +58,16 @@ test_that("app_validate_metadata renders even when validators fail", {
 # 4) Tier-2: server surfaces both validation statuses
 
 test_that("app_validate_metadata_server: renders both validation statuses", {
+  # On the bundled fixtures both validators are deterministic; assert
+  # the exact value rather than just set membership so a regression in
+  # the Ukrainian sample data is caught sharply.
   testServer(
     app_validate_metadata_server,
     args = list(shp_dta = ukr_shp, inp_dta = ukr_mtdt_full),
     expr = {
       session$flushReact()
-      expect_true(output$geometries_status %in% c("pass", "warn", "fail"))
-      expect_true(output$metadata_status   %in% c("pass", "warn", "fail"))
+      expect_equal(output$geometries_status, "pass")
+      expect_equal(output$metadata_status,   "pass")
       expect_match(output$summary, "Layers|Polygons|Indicators")
     }
   )
