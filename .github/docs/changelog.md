@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-05-09
+
+| Scope | Change                                                                                                                                                                                                                                |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Code  | New exported `app_validate_metadata(shp_dta, inp_dta)` (R/app_validate_metadata.R) — standalone Shiny launcher that runs `validate_geometries()` + `validate_metadata()`, displays the structured statuses in a sidebar, and embeds the existing `mod_dta_explorer2_*` Data Explorer for visual indicator inspection. Renders even when validators report `status = "fail"` (issue [#81](https://github.com/worldbank/devPTIpack/issues/81)). |
+| Tests | New `tests/testthat/test-app-validate-metadata.R` — 13 expectations covering construction smoke for `(ukr_shp, ukr_mtdt_full)`, defensive input validation (missing / NULL / unnamed for both args), render-on-fail contract, and Tier-2 `testServer` checks for the `geometries_status` / `metadata_status` / `summary` outputs. |
+
 ## 2026-05-08
 
 | Scope  | Change                                                                                                                                                                                                            |
