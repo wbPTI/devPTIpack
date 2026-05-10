@@ -161,6 +161,7 @@ reference:
       - drop_inval_adm
       - mod_drop_inval_adm
       - app_validate_shp
+      - app_validate_metadata
 
   - title: "Visualisation Helpers"
     desc: >
