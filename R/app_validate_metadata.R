@@ -165,8 +165,13 @@ app_validate_metadata_ui <- function(id, app_name = "Validate metadata") {
       shiny::mainPanel(
         width = 9,
         shiny::h4("Data Explorer"),
+        # The validator server is wrapped in `moduleServer(id, ...)`, so
+        # the embedded explorer's server-side namespace ends up nested
+        # as `<id>-explorer`. Mirror that here on the UI side via
+        # `ns("explorer")` — otherwise the output IDs don't bind and
+        # the leaflet + picker render but never populate.
         mod_dta_explorer2_ui(
-          "explorer",
+          ns("explorer"),
           multi_choice = FALSE,
           height = "calc(100vh - 250px)"
         )
