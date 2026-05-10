@@ -236,30 +236,51 @@ app_validate_metadata_server <- function(id, shp_dta, inp_dta) {
       )
     })
 
-    # Embed the Data Explorer. Wrap in tryCatch so a malformed input
-    # does not take down the whole launcher — the validation summary
-    # remains readable in the sidebar. Surface the failure both in the
-    # R console (`message()`) and in the running app
-    # (`showNotification`) so a deployer doesn't see a silently blank
-    # right pane.
-    tryCatch(
-      mod_dta_explorer2_server(
-        "explorer",
-        shp_dta      = shiny::reactive(shp_dta),
-        input_dta    = shiny::reactive(inp_dta),
-        active_tab   = shiny::reactive("explore"),
-        target_tabs  = "explore",
-        shapes_path  = paths$shapes_path,
-        data_path    = paths$data_path,
-        mtdtpdf_path = paths$mtdtpdf_path
-      ),
-      error = function(e) {
-        msg <- paste0(
-          "Data Explorer failed to construct: ", conditionMessage(e)
-        )
-        message(msg)
-        shiny::showNotification(msg, type = "error", duration = NULL)
-      }
-    )
+    # Embed the Data Explorer ONLY when both validators pass / warn.
+    # The explorer's reactive chain runs the same calc pipeline as
+    # validate_metadata; on a "fail" input that pipeline aborts inside
+    # the explorer's reactive (where Shiny's default error handler
+    # sometimes propagates the error all the way up and crashes the R
+    # process — we hit this on PR #92 visual review). Embedding only
+    # when validators are healthy avoids the crash.
+    #
+    # The validation summary in the sidebar is the actionable output
+    # in the fail case anyway: the deployer's first action is to fix
+    # what the validators flagged. Surface that explicitly via
+    # `showNotification` so the empty right pane isn't confusing.
+    statuses_ok <-
+      geom_diag$status %in% c("pass", "warn") &&
+      mtdt_diag$status %in% c("pass", "warn")
+
+    if (statuses_ok) {
+      tryCatch(
+        mod_dta_explorer2_server(
+          "explorer",
+          shp_dta      = shiny::reactive(shp_dta),
+          input_dta    = shiny::reactive(inp_dta),
+          active_tab   = shiny::reactive("explore"),
+          target_tabs  = "explore",
+          shapes_path  = paths$shapes_path,
+          data_path    = paths$data_path,
+          mtdtpdf_path = paths$mtdtpdf_path
+        ),
+        error = function(e) {
+          msg <- paste0(
+            "Data Explorer failed to construct: ", conditionMessage(e)
+          )
+          message(msg)
+          shiny::showNotification(msg, type = "error", duration = NULL)
+        }
+      )
+    } else {
+      shiny::showNotification(
+        paste0(
+          "Validation failed (", geom_diag$status, " / ",
+          mtdt_diag$status, ") — Data Explorer disabled. Fix the ",
+          "issues listed in the sidebar and relaunch."
+        ),
+        type = "error", duration = NULL
+      )
+    }
   })
 }
