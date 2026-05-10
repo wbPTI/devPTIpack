@@ -16,7 +16,7 @@ The numbered files form the data-prep pipeline:
 | `02a-user-zonal-stats.qmd` | Step 2 -- Zonal stats (optional)      | Stub. Extract raster zonal stats. Run manually if needed.       |
 | `03-metadata.qmd`          | Step 3 -- Metadata Excel              | Read + validate the indicator workbook, stage `metadata-user.xlsx`. |
 | `04-hex-data.qmd`          | Step 4 -- HEX data                    | Stub. Blocked by the HEX API -- coming in a later release.       |
-| `05-compile.qmd`           | Step 5 -- Compile and finalise        | Stub. Merges intermediates into `metadata.xlsx` + PDF + zip.     |
+| `05-compile.qmd`           | Step 5 -- Compile and finalise        | Merges intermediates into `metadata.xlsx` + `pti-metadata.pdf` + `shapefiles.zip`. |
 | `06-deploy.R`              | Step 6 -- Deploy                      | Plain R script with `rsconnect::deployApp()` boilerplate.       |
 | `app.R`                    | Shiny app entry point                 | The deployed app. Loads from `app-data/` paths.                  |
 | `landing-page.md`          | App landing-page text                 | Markdown content shown on the app's About tab.                   |
@@ -62,31 +62,18 @@ R/             golem boilerplate.
 
 Don't let it slip through unreviewed.
 
-## Current template state (arch-09 issue #79)
+## Current template state
 
-Steps 1 and 3 ship with **working Rwanda code** that produces real
-outputs into `app-data/`. Steps 4 and 5 ship as **stubs** awaiting
-upstream work:
+Steps 1, 3, and 5 ship with **working Rwanda code** that produces
+real outputs into `app-data/`. Step 4 ships as a **stub** awaiting
+the HEX data API.
 
-- Step 4 is blocked indefinitely by the HEX data API (issue #79's
-  parent design notes).
-- Step 5's `compile_pti_data()` is delivered by issue #83.
+`00-master.R` renders Steps 01, 03, and 05 by default; the 02a (optional
+zonal stats), 04 (HEX), and 06 (deploy) lines are commented and clearly
+marked.
 
-`00-master.R` therefore renders steps 01 and 03 only by default; the
-04 / 05 lines are commented and clearly marked. Until #83 lands, the
-deployed `app.R` falls back to either:
-
-1. Running the bundled `devPTIpack::ukr_shp` / `devPTIpack::ukr_mtdt_full`
-   sample data (works out of the box -- see commented lines in `app.R`),
-   or
-2. Loading `app-data/shapes.rds` (produced by Step 1) plus a manually
-   copied `app-data/metadata.xlsx` (`file.copy("app-data/metadata-user.xlsx",
-   "app-data/metadata.xlsx", overwrite = TRUE)`).
-
-The first option is the quickest sanity check; the second exercises
-your real Rwanda inputs without yet running the multi-source merge
-that #83 will add.
-
-Validator app calls in `01-shapes.qmd` (`app_validate_shp()`) and
-`03-metadata.qmd` (`app_validate_metadata()`) are commented out
-pending issues #80 and #81 respectively.
+Visual-validation app calls (`app_validate_shp()` in `01-shapes.qmd`
+and `app_validate_metadata()` in `03-metadata.qmd`) are commented in
+the template because `00-master.R` runs the files unattended. Uncomment
+them and re-source the relevant `.qmd` interactively when you want a
+visual pass over the data.

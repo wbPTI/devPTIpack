@@ -40,11 +40,11 @@ validate_metadata(
   mtdt_path = mtdt_path
 )
 
-# TODO #81 -- visual inspection via standalone Shiny app.
-# app_validate_metadata() lands in issue #81; it pairs the validator
+# Visual inspection via standalone Shiny app -- pairs the validator
 # output with the bundled mod_dta_explorer2 modules so you can scan
-# every indicator's values on the map even when validation fails.
-# Uncomment when that PR merges.
+# every indicator's values on the map. Commented because `00-master.R`
+# runs this file unattended; uncomment and re-source this file
+# interactively when you want the visual pass.
 # shp_dta <- readRDS("app-data/shapes.rds")
 # app_validate_metadata(shp_dta = shp_dta, inp_dta = inp_dta)
 ```

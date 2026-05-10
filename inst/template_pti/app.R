@@ -15,18 +15,11 @@ options("golem.app.prod" = TRUE)
 # canonical inputs live under `app-data/`:
 #
 #   app-data/shapes.rds       -- compiled shapes list (Step 1)
-#   app-data/metadata.xlsx    -- canonical metadata workbook (Step 5)
-#
-# Step 5's `compile_pti_data()` lands in issue #83. Until then,
-# `metadata.xlsx` does not exist; either fall back to the bundled
-# Ukraine sample data (option B below) or copy the Step 3 intermediate
-# manually:
-#
-#   file.copy("app-data/metadata-user.xlsx",
-#             "app-data/metadata.xlsx", overwrite = TRUE)
+#   app-data/metadata.xlsx    -- canonical metadata workbook (Step 5,
+#                                produced by `compile_pti_data()`)
 # -----------------------------------------------------------------------
 
-# Option A -- load from app-data/ (default once #83 lands).
+# Option A -- load from app-data/ (default).
 shp_dta <- readRDS("app-data/shapes.rds")
 inp_dta <- devPTIpack::fct_template_reader("app-data/metadata.xlsx")
 

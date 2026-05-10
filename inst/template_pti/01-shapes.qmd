@@ -93,8 +93,9 @@ my_shp <- list(
 ```{r}
 validate_geometries(my_shp)
 
-# TODO #80 -- visual inspection via standalone Shiny app.
-# app_validate_shp() lands in issue #80; uncomment when that PR merges.
+# Visual inspection via standalone Shiny app. Commented because
+# `00-master.R` runs this file unattended; uncomment and re-source
+# this file interactively to scan the layers on a leaflet map.
 # app_validate_shp(my_shp)
 ```
 
