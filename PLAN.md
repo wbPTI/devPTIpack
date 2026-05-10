@@ -659,6 +659,16 @@ Per arch-04. Concrete cuts:
 - [ ] Confirm `R CMD check` builds vignettes cleanly.
 - [ ] **After this phase:** add `shinytest2` automation for Tier 3.
 
+### arch-09 documentation redesign (PRD [#77](https://github.com/worldbank/devPTIpack/issues/77))
+
+- [x] Restructure `_pkgdown.yml` navbar to "About / PTI Methodology / Build a PTI"
+      with Steps 0–6 dropdown (arch-09 §2, [#78](https://github.com/worldbank/devPTIpack/issues/78)).
+- [x] Drop manual `reference:` groupings from `_pkgdown.yml` (arch-09 §1, §7.1);
+      `@family`-tag migration tracked in [#75](https://github.com/worldbank/devPTIpack/issues/75).
+- [x] Create 8 stub vignettes in `vignettes/articles/` (Steps 0–6 + `overview-paper`)
+      per arch-09 §3–§4 ([#78](https://github.com/worldbank/devPTIpack/issues/78)).
+  - Issue #78 — PR draft on `docs/navbar-restructure` (commit pending stop-hook autodraft).
+
 ---
 
 ## 8. Phase 5 — Hex ingestion (#13, independent)

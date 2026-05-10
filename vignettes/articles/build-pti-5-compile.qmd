@@ -1,0 +1,17 @@
+---
+title: "Step 5 — Compile & finalise"
+---
+
+Merge the intermediate metadata files, validate the combined inputs, and produce the deployment-ready artefacts in `app-data/`.
+
+## What "compile" means
+
+## Run compile_pti_data()
+
+## Landing page
+
+## Final pre-launch checklist
+
+## Launch locally
+
+## Pointer to 00-master.R

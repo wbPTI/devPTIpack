@@ -1,0 +1,20 @@
+---
+title: "Step 4 — HEX data"
+---
+
+> ⚠ **This step depends on the HEX data API, which is under active development.**
+> Content will be added when the API and integration functions are production-ready.
+> This is not merely unwritten documentation — the underlying infrastructure
+> does not yet exist.
+
+## What HEX data is
+
+## Fetching HEX data
+
+## Exploring available variables
+
+## Matching HEX data
+
+## Supported admin levels
+
+## Note on ordering

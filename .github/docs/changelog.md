@@ -24,6 +24,9 @@
 | Code   | Refactored four exported validators (`validate_geometries`, `validate_metadata`, `validate_read_shp`, `validate_read_metadata`) to emit cli alerts and return `invisible(list(status, summary, issues))` with stable per-issue `check` identifiers; added `error_on_fail` parameter (default `TRUE` preserves abort semantics). New internal helper module `R/utils-validation.R`. |
 | Tests  | Added `tests/testthat/test-validators-structured-return.R` (16 expectations) pinning the new contract; refreshed `test-validators.R` to drop the obsolete `capture_validator()` helper and inspect the structured return directly. Suite stays at 0 fail / 1 skip.                                                |
 | Docs   | Updated PLAN.md §7 (Phase 4) to tick `dataprep.qmd` + `build-pti.qmd` + pkgdown deploy + validator UX pass; added explicit row for [#73](https://github.com/worldbank/devPTIpack/issues/73) (methodology.qmd slim, deferred per arch-06 §5).                                                                  |
+| Config | Restructured pkgdown navbar to "About / PTI Methodology / Build a PTI" with a Steps 0–6 dropdown (arch-09 §2, [issue #78](https://github.com/worldbank/devPTIpack/issues/78)); reshuffled Resources to the right side; replaced `articles:` block with PTI Methodology + Build a PTI groups per arch-09 §3. |
+| Config | Dropped manual `reference:` groupings from `_pkgdown.yml` (arch-09 §1, §7.1); reference page renders ungrouped alphabetically until the `@family` tag migration in [#75](https://github.com/worldbank/devPTIpack/issues/75) lands.                                                                          |
+| Docs   | Added 8 stub vignettes in `vignettes/articles/` (`build-pti-0-setup`, `build-pti-1-shapefiles`, `build-pti-2-zonal-stats`, `build-pti-3-metadata`, `build-pti-4-hex`, `build-pti-5-compile`, `build-pti-6-deploy`, `overview-paper`) — YAML front matter + section headers per arch-09 §4, no body content. |
 
 ## 2026-05-05
 
