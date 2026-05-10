@@ -48,18 +48,45 @@ lang: en
 
 navbar:
   structure:
-    left:  [methodology, build-pti, past-projects, reference]
-    right: [resources, search, github]
+    left:  [about, methodology, build-pti]
+    right: [search, reference, resources, github]
   components:
+    about:
+      text: About
+      href: index.html
     methodology:
       text: PTI Methodology
-      href: articles/methodology.html
+      menu:
+        - text: Detailed methodology
+          href: articles/methodology.html
+        - text: Overview paper
+          href: articles/overview-paper.html
+        - text: "---"
+        - text: Past Projects
+          href: articles/past-projects.html
     build-pti:
       text: Build a PTI
-      href: articles/build-pti.html
-    past-projects:
-      text: Past Projects
-      href: articles/past-projects.html
+      menu:
+        - text: Overview
+          href: articles/build-pti.html
+        - text: "---"
+        - text: "Step 0 — Setup new project"
+          href: articles/build-pti-0-setup.html
+        - text: "Step 1 — Shapefiles"
+          href: articles/build-pti-1-shapefiles.html
+        - text: "Step 2 — Zonal stats (optional)"
+          href: articles/build-pti-2-zonal-stats.html
+        - text: "Step 3 — Metadata Excel"
+          href: articles/build-pti-3-metadata.html
+        - text: "Step 4 — HEX data"
+          href: articles/build-pti-4-hex.html
+        - text: "Step 5 — Compile & finalise"
+          href: articles/build-pti-5-compile.html
+        - text: "Step 6 — Deploy"
+          href: articles/build-pti-6-deploy.html
+        - text: "---"
+        - text: Data preparation reference
+          href: articles/dataprep.html
     reference:
       text: Reference
       href: reference/index.html
@@ -84,122 +111,18 @@ navbar:
 
 articles:
   - title: PTI Methodology
-    navbar: PTI Methodology
     contents:
       - articles/methodology
+      - articles/overview-paper
+      - articles/past-projects
   - title: Build a PTI
-    navbar: Build a PTI
     contents:
       - articles/build-pti
-  - title: Past Projects
-    navbar: Past Projects
-    contents:
-      - articles/past-projects
-  - title: Additional Resources
-    desc: Supporting technical articles.
-    contents:
+      - articles/build-pti-0-setup
+      - articles/build-pti-1-shapefiles
+      - articles/build-pti-2-zonal-stats
+      - articles/build-pti-3-metadata
+      - articles/build-pti-4-hex
+      - articles/build-pti-5-compile
+      - articles/build-pti-6-deploy
       - articles/dataprep
-
-reference:
-  - title: "Launch PTI Applications"
-    desc: >
-      Top-level functions for starting a PTI Shiny app or scaffolding
-      a new PTI project directory.
-    contents:
-      - launch_pti
-      - launch_pti_onepage
-      - create_new_pti
-
-  - title: "PTI Calculation Pipeline"
-    desc: >
-      Functions that implement or support the core PTI score calculation
-      pipeline. `run_pti_pipeline()` is the primary entry point for
-      headless (non-Shiny) pipeline execution.
-    contents:
-      - run_pti_pipeline
-      - label_generic_pti
-      - generic_pti_glue
-
-  - title: "Data Input & Preparation"
-    desc: >
-      Read and parse the PTI metadata Excel template and retrieve
-      processed geometry objects.
-    contents:
-      - fct_template_reader
-      - get_shape
-
-  - title: "Weights"
-    desc: >
-      Generate and manipulate indicator weight schemes used in the
-      PTI calculation.
-    contents:
-      - get_rand_weights
-      - get_all_weights_combs
-      - get_min_admin_wght
-
-  - title: "Data Export"
-    desc: >
-      Extract PTI scores, weight tables, and unavailable-admin
-      summaries for downstream reporting or download.
-    contents:
-      - get_pti_scores_export
-      - get_pti_weights_export
-      - get_vars_un_avbil
-
-  - title: "Validation"
-    desc: >
-      Pre-flight validators for geometry layers, metadata templates,
-      and data file paths. Run these before deploying a PTI app to
-      catch input problems early. The `app_validate_*` launchers wrap
-      the headless validators in standalone Shiny apps for visual
-      inspection.
-    contents:
-      - validate_geometries
-      - validate_metadata
-      - validate_read_metadata
-      - validate_read_shp
-      - drop_inval_adm
-      - mod_drop_inval_adm
-      - app_validate_shp
-      - app_validate_metadata
-
-  - title: "Visualisation Helpers"
-    desc: >
-      Utility functions for plotting and labelling PTI outputs.
-    contents:
-      - gg_admin_list
-
-  - title: "Shiny Modules"
-    desc: >
-      Reusable Shiny UI and server module pairs that compose the PTI
-      application interface. Advanced users can embed individual
-      modules into custom Shiny apps.
-    contents:
-      - mod_ptipage_twocol_ui
-      - mod_ptipage_newsrv
-      - mod_pti_comparepage_ui
-      - mod_pti_comparepage_newsrv
-      - mod_dta_explorer2_ui
-      - mod_dta_explorer2_server
-      - mod_map_pti_leaf_ui
-      - mod_leaf_side_panel_ui
-      - mod_plot_pti2_srv
-      - mod_tab_open_first_newserv
-
-  - title: "Package Utilities"
-    desc: >
-      Low-level golem infrastructure helpers. These are exported
-      primarily to support the auto-generated `app.R` in scaffolded
-      projects.
-    contents:
-      - app_sys
-      - golem_add_external_resources
-
-  - title: "Sample Data"
-    desc: >
-      Bundled sample datasets used in examples and the test suite.
-      `ukr_shp` provides Ukraine administrative boundaries;
-      `ukr_mtdt_full` provides matching synthetic indicator metadata.
-    contents:
-      - ukr_shp
-      - ukr_mtdt_full
