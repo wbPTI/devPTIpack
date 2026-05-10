@@ -6,4 +6,11 @@
 *_cache
 *_files
 
-data-raw/
+# `app-data/` holds compiled deployment outputs. Keep tracked by default
+# so reviewers can see what the app actually serves, but uncomment the
+# next line if your country's data is sensitive or large.
+# app-data/
+
+# `data-raw/` holds scripts that regenerate `sample-data/`. Tracked by
+# default so the data is reproducible; uncomment to ignore.
+# data-raw/

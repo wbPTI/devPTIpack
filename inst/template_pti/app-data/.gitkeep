@@ -1,0 +1,6 @@
+# Placeholder so this folder ships with the template.
+# After running 00-master.R, this folder will contain:
+#   shapes.rds (Step 1)
+#   metadata-user.xlsx (Step 3)
+#   metadata-hex.xlsx (Step 4 — when HEX API lands)
+#   metadata.xlsx, pti-metadata.pdf, shapefiles.zip (Step 5 — when compile_pti_data() lands)

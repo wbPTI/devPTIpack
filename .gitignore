@@ -7,6 +7,10 @@
 *_files
 
 data-raw/
+# Exception: the template scaffold's data-raw/ ships seeded
+# regeneration scripts that must be tracked (see arch-09 § 9.1, #79).
+!inst/template_pti/data-raw/
+!inst/template_pti/data-raw/**
 docs/
 !.github/docs/
 inst/doc
