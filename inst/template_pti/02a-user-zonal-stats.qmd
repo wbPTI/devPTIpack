@@ -1,0 +1,62 @@
+---
+title: "Step 2 -- Zonal statistics (optional)"
+format: html
+---
+
+<!-- For detailed instructions, see:
+     https://worldbank.github.io/devPTIpack/articles/build-pti-2-zonal-stats.html -->
+
+::: {.callout-note}
+**This step is optional.** Use it when you need to extract zonal
+statistics from raster data (e.g. satellite imagery, gridded
+population) before building your metadata Excel in Step 3. It is
+**not** sourced by `00-master.R` -- run it manually as needed.
+
+This file ships as a stub; populate the chunks below with your own
+extraction code, write the resulting indicator columns into a CSV /
+Excel keyed by `admin<N>Pcod`, and feed that file into Step 3.
+
+Add `02b-...qmd`, `02c-...qmd`, etc. for additional zonal-stats
+extractions.
+:::
+
+## When you need zonal stats
+
+Typical use cases:
+
+- Population-weighted averages of poverty rasters by district.
+- Mean night-time-lights intensity per province.
+- Average accessibility / travel-time per polygon.
+
+## Common tools
+
+- [`exactextractr`](https://isciences.gitlab.io/exactextractr/) -- fast
+  zonal stats with fractional pixel coverage.
+- [`terra::extract()`](https://rspatial.github.io/terra/reference/extract.html)
+  -- general-purpose raster sampling.
+
+## Output format
+
+One column per indicator, keyed by `admin<N>Pcod`. The output of this
+step becomes one of the indicator-value sheets you load into your
+metadata Excel in Step 3 (see [Data preparation reference](
+https://worldbank.github.io/devPTIpack/articles/dataprep.html)
+for the column contract).
+
+```{r}
+#| eval: false
+# Example skeleton -- replace with your own raster + admin layer.
+# library(sf)
+# library(terra)
+# library(exactextractr)
+#
+# adm2 <- sf::read_sf("sample-data/rwa_adm2.geojson")
+# r    <- terra::rast("path/to/your-raster.tif")
+# adm2$mean_value <- exactextractr::exact_extract(r, adm2, fun = "mean")
+#
+# # Write a tidy table for Step 3.
+# adm2 |>
+#   sf::st_drop_geometry() |>
+#   dplyr::transmute(admin2Pcod = shapeID, my_indicator = mean_value) |>
+#   writexl::write_xlsx("sample-data/my-zonal-stats-adm2.xlsx")
+```
