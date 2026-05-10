@@ -46,9 +46,16 @@ Project-scoped tooling under `.claude/`:
 | `cleanup-batch`          | skill     | Execute one arch-01 cleanup batch end-to-end (delete, document, test, check)          |
 | `roxygen-document`       | skill     | Add/upgrade roxygen2 per `.claude/rules/roxygen-documentation.md`                     |
 | `issue-progress-comment` | skill     | Draft a status comment for a GitHub issue from the recent diff/work                   |
+| `close-issue-on-merge`   | skill     | After a PR lands, close the issue(s) it claims to close (GitHub auto-close does NOT fire because PRs target `eb-docs-pkgdown`, not the default branch) |
 | `r-package-reviewer`     | sub-agent | Review diffs for R-package conventions (NAMESPACE, exports, examples, no `browser()`) |
 
 Invoke skills via the Skill tool by name. Spawn the sub-agent via the Agent tool with `subagent_type: r-package-reviewer`.
+
+**Issue-close workflow (compulsory after every PR merge):** invoke
+`close-issue-on-merge` immediately after the user reports a PR has
+merged. GitHub's auto-close fires only on PRs that land on the repo's
+default branch (`main`); our redesign PRs target `eb-docs-pkgdown`, so
+`Closes #N` lines never trigger and issues silently rot otherwise.
 
 ## PLAN.md Sync (COMPULSORY)
 
