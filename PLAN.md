@@ -664,6 +664,13 @@ Per arch-04. Concrete cuts:
       and embedding the existing `mod_dta_explorer2_*` Data Explorer
       for visual indicator inspection; 13-test Tier-1+Tier-2 file
       (`tests/testthat/test-app-validate-metadata.R`).
+- [x] arch-09 template smoke gate — Tier-1 integration test
+      (`tests/testthat/test-template-integration.R`, 34 expectations,
+      ~6 s) that gates #83 by walking the template end-to-end:
+      `create_new_pti()` → render Step 01 → `validate_geometries()` →
+      `validate_metadata()` (simple + advanced xlsx) → `app_validate_*()`
+      smoke → `launch_pti()` smoke. Issue
+      [#82](https://github.com/worldbank/devPTIpack/issues/82).
 - [ ] Confirm `R CMD check` builds vignettes cleanly.
 - [ ] **After this phase:** add `shinytest2` automation for Tier 3.
 
