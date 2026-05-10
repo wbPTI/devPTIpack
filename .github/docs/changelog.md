@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-05-09
+
+| Scope  | Change                                                                                                                                                                                                                                |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Code   | New exported `app_validate_shp(shp)` (R/app_validate_shp.R) — standalone Shiny launcher for visual shapefile inspection. Renders each admin layer on a leaflet map with a layer toggle; shows the structured `validate_geometries()` summary in a sidebar; renders even when the input fails validation so the deployer can see *what* is wrong (issue [#80](https://github.com/worldbank/devPTIpack/issues/80)). |
+| Tests  | New `tests/testthat/test-app-validate-shp.R` — 12 expectations covering construction smoke (`shiny.appobj` returned for `ukr_shp`), defensive input validation (missing / NULL / non-list / empty / unnamed), render-on-fail contract, and Tier-2 `testServer` checks for the leaflet map output and validation-summary text outputs. |
+
 ## 2026-05-08
 
 | Scope   | Change                                                                                                                                                                                                            |
