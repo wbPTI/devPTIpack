@@ -671,6 +671,19 @@ Per arch-04. Concrete cuts:
       `validate_metadata()` (simple + advanced xlsx) → `app_validate_*()`
       smoke → `launch_pti()` smoke. Issue
       [#82](https://github.com/worldbank/devPTIpack/issues/82).
+- [x] arch-09 PR #D — `compile_pti_data(shp_path, metadata_paths,
+      output_dir, error_on_fail)` exported (issue
+      [#83](https://github.com/worldbank/devPTIpack/issues/83)):
+      merges 1+ intermediate metadata xlsx files, writes canonical
+      `metadata.xlsx` + `shapefiles.zip` + `pti-metadata.pdf`, runs
+      both validators on the combined inputs, prints a verbose CLI
+      summary, returns the validator-style structured result.
+      `inst/metadata.Rmd` rewritten — parameterised, dropped
+      `pacman` / `here` / heavy plotting stack; one-map-per-indicator
+      using `gg_admin_list()` + ggplot2. `inst/template_pti/05-compile.qmd`
+      now a working step (no longer a stub). `DESCRIPTION` Imports
+      gains `zip (>= 2.3)`. 23-test file
+      (`tests/testthat/test-compile-pti-data.R`).
 - [ ] Confirm `R CMD check` builds vignettes cleanly.
 - [ ] **After this phase:** add `shinytest2` automation for Tier 3.
 

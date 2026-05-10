@@ -48,7 +48,8 @@ Imports:
     ggplot2 (>= 3.3.5),
     DT (>= 0.20),
     htmlwidgets (>= 1.5.4),
-    quarto (>= 1.5.0)
+    quarto (>= 1.5.0),
+    zip (>= 2.3)
 Suggests:
     progress (>= 1.2),
     knitr (>= 1.33),
