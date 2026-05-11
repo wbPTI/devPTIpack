@@ -106,25 +106,35 @@
 #'   output_dir      = "app-data"
 #' )
 #' }
-compile_pti_data <- function(shp_path,
-                             metadata_paths,
-                             output_dir,
-                             error_on_fail = TRUE) {
-
+compile_pti_data <- function(
+  shp_path,
+  metadata_paths,
+  output_dir,
+  error_on_fail = TRUE
+) {
   # ----- 1) input gate -----------------------------------------------------
 
-  if (rlang::is_missing(shp_path) || !is.character(shp_path) ||
-      length(shp_path) != 1L || !nzchar(shp_path)) {
-    stop("'shp_path' must be a single non-empty character path.",
-         call. = FALSE)
+  if (
+    rlang::is_missing(shp_path) ||
+      !is.character(shp_path) ||
+      length(shp_path) != 1L ||
+      !nzchar(shp_path)
+  ) {
+    stop("'shp_path' must be a single non-empty character path.", call. = FALSE)
   }
   if (!file.exists(shp_path)) {
     stop("'shp_path' does not exist: ", shp_path, call. = FALSE)
   }
-  if (rlang::is_missing(metadata_paths) || !is.character(metadata_paths) ||
-      length(metadata_paths) == 0L || any(!nzchar(metadata_paths))) {
-    stop("'metadata_paths' must be a non-empty character vector of paths.",
-         call. = FALSE)
+  if (
+    rlang::is_missing(metadata_paths) ||
+      !is.character(metadata_paths) ||
+      length(metadata_paths) == 0L ||
+      any(!nzchar(metadata_paths))
+  ) {
+    stop(
+      "'metadata_paths' must be a non-empty character vector of paths.",
+      call. = FALSE
+    )
   }
   missing_mtdt <- metadata_paths[!file.exists(metadata_paths)]
   if (length(missing_mtdt) > 0L) {
@@ -134,10 +144,16 @@ compile_pti_data <- function(shp_path,
       call. = FALSE
     )
   }
-  if (rlang::is_missing(output_dir) || !is.character(output_dir) ||
-      length(output_dir) != 1L || !nzchar(output_dir)) {
-    stop("'output_dir' must be a single non-empty character path.",
-         call. = FALSE)
+  if (
+    rlang::is_missing(output_dir) ||
+      !is.character(output_dir) ||
+      length(output_dir) != 1L ||
+      !nzchar(output_dir)
+  ) {
+    stop(
+      "'output_dir' must be a single non-empty character path.",
+      call. = FALSE
+    )
   }
   if (!dir.exists(output_dir)) {
     dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
@@ -155,9 +171,18 @@ compile_pti_data <- function(shp_path,
   parsed_inputs <- purrr::map(metadata_paths, fct_template_reader)
   cli::cli_alert_info("Read metadata: {length(metadata_paths)} input file{?s}.")
 
+  # Derive source labels from file basenames.
+  source_labels <- sub(
+    "\\.xlsx$",
+    "",
+    basename(metadata_paths),
+    ignore.case = TRUE
+  )
+  source_labels <- sub("^metadata-", "", source_labels)
+
   # ----- 3) merge ----------------------------------------------------------
 
-  merged <- compile_merge_metadata(parsed_inputs)
+  merged <- compile_merge_metadata(parsed_inputs, source_labels)
   n_indicators <- NROW(merged$metadata)
   n_pillars <- length(unique(merged$metadata$pillar_group))
   cli::cli_alert_info(
@@ -181,8 +206,8 @@ compile_pti_data <- function(shp_path,
   cli::cli_h2("Validating combined inputs")
   geom_diag <- validate_geometries(shp_dta, error_on_fail = FALSE)
   mtdt_diag <- validate_metadata(
-    shp_path      = shp_path,
-    mtdt_path     = out_xlsx,
+    shp_path = shp_path,
+    mtdt_path = out_xlsx,
     error_on_fail = FALSE
   )
 
@@ -194,7 +219,7 @@ compile_pti_data <- function(shp_path,
   cli::cli_h2("Rendering pti-metadata.pdf")
   pdf_path <- tryCatch(
     compile_render_metadata_pdf(
-      shp_path  = shp_path,
+      shp_path = shp_path,
       mtdt_path = out_xlsx,
       output_dir = output_dir
     ),
@@ -235,12 +260,12 @@ compile_pti_data <- function(shp_path,
   }
 
   result <- list(
-    status          = combined_status,
-    summary         = summary_lines,
-    issues          = c(geom_diag$issues, mtdt_diag$issues),
-    metadata_path   = out_xlsx,
+    status = combined_status,
+    summary = summary_lines,
+    issues = c(geom_diag$issues, mtdt_diag$issues),
+    metadata_path = out_xlsx,
     shapefiles_path = out_zip,
-    pdf_path        = pdf_path
+    pdf_path = pdf_path
   )
 
   if (isTRUE(error_on_fail) && combined_status == "fail") {
@@ -261,14 +286,25 @@ compile_pti_data <- function(shp_path,
 #' with `general`, per-admin tibbles, `metadata`, and (optionally)
 #' `weights_table`.
 #'
+#' When the same `var_code` appears in more than one input, both are
+#' kept. Each is renamed `<var_code>__<source_label>` where
+#' `source_label` is derived from the input file's basename by stripping
+#' the leading `metadata-` prefix (if present) and the `.xlsx` extension
+#' (e.g. `metadata-hex.xlsx` → `hex`, `my-indicators.xlsx` →
+#' `my-indicators`). The same renaming is applied to the matching
+#' indicator columns in every `admin<N>_*` sheet so column names stay
+#' in sync with `var_code` values.
+#'
 #' @param parsed_list List of lists; each element is the return value
 #'   of [fct_template_reader()] on one input file.
+#' @param source_labels Character vector the same length as
+#'   `parsed_list`; used to build disambiguation suffixes. Derived from
+#'   file basenames by the caller.
 #'
 #' @return A single list of tibbles, ready to write via
 #'   [writexl::write_xlsx()].
 #' @noRd
-compile_merge_metadata <- function(parsed_list) {
-
+compile_merge_metadata <- function(parsed_list, source_labels) {
   if (length(parsed_list) == 0L) {
     stop("internal: empty parsed_list passed to compile_merge_metadata.")
   }
@@ -276,51 +312,102 @@ compile_merge_metadata <- function(parsed_list) {
   # general — first wins.
   general <- parsed_list[[1]]$general
 
-  # metadata — rbind all, dedup by var_code (last wins, with warning).
-  metadata <- purrr::map_dfr(parsed_list, ~ .x$metadata)
-  dup_codes <- metadata$var_code[duplicated(metadata$var_code)]
-  if (length(dup_codes) > 0L) {
-    cli::cli_alert_warning(
-      "Duplicate var_code{?s} across metadata inputs (last writer wins): {.val {unique(dup_codes)}}"
-    )
-    # "Last writer wins" — equivalent to "keep last occurrence per
-    # var_code". `duplicated()` defaults to keeping the first; reverse
-    # the vector so it keeps the last, then reverse the resulting
-    # mask back to row order.
-    keep_last_mask <- !rev(duplicated(rev(metadata$var_code)))
-    metadata <- metadata[keep_last_mask, , drop = FALSE]
+  # metadata — identify colliding var_codes and suffix both sides.
+  all_metadata <- mapply(
+    function(p, lbl) {
+      tbl <- p$metadata
+      tbl[[".source_label"]] <- lbl
+      tbl
+    },
+    parsed_list,
+    source_labels,
+    SIMPLIFY = FALSE
+  )
+  metadata_raw <- do.call(rbind, all_metadata)
+
+  dup_codes <- unique(metadata_raw$var_code[
+    duplicated(metadata_raw$var_code)
+  ])
+
+  # Per-input rename maps: var_code -> renamed_var_code (for collisions only)
+  rename_maps <- vector("list", length(parsed_list))
+  names(rename_maps) <- source_labels
+  for (i in seq_along(source_labels)) {
+    rename_maps[[i]] <- character(0L)
   }
 
-  # admin sheets — full_join on key columns across files that have them.
+  if (length(dup_codes) > 0L) {
+    cli::cli_alert_warning(
+      c(
+        "Duplicate var_code{?s} across metadata inputs — both kept with source suffix:",
+        "*" = "{.val {dup_codes}}"
+      )
+    )
+    for (code in dup_codes) {
+      rows <- which(metadata_raw$var_code == code)
+      for (r in rows) {
+        lbl <- metadata_raw$.source_label[[r]]
+        new_code <- paste0(code, "__", lbl)
+        rename_maps[[lbl]][[code]] <- new_code
+        metadata_raw$var_code[[r]] <- new_code
+      }
+    }
+  }
+  metadata_raw$.source_label <- NULL
+  metadata <- metadata_raw
+
+  # admin sheets — full_join on key columns; apply same var_code renames.
   admin_slots <- unique(unlist(lapply(parsed_list, function(p) {
     grep("^admin\\d", names(p), value = TRUE)
   })))
 
   admin_combined <- list()
   for (slot in admin_slots) {
-    parts <- lapply(parsed_list, function(p) p[[slot]])
-    parts <- purrr::keep(parts, ~ !is.null(.x))
-    if (length(parts) == 0L) next
-    if (length(parts) == 1L) {
-      admin_combined[[slot]] <- parts[[1]]
+    parts <- mapply(
+      function(p, lbl) {
+        tbl <- p[[slot]]
+        if (is.null(tbl)) {
+          return(NULL)
+        }
+        # Rename any colliding indicator columns in this admin sheet.
+        rmap <- rename_maps[[lbl]]
+        if (length(rmap) > 0L) {
+          cols_to_rename <- intersect(names(tbl), names(rmap))
+          if (length(cols_to_rename) > 0L) {
+            names(tbl)[match(cols_to_rename, names(tbl))] <-
+              unname(rmap[cols_to_rename])
+          }
+        }
+        tbl
+      },
+      parsed_list,
+      source_labels,
+      SIMPLIFY = FALSE
+    )
+    parts <- Filter(Negate(is.null), parts)
+    if (length(parts) == 0L) {
       next
     }
-    # Find shared key columns: admin*Pcod / admin*Name / area / year.
+    if (length(parts) == 1L) {
+      admin_combined[[slot]] <- parts[[1L]]
+      next
+    }
     key_pattern <- "^(admin\\d+(Pcod|Name)|area|year)$"
-    key_cols <- intersect(
-      names(parts[[1]]),
-      grep(key_pattern, names(parts[[1]]), value = TRUE)
-    )
+    key_cols <- grep(key_pattern, names(parts[[1L]]), value = TRUE)
     if (length(key_cols) == 0L) {
       stop(
-        "internal: no join keys found in slot '", slot,
+        "internal: no join keys found in slot '",
+        slot,
         "' (expected admin<N>Pcod / admin<N>Name / area / year)."
       )
     }
-    admin_combined[[slot]] <- Reduce(function(a, b) {
-      shared <- intersect(names(a), key_cols)
-      dplyr::full_join(a, b, by = shared)
-    }, parts)
+    admin_combined[[slot]] <- Reduce(
+      function(a, b) {
+        shared <- intersect(intersect(names(a), names(b)), key_cols)
+        dplyr::full_join(a, b, by = shared)
+      },
+      parts
+    )
   }
 
   # weights_table — first non-empty wins.
@@ -388,14 +475,21 @@ compile_write_shapefiles_zip <- function(shp_dta, path) {
   dir.create(tmpdir, recursive = TRUE, showWarnings = FALSE)
   on.exit(unlink(tmpdir, recursive = TRUE), add = TRUE)
 
-  geojson_paths <- vapply(seq_along(shp_dta), function(i) {
-    out <- file.path(tmpdir, paste0(names(shp_dta)[i], ".geojson"))
-    sf::st_write(
-      shp_dta[[i]], out,
-      driver = "GeoJSON", append = FALSE, quiet = TRUE
-    )
-    out
-  }, character(1))
+  geojson_paths <- vapply(
+    seq_along(shp_dta),
+    function(i) {
+      out <- file.path(tmpdir, paste0(names(shp_dta)[i], ".geojson"))
+      sf::st_write(
+        shp_dta[[i]],
+        out,
+        driver = "GeoJSON",
+        append = FALSE,
+        quiet = TRUE
+      )
+      out
+    },
+    character(1)
+  )
 
   zip::zipr(zipfile = path, files = geojson_paths)
   invisible(path)
@@ -424,16 +518,16 @@ compile_render_metadata_pdf <- function(shp_path, mtdt_path, output_dir) {
   on.exit(unlink(tmprmd), add = TRUE)
 
   rmarkdown::render(
-    input         = tmprmd,
+    input = tmprmd,
     output_format = "pdf_document",
-    output_file   = "pti-metadata.pdf",
-    output_dir    = normalizePath(output_dir, mustWork = TRUE),
-    params        = list(
-      shp_path  = normalizePath(shp_path,  mustWork = TRUE),
+    output_file = "pti-metadata.pdf",
+    output_dir = normalizePath(output_dir, mustWork = TRUE),
+    params = list(
+      shp_path = normalizePath(shp_path, mustWork = TRUE),
       mtdt_path = normalizePath(mtdt_path, mustWork = TRUE)
     ),
-    quiet         = TRUE,
-    envir         = new.env()
+    quiet = TRUE,
+    envir = new.env()
   )
 
   file.path(output_dir, "pti-metadata.pdf")
