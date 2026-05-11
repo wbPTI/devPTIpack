@@ -39,9 +39,9 @@ show values 1,000,000× too large.
 area = as.numeric(units::set_units(sf::st_area(geometry), "km^2"))
 ```
 
-Note: for accurate area, re-project to UTM before computing, then transform
-back to display CRS (commonly EPSG:4326) for saving. The example should show
-this two-step pattern explicitly.
+Note: the project standard CRS is **EPSG:4326**. Compute `area` directly in
+EPSG:4326 using `sf::st_area()` with s2 enabled — no UTM reprojection step.
+The 1–5% approximation error is acceptable for PTI applications.
 
 ### 1.2 `admin0_Country` is mandatory but the simple example omits it (high impact)
 
@@ -114,6 +114,12 @@ make_hex_grid(country_polygon, resolution = 6)
 | ----------------- | ----------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `country_polygon` | `sf` object | —       | Any `sf` object. If multi-row, all rows are unioned with `sf::st_union()` before proceeding. The user may pass `admin1_Province` instead of `admin0_Country`. |
 | `resolution`      | integer     | `6`     | H3 resolution for fine grid. Acceptable values: 5, 6, 7. Coarse pre-filter resolution = `resolution - 2` (derived internally, not exposed).                   |
+
+**`resolution` should always be supplied from `HEX_RESOLUTION` in `00-master.R`** — that is the single place a deployer controls what resolution ships with the app. The template Step 1 (`01-shapes.qmd`) reads it as:
+
+```r
+my_shp$admin9_Hexagon <- make_hex_grid(my_shp$admin0_Country, resolution = HEX_RESOLUTION)
+```
 
 ### 2.3 Algorithm
 
@@ -213,6 +219,11 @@ make_admin_lookup(shp_list)
    - `admin<N>Pcod` exists and is unique (no duplicates, no NAs).
    - `admin<N>Name` exists and is unique (no duplicates, no NAs).
    - Layer is an `sf` object.
+   - `area` column exists and is numeric. If absent, emit a warning naming the
+     layer and compute it in-place as
+     `as.numeric(units::set_units(sf::st_area(geometry), "km^2"))` in the
+     layer's existing CRS (assumed EPSG:4326). All layers must already be in
+     EPSG:4326 — `make_admin_lookup()` does not re-project.
 
 3. **Centroid-in-polygon join** per adjacent level-pair (parent → child):
    - Compute centroids of child layer.
@@ -258,12 +269,15 @@ detail and is not returned.
 Step 1 §E replaces the manual centroid-join code with:
 
 ```r
+# HEX_RESOLUTION is set in 00-master.R -- the single control point for
+# what H3 resolution ships with the app.
+
 # Step 1: assemble raw layers (without parent Pcods)
 my_shp <- list(
   admin0_Country  = adm0,
   admin1_Province = adm1,
   admin2_District = adm2,
-  admin9_Hexagon  = make_hex_grid(adm0)
+  admin9_Hexagon  = make_hex_grid(adm0, resolution = HEX_RESOLUTION)
 )
 
 # Step 2: build and validate cascade; populate all parent Pcod columns
@@ -385,42 +399,48 @@ and correct. The `area` column will appear nearly constant; that is not a bug.
 
 ## 7. Function file locations
 
-| Function              | File                        | Export |
-| --------------------- | --------------------------- | ------ |
-| `make_hex_grid()`     | `R/fct_make_hex_grid.R`     | yes    |
-| `make_admin_lookup()` | `R/fct_make_admin_lookup.R` | yes    |
+| Function / Script     | File                                   | Export |
+| --------------------- | -------------------------------------- | ------ |
+| `make_hex_grid()`     | `R/fct_make_hex_grid.R`                | yes    |
+| `make_admin_lookup()` | `R/fct_make_admin_lookup.R`            | yes    |
+| Rwanda data rebuild   | `data-raw/generate-rwa-package-data.R` | no     |
+
+`data-raw/generate-rwa-package-data.R` must be updated as part of this work (see Decision 19). The Rwanda template (`inst/template_pti/01-shapes.qmd`) is the source the script mirrors — both must stay in sync.
 
 ---
 
 ## 8. Tests required
 
-| Test file                                 | Key expectations                                                                                                                                                                                                                                            |
-| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tests/testthat/test-make-hex-grid.R`     | Returns `sf` with `admin9Pcod`, `admin9Name`, `area`, `geometry`. Pcods are unique. Area is numeric. Passes with `rwa_shp$admin0_Country` as input. Passes with `rwa_shp$admin1_Province` (triggers union). s2 fallback path exercised by mocking s2 error. |
-| `tests/testthat/test-make-admin-lookup.R` | Returns enriched list with all parent Pcod columns populated. Validates many-to-one. Errors on orphan children. Tie-break warning emitted when centroids are ambiguous. Works with `admin9_Hexagon` included. s2 fallback path exercised.                   |
+| Test file                                 | Key expectations                                                                                                                                                                                                                                                                                          |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tests/testthat/test-make-hex-grid.R`     | Returns `sf` with `admin9Pcod`, `admin9Name`, `area`, `geometry`. Pcods are unique. Area is numeric. Passes with `rwa_shp$admin0_Country` as input. Passes with `rwa_shp$admin1_Province` (triggers union). s2 fallback path exercised by mocking s2 error.                                               |
+| `tests/testthat/test-make-admin-lookup.R` | Returns enriched list with all parent Pcod columns populated. Validates many-to-one. Errors on orphan children. Tie-break warning emitted when centroids are ambiguous. Works with `admin9_Hexagon` included. s2 fallback path exercised. Warning emitted and `area` computed when a layer is missing it. |
 
 ---
 
 ## 9. Decisions recorded
 
-| #   | Decision                                                                                                |
-| --- | ------------------------------------------------------------------------------------------------------- |
-| 1   | `make_hex_grid()` default resolution = 6. User may set 5 or 7.                                          |
-| 2   | Coarse pre-filter resolution = `resolution - 2` (derived internally).                                   |
-| 3   | Coarse-to-fine child expansion uses pure H3 math — no spatial operations.                               |
-| 4   | Centroid filter for inclusion test. Not polygon-polygon intersection.                                   |
-| 5   | `admin9Pcod` = H3 index string. `admin9Name` = same.                                                    |
-| 6   | `make_hex_grid()` unions all input rows — user may pass any admin layer.                                |
-| 7   | `make_admin_lookup()` takes named list, infers order from `admin<N>_` prefix.                           |
-| 8   | Tie-break on ambiguous centroid assignment: random sample + warning with count.                         |
-| 9   | Many-to-one validation enforced after each level-pair join.                                             |
-| 10  | `admin9_Hexagon` carries all parent Pcods — no cascade exceptions.                                      |
-| 11  | s2 fallback with `on.exit()` guard in both functions.                                                   |
-| 12  | `make_admin_lookup()` returns enriched `my_shp` list (not the internal lookup table).                   |
-| 13  | H3 package dependency (`h3jsr` or `h3o`) decided at implementation time.                                |
-| 14  | Rwanda (`rwa_shp`) used as guide example throughout. Ukraine `admin4_Hexagon` not referenced.           |
-| 15  | Step 4 resolution-mismatch must produce a clear error with actionable message.                          |
-| 16  | `admin9_Hexagon` included in `shapefiles.zip` by default. File size managed via resolution choice only. |
+| #   | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `make_hex_grid()` default resolution = 6. User may set 5 or 7.                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 2   | Coarse pre-filter resolution = `resolution - 2` (derived internally).                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 3   | Coarse-to-fine child expansion uses pure H3 math — no spatial operations.                                                                                                                                                                                                                                                                                                                                                                                                           |
+| 4   | Centroid filter for inclusion test. Not polygon-polygon intersection.                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 5   | `admin9Pcod` = H3 index string. `admin9Name` = same.                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 6   | `make_hex_grid()` unions all input rows — user may pass any admin layer.                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 7   | `make_admin_lookup()` takes named list, infers order from `admin<N>_` prefix.                                                                                                                                                                                                                                                                                                                                                                                                       |
+| 8   | Tie-break on ambiguous centroid assignment: random sample + warning with count.                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 9   | Many-to-one validation enforced after each level-pair join.                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 10  | `admin9_Hexagon` carries all parent Pcods — no cascade exceptions.                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| 11  | s2 fallback with `on.exit()` guard in both functions.                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 12  | `make_admin_lookup()` returns enriched `my_shp` list (not the internal lookup table).                                                                                                                                                                                                                                                                                                                                                                                               |
+| 13  | H3 package dependency (`h3jsr` or `h3o`) decided at implementation time.                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 14  | Rwanda (`rwa_shp`) used as guide example throughout. Ukraine `admin4_Hexagon` not referenced.                                                                                                                                                                                                                                                                                                                                                                                       |
+| 15  | Step 4 resolution-mismatch must produce a clear error with actionable message.                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 16  | `admin9_Hexagon` included in `shapefiles.zip` by default. File size managed via resolution choice only.                                                                                                                                                                                                                                                                                                                                                                             |
+| 17  | `make_admin_lookup()` warns and computes `area` in km² (EPSG:4326, s2-based) if a layer is missing it. Does not error, does not re-project.                                                                                                                                                                                                                                                                                                                                         |
+| 18  | All layers in `my_shp` must be in EPSG:4326. This is the single project CRS standard. No UTM step anywhere in the workflow.                                                                                                                                                                                                                                                                                                                                                         |
+| 19  | `rwa_shp` is the output of `data-raw/generate-rwa-package-data.R`, which must be re-run whenever the Step 1 workflow changes. `make_admin_lookup()` must exist before `rwa_shp` can be correctly rebuilt. `data-raw/generate-rwa-package-data.R` must be updated to call `make_admin_lookup()` (replacing the manual centroid-join) and to use `as.numeric(units::set_units(st_area(geometry), "km^2"))` (replacing the current `as.numeric(st_area(geometry))` which produces m²). |
 
 ---
 

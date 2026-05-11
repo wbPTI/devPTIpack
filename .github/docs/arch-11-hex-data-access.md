@@ -136,9 +136,14 @@ admin-level aggregates are included.
     point to the finest available level for each variable (hex level for hex
     data), so that the PTI calculation engine uses the most granular source.
 
-22. As a PTI deployer, I want population to appear as a visible indicator in
-    the metadata sheet and on the map, so that users can see population
-    distribution alongside other indicators.
+22. As a PTI deployer, I want population to be **excluded** from
+    `metadata-hex.xlsx` by default, so that it does not create a
+    `population__hex` collision when `compile_pti_data()` merges it
+    with a user metadata file that already contains a `population`
+    variable. Population is always fetched and used internally for
+    aggregation weighting but is not written as a visible indicator
+    row unless the deployer opts in via `include_hex = TRUE` on
+    `build_hex_metadata()`.
 
 23. As a PTI deployer, I want progress bars during fetch (per variable) and
     aggregation (per admin level × variable), so that I can track pipeline
@@ -197,12 +202,12 @@ admin-level aggregates are included.
   sources:
     pti_hex_store:
       label: "PTI Pre-computed Hex Data"
-      path: "https://..."
-      hex_col: "h3_index"
-      pop_col: "pop_gpw_2020"
+      path: "https://..."          # TBD — main pre-computed store
+      hex_col: "h3_index"          # TBD — verify at implementation
+      pop_var: "population"        # canonical name of the population variable
       variables:
         nightlights:
-          source_col: "ntl_mean"
+          source_col: "ntl_mean"   # TBD
           var_name: "Night Lights ({year})"
           var_description: "..."
           var_units: "nW/cm²/sr"
@@ -210,17 +215,60 @@ admin-level aggregates are included.
           pillar_name: "Economic Activity"
           legend_revert_colours: false
           time_col: "year"
-          available_years: [2013, ..., 2022]   # hint only
+          available_years: [2013, 2022]   # hint only
           weight: "none"
           fun: "mean"
           fltr_exclude_pti: false
         population:
-          source_col: "pop_gpw_2020"
+          source_col: "pop_gpw_2020"   # TBD
           var_name: "Population"
-          ...
+          var_units: "count"
           weight: "none"
           fun: "sum"
+
+    wb_flood_exposure:
+      label: "WB Flood Exposure (15 cm, 1-in-100)"
+      # Data: https://datacatalogfiles.worldbank.org/ddh-published/0066820/DR0095272/flood_exposure_15cm_1in100.parquet
+      # Catalog (Space2Stats): https://datacatalog.worldbank.org/int/search/dataset/0066820/Space2Stats-Database
+      path: "https://datacatalogfiles.worldbank.org/ddh-published/0066820/DR0095272/flood_exposure_15cm_1in100.parquet"
+      hex_col: ~                   # TBD — inspect schema at implementation
+      pop_var: ~                   # no population column in this source
+      variables:
+        flood_exposure_15cm_1in100:
+          source_col: ~            # TBD — inspect schema at implementation
+          var_name: "Flood Exposure (15 cm, 1-in-100)"
+          var_description: "Population exposed to flood depth ≥15 cm in a 1-in-100 year event. Source: World Bank Space2Stats Database."
+          var_units: "count"
+          pillar_group: ~          # TBD by deployer
+          pillar_name: ~           # TBD by deployer
+          legend_revert_colours: true
+          time_col: ~              # non-temporal — single snapshot
+          available_years: ~
+          weight: "none"
+          fun: "sum"
+          fltr_exclude_pti: false
   ```
+
+  > **Implementation note — first concrete test source:** `wb_flood_exposure`
+  > is the first real parquet endpoint used to develop and validate
+  > `fetch_hex_data()`.
+  >
+  > **Data file:**
+  > `https://datacatalogfiles.worldbank.org/ddh-published/0066820/DR0095272/flood_exposure_15cm_1in100.parquet`
+  >
+  > **Catalog / variable metadata:**
+  > [World Bank Space2Stats Database](https://datacatalog.worldbank.org/int/search/dataset/0066820/Space2Stats-Database)
+  > — use this page to confirm column names, units, description, and
+  > whether additional variables from the same dataset should be added
+  > to the registry.
+  >
+  > Before merging the registry YAML, run:
+  > ```r
+  > arrow::open_dataset(
+  >   "https://datacatalogfiles.worldbank.org/ddh-published/0066820/DR0095272/flood_exposure_15cm_1in100.parquet"
+  > ) |> arrow::schema()
+  > ```
+  > and fill in `hex_col` and `source_col` with the verified column names.
 
 - `available_years` is a **documentation hint** shown in `list_hex_vars()`
   output. `get_available_years()` queries the live parquet for ground truth.
@@ -272,19 +320,32 @@ admin-level aggregates are included.
 - `years = NULL` + interactive session → `cli` prints available years +
   `utils::menu()` prompt. Non-interactive → error with actionable message.
 
+- **`use_hex_vars()` always injects population automatically.** Regardless
+  of what the deployer requests, `use_hex_vars()` finds the source whose
+  registry entry declares `pop_var`, resolves it, and appends it to the
+  returned `vars` object tagged `internal = TRUE`. The deployer never
+  lists `population` explicitly. `build_hex_metadata()` reads the
+  `internal` tag to exclude population from the Excel output unless
+  `include_population = TRUE`. `fetch_hex_data()` has no registry
+  knowledge — it simply fetches everything in `vars`.
+
 ### Fetching
 
 - **`fetch_hex_data(hex_ids, vars)`** reads from online (or in exceptional
   cases, local) parquet endpoints via `arrow::open_dataset()` with
   predicate pushdown on the hex ID column.
 
+- `fetch_hex_data()` has **no registry knowledge**. It fetches every
+  variable in `vars` (including population, which `use_hex_vars()` has
+  already injected). It does not consult the YAML directly.
+
 - Only hexagons matching `hex_ids` are read — no global download.
 
 - `hex_ids` come from `hex_layer$admin9Pcod` (output of arch-10's
   `make_hex_grid()` + `make_admin_lookup()`).
 
-- Population is always fetched, always the first indicator column after
-  `hex_id`.
+- Population is always present in `vars` (injected by `use_hex_vars()`)
+  and always the first indicator column after `hex_id` in the output.
 
 - Temporal variables: fetched in long format internally, pivoted wide
   before returning. Output columns: `<canonical_name>_<resolved_year>`.
@@ -325,9 +386,22 @@ admin-level aggregates are included.
   )
   ```
 
+- **`population` is never looked up in `strategy`.** Its aggregation is
+  always hardcoded to `weight = "none", fun = "sum"` — the only
+  statistically correct aggregation for a count variable. If a deployer
+  includes `population` in `strategy`, a cli warning is emitted and the
+  entry is ignored.
+
 - Strategy resolution for temporal variables: strip `_<year>` suffix from
   `var_code` to get the stem, look up stem in `strategy`, fall back to
   `.default`.
+
+- **`strategy` is entirely the deployer's responsibility.**
+  `aggregate_hex_to_shapes()` never consults the registry YAML for
+  `weight`/`fun` defaults. The registry's `weight`/`fun` fields are
+  documentation hints surfaced by `list_hex_vars()` to guide the deployer
+  when writing their `strategy` list — they are not applied automatically.
+  This keeps `aggregate_hex_to_shapes()` decoupled from the registry.
 
 - **Weight × Fun are orthogonal.** All 15 combinations are valid:
   - `weight`: `"pop"` (population-weighted), `"area"` (area-weighted from
@@ -346,12 +420,14 @@ admin-level aggregates are included.
 - Progress bar: per admin level × variable.
 
 - Returns: named list of tibbles, one per admin level. Each tibble has
-  `admin<N>Pcod`, `admin<N>Name`, parent Pcods, `population` (aggregated),
-  and indicator columns.
+  `admin<N>Pcod`, `admin<N>Name`, parent Pcods, `population` (aggregated,
+  for internal use / weighting), and indicator columns. The `population`
+  column is always present in the returned tibbles for downstream use but
+  is omitted from `metadata-hex.xlsx` unless `include_population = TRUE`.
 
 ### Metadata Excel output
 
-- **`build_hex_metadata(aggregated, shp_dta, indicator_config, country_name, output_path, include_hex)`**
+- **`build_hex_metadata(aggregated, shp_dta, indicator_config, country_name, output_path, include_hex, include_population = FALSE)`**
 
 - Registry variables → metadata fields auto-populated from YAML. Printed
   via `cli` for user verification.
@@ -365,14 +441,25 @@ admin-level aggregates are included.
 - Temporal variables expand to one `metadata` row per resolved year:
   `var_code = <stem>_<year>`, `var_name` from glue template.
 
-- All user-chosen resolved years: `fltr_exclude_pti = FALSE` by default
-  (user explicitly chose them).
+- **`fltr_exclude_pti = FALSE` for all hex-derived variables by default**
+  — every fetched indicator is included in the PTI score calculation unless
+  the deployer overrides it. `build_hex_metadata()` prints a cli note after
+  writing the file reminding the deployer to review `fltr_exclude_pti` for
+  any display-only indicators (e.g. connectivity, accessibility indices that
+  should appear on the map but not enter the composite score). Override via
+  the `indicator_config` tibble argument.
 
 - `spatial_level` for hex-derived variables = the hex level name
   (e.g. `admin9_Hexagon`).
 
-- Population appears as a visible indicator (row in `metadata` sheet,
-  column in admin sheets).
+- **Population is excluded from `metadata-hex.xlsx` by default.**
+  It is always fetched and used internally for population-weighted
+  aggregation, but is not written as a row in the `metadata` sheet
+  or as a column in the `admin<N>_*` sheets. This prevents a
+  `population__hex` collision when `compile_pti_data()` merges with
+  a user metadata file. A deployer who wants population as a visible
+  map indicator can set `include_population = TRUE` in
+  `build_hex_metadata()`.
 
 - `registry_version` captured in the `general` sheet.
 
@@ -399,7 +486,13 @@ admin-level aggregates are included.
 ### `00-master.R` integration
 
 ```r
-# ── Hex data configuration ──────────────────────────────────────────
+# ── Hex grid configuration ──────────────────────────────────────────────────
+# H3 resolution for the hex grid built in Step 1. This is the SINGLE
+# place that controls what resolution ships with the app.
+#   5 = ~252 km²  6 = ~36 km² (default)  7 = ~5 km²
+# Changing this requires re-running Steps 1, 4, and 5.
+HEX_RESOLUTION <- 6L
+
 # Set to TRUE to include hex-level polygons in the deployed app.
 # When FALSE (default), hex data is aggregated to admin levels only —
 # hex polygons are NOT shipped with the app. Recommended when the hex
@@ -407,18 +500,21 @@ admin-level aggregates are included.
 INCLUDE_HEX_IN_APP <- FALSE
 ```
 
-This variable is passed to:
+`HEX_RESOLUTION` cascades as follows:
 
-- **Step 1 (`01-shapes.qmd`):** if `FALSE`, `admin9_Hexagon` is removed
-  from `shp_dta` before `saveRDS()`. The hex layer object is retained in
-  the Quarto environment for Step 4 to use.
+- **Step 1 (`01-shapes.qmd`):** passed to `make_hex_grid(..., resolution = HEX_RESOLUTION)`. The resulting `admin9_Hexagon` layer in `shapes.rds` encodes the resolution in every H3 index string — `fetch_hex_data()` reads it automatically from `hex_ids` with no additional configuration.
 
-- **Step 4 (`04-hex-data.qmd`):** passed to `build_hex_metadata()` as
-  `include_hex`.
+- **Step 4 (`04-hex-data.qmd`):** `fetch_hex_data()` detects resolution from the H3 index strings in `hex_ids`. H5 grids trigger the transparent H5→H6→H5 bridge. H7 grids error with an actionable message pointing back to `HEX_RESOLUTION` in `00-master.R`. No second control point is needed.
 
-- **Step 5 (`05-compile.qmd`):** no change needed — if the hex sheet is
-  absent from `metadata-hex.xlsx`, `compile_pti_data()` merges only what
-  is present.
+- **Step 5 (`05-compile.qmd`):** no change needed — resolution is encoded in the `admin9Pcod` values already present in `shapes.rds`.
+
+`INCLUDE_HEX_IN_APP` is passed to:
+
+- **Step 1 (`01-shapes.qmd`):** no effect. `admin9_Hexagon` is **always** saved to `shapes.rds`. Each `.qmd` runs in its own session — objects cannot be retained across steps.
+
+- **Step 4 (`04-hex-data.qmd`):** passed to `build_hex_metadata()` as `include_hex` to control whether the hex-level sheet is written to `metadata-hex.xlsx`.
+
+- **Step 5 (`05-compile.qmd`):** no change needed — if the hex sheet is absent from `metadata-hex.xlsx`, `compile_pti_data()` merges only what is present.
 
 ### Local user parquet — DIY path (documented, not automated)
 
@@ -446,16 +542,37 @@ documented recipe between the fetch and aggregate steps:
 suffixed columns (symptom of a bad `full_join`) and warns with an actionable
 message about canonical name collision between user and registry data.
 
+### `compile_pti_data()` multi-file merge
+
+`compile_pti_data()` accepts `metadata_paths` as a character vector — one or
+more Excel files (e.g. `metadata-user.xlsx` from Step 3 and
+`metadata-hex.xlsx` from Step 4). The merge rules:
+
+- **No data is lost.** When the same `var_code` appears in more than one
+  input, **both rows are kept** and each is renamed
+  `<var_code>__<source_label>` where `source_label` is derived from the
+  input filename (`metadata-hex.xlsx` → `hex`, `metadata-user.xlsx` →
+  `user`). A cli warning lists all renamed codes.
+- The same suffix is applied to the matching indicator columns in every
+  `admin<N>_*` sheet so `var_code` values stay in sync with column names.
+- `general` sheet: first file wins.
+- `admin<N>_*` sheets: `full_join` across files on shared key columns
+  (`admin<N>Pcod`, `admin<N>Name`, `area`, `year`).
+- `weights_table`: first non-empty file wins (warning if multiple).
+
+This is implemented in `compile_merge_metadata()` (internal helper in
+`R/compile_pti_data.R`). `INCLUDE_HEX_IN_APP` gates whether
+`build_hex_metadata()` writes the hex admin sheet to `metadata-hex.xlsx` —
+it has no effect on `compile_pti_data()` itself.
+
 ### Resolution constraints
 
-- Pre-computed data is at **H6**. No H7.
-- `make_hex_grid()` supports resolution 5, 6, or 7 (arch-10), but this
-  pipeline's `fetch_hex_data()` constrains to **H6 or coarser** (H5).
-- H5 hex grid + H6 data: transparent expansion via `h3_to_children()`,
-  fetch at H6, aggregate back to H5.
-- H7 or finer → error: "Pre-computed data is at H6. Use resolution 6 or 5."
-- Large countries at H6: warn user if >5,000 cells and recommend H5 for
-  display or setting `INCLUDE_HEX_IN_APP <- FALSE`.
+- **`HEX_RESOLUTION` in `00-master.R` is the single deployer control point** for what H3 resolution ships with the app. It is passed to `make_hex_grid()` in Step 1. Everything downstream (fetch, aggregate, compile) adapts automatically.
+- Pre-computed data sources (e.g. `wb_flood_exposure`) provide data at **H6**. No H7 data available.
+- `HEX_RESOLUTION = 5` (H5 grid) — `fetch_hex_data()` expands each H5 ID to its H6 children, fetches at H6, aggregates back to H5 transparently.
+- `HEX_RESOLUTION = 6` (H6 grid, default) — direct fetch, no bridge.
+- `HEX_RESOLUTION = 7` — error at `fetch_hex_data()`: "Pre-computed data is at H6. Set `HEX_RESOLUTION` to 6 or 5 in `00-master.R`."
+- Large countries at H6: warn if >5,000 cells and recommend `HEX_RESOLUTION <- 5L` or `INCLUDE_HEX_IN_APP <- FALSE`.
 
 ---
 
@@ -470,14 +587,14 @@ changes, not when implementation is refactored.
 
 ### Modules to test
 
-| Module               | Test file                   | Key assertions                                                                                                                                                                                                                                                                                                                                          |
-| -------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Registry reader      | `test-hex-registry.R`       | YAML parses to expected structure. `list_hex_vars()` returns correct columns and filters. `use_hex_vars()` resolves registry entries. Duplicate canonical names get source-label suffix. Unknown canonical name errors immediately.                                                                                                                     |
-| Year resolver        | `test-hex-year-resolver.R`  | Exact match returns exact. Nearest year preference (later on tie). 7-year max tolerance error. Warning messages list requested→resolved pairs. Non-temporal var unaffected by `years`. `NULL` years in non-interactive session errors.                                                                                                                  |
-| Hex data fetcher     | `test-hex-fetch.R`          | Returns tibble with `hex_id` + `population` + indicator columns. Temporal vars pivoted wide with `_<year>` suffix. Only requested hex IDs returned (mock with local parquet fixture). H5→H6 resolution bridge: H5 input, H6 fixture, output at H5. Finer-than-source errors.                                                                            |
-| Hex aggregator       | `test-hex-aggregate.R`      | All `weight × fun` combinations produce correct numeric result on a small fixture. `.default` fallback works. Stem-based strategy lookup strips `_<year>`. NA value → 0. NA population → 0. All-NA polygon → `NA` + warning. Each admin level aggregated directly from hex (not chained).                                                               |
-| Hex metadata builder | `test-hex-build-metadata.R` | Output xlsx passes `validate_metadata()`. Registry vars auto-populated. Non-registry vars require `indicator_config`. Temporal vars expand to one row per year. `spatial_level` = hex level. Population appears as indicator. `registry_version` in general sheet. `include_hex = FALSE` omits hex sheet. >5k cell prompt in non-interactive → `FALSE`. |
-| Source adapter       | `test-hex-source.R`         | `pti_hex_source()` validates required fields. `pti_hex_var()` validates weight/fun combinations. Exactly-one `pop_var` enforced across sources.                                                                                                                                                                                                         |
+| Module               | Test file                   | Key assertions                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| -------------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Registry reader      | `test-hex-registry.R`       | YAML parses to expected structure. `list_hex_vars()` returns correct columns and filters. `use_hex_vars()` resolves registry entries. Duplicate canonical names get source-label suffix. Unknown canonical name errors immediately.                                                                                                                                                                                                                                                                                                                                                 |
+| Year resolver        | `test-hex-year-resolver.R`  | Exact match returns exact. Nearest year preference (later on tie). 7-year max tolerance error. Warning messages list requested→resolved pairs. Non-temporal var unaffected by `years`. `NULL` years in non-interactive session errors.                                                                                                                                                                                                                                                                                                                                              |
+| Hex data fetcher     | `test-hex-fetch.R`          | Returns tibble with `hex_id` + `population` + indicator columns. Temporal vars pivoted wide with `_<year>` suffix. Only requested hex IDs returned (mock with local parquet fixture). H5→H6 resolution bridge: H5 input, H6 fixture, output at H5. Finer-than-source errors. **Live integration test** (skipped on CRAN / CI without network): fetch a small set of Rwanda H6 hex IDs from `wb_flood_exposure` (`https://datacatalogfiles.worldbank.org/ddh-published/0066820/DR0095272/flood_exposure_15cm_1in100.parquet`) and assert non-empty result with correct column names. |
+| Hex aggregator       | `test-hex-aggregate.R`      | All `weight × fun` combinations produce correct numeric result on a small fixture. `.default` fallback works. Stem-based strategy lookup strips `_<year>`. NA value → 0. NA population → 0. All-NA polygon → `NA` + warning. Each admin level aggregated directly from hex (not chained).                                                                                                                                                                                                                                                                                           |
+| Hex metadata builder | `test-hex-build-metadata.R` | Output xlsx passes `validate_metadata()`. Registry vars auto-populated. Non-registry vars require `indicator_config`. Temporal vars expand to one row per year. `spatial_level` = hex level. Population **excluded** by default; present when `include_population = TRUE`. `registry_version` in general sheet. `include_hex = FALSE` omits hex sheet. >5k cell prompt in non-interactive → `FALSE`.                                                                                                                                                                                |
+| Source adapter       | `test-hex-source.R`         | `pti_hex_source()` validates required fields. `pti_hex_var()` validates weight/fun combinations. Exactly-one `pop_var` enforced across sources.                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 
 ### Prior art
 
@@ -486,6 +603,21 @@ Existing test patterns in `tests/testthat/` use `testthat` with the bundled
 tests will follow the same pattern, adding small synthetic hex fixtures
 (a handful of H6 cells covering Rwanda) as `.rds` files in
 `tests/testthat/fixtures/`.
+
+**First live test source:** `wb_flood_exposure`.
+
+| Field                | Value                                                                                                                |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Parquet URL          | `https://datacatalogfiles.worldbank.org/ddh-published/0066820/DR0095272/flood_exposure_15cm_1in100.parquet`          |
+| Dataset catalog      | [World Bank Space2Stats Database](https://datacatalog.worldbank.org/int/search/dataset/0066820/Space2Stats-Database) |
+| Variable             | `flood_exposure_15cm_1in100` — population exposed to flood depth ≥15 cm, 1-in-100 year return period                 |
+| Temporal             | Non-temporal (single snapshot)                                                                                       |
+| Recommended strategy | `weight = "none", fun = "sum"`                                                                                       |
+
+This is the first real endpoint for `fetch_hex_data()` integration tests.
+Schema (`hex_col`, `source_col`) must be verified before the registry YAML
+entry is finalised. Live tests are wrapped in `skip_if_offline()` so they
+do not run on CRAN or in CI without network.
 
 ---
 
