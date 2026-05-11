@@ -1,0 +1,176 @@
+---
+title: "Step 3 — Metadata Excel"
+---
+
+Build the metadata Excel workbook that holds the indicator dictionary and per-admin-level values consumed by the PTI calculation pipeline.
+
+The end product of this step is `app-data/metadata-user.xlsx`. Step 5 merges it (with optional Step 4 outputs) into the canonical `app-data/metadata.xlsx`, validates the combined inputs, renders the indicator atlas PDF, and writes the deployment artefacts.
+
+This page walks through the bundled Rwanda templates: a **simple case** (`sample-metadata-adm1.xlsx` — 5 provinces, 3 indicators) and a **multi-level case** (`sample-metadata-adm1-adm2.xlsx` — same 3 indicators with 30 districts joined onto the same provinces).
+
+## What the workbook is and why it exists
+
+The Shiny app needs three things to render a PTI: boundaries (Step 1), values (an indicator measured at every polygon at some level), and metadata describing what those values mean. The metadata Excel bundles values + descriptions in one round-trippable file:
+
+- **`general`** — a one-row sheet with country-level info (`country` column).
+- **`metadata`** — the indicator catalogue. One row per indicator, columns for display name, units, pillar, filter flags, etc.
+- **`admin<N>_<HumanName>`** — one sheet per admin level you have indicator data for. Wide format: rows are polygons, columns are indicators.
+- **`weights_table`** *(optional)* — pre-defined weighting schemes the deployer can ship.
+
+`fct_template_reader()` parses the file into the list shape `launch_pti()` consumes. The full sheet inventory and column contract is the [Data preparation reference §2](dataprep.html) — refer there whenever a validator points at a specific column.
+
+## Sheet structure (condensed)
+
+| Sheet               | Required?     | What goes in it                                                                                |
+| ------------------- | ------------- | ---------------------------------------------------------------------------------------------- |
+| `general`           | yes           | One row, one column (`country`).                                                               |
+| `metadata`          | yes           | One row per indicator. 14 columns describing it. See condensed column reference below.         |
+| `admin<N>_<Name>`   | one or more   | Wide indicator values. Sheet name **must match** an `admin<N>_<HumanName>` slot in `shapes.rds`. |
+| `weights_table`     | optional      | Pre-defined weight schemes. One row per `var_code`; column groups named `ws<digit>..*`.        |
+| `point_data`        | optional      | Reserved for future point overlays. Currently ignored; safe to omit.                            |
+
+The admin-sheet name is a foreign key — `admin1_Province` here must equal `admin1_Province` in your `shapes.rds`. Mismatches drop indicators silently. See [§2.1](dataprep.html) for the full inventory.
+
+## Condensed column reference — `metadata` sheet
+
+Every row in `metadata` has these 14 columns. Required unless noted:
+
+| Column                  | Type      | Required    | Purpose                                                                                                       |
+| ----------------------- | --------- | ----------- | ------------------------------------------------------------------------------------------------------------- |
+| `var_code`              | character | yes         | Indicator's column name as it appears in the admin sheets. **No `:`.**                                        |
+| `var_name`              | character | yes         | Display name in the dashboard UI. **No `:`.**                                                                 |
+| `var_description`       | character | recommended | Long-form description: construction, sources, units, caveats.                                                 |
+| `var_order`             | integer   | yes         | Sort order within a pillar.                                                                                   |
+| `var_units`             | character | optional    | Unit (e.g. `"%"`, `"km"`, `"USD"`). Display-only.                                                              |
+| `spatial_level`         | character | yes         | The most disaggregated `admin<N>_<Name>` sheet this indicator appears on.                                     |
+| `pillar_group`          | numeric   | yes         | Numeric code grouping indicators into pillars.                                                                |
+| `pillar_name`           | character | yes         | Human-readable pillar name. Rows sharing `pillar_group` must share `pillar_name`. **No `:`.**                 |
+| `pillar_description`    | character | optional    | Long-form pillar description.                                                                                 |
+| `fltr_exclude_pti`      | logical   | yes         | `TRUE` to exclude this indicator from the PTI calculation.                                                    |
+| `fltr_exclude_explorer` | logical   | yes         | `TRUE` to exclude from the Data Explorer tab.                                                                 |
+| `fltr_overlay_pti`      | logical   | yes         | Reserved overlay flag. Set `FALSE` unless you need it.                                                        |
+| `fltr_overlay_explorer` | logical   | yes         | Reserved overlay flag. Set `FALSE`.                                                                           |
+| `legend_revert_colours` | logical   | yes         | `TRUE` reverses the colour scale (use when high values are *bad*, e.g. poverty rate).                          |
+
+For column-by-column rules, common pitfalls (booleans-as-strings, `:` in names, `var_code` mismatches), and the optional `weights_table` layout, see [Data preparation reference §2.3 and §2.5](dataprep.html).
+
+## Condensed column reference — `admin<N>_<Name>` sheets
+
+Wide format. Every admin sheet must carry these key columns plus one numeric column per indicator measured at this level:
+
+| Column                | Type      | Purpose                                                                          |
+| --------------------- | --------- | -------------------------------------------------------------------------------- |
+| `admin<N>Pcod`        | character | Foreign key onto the matching `sf` layer's `admin<N>Pcod` (1-to-1).              |
+| `admin<N>Name`        | character | Mirror of the geometry's name column.                                            |
+| Parent `admin<k>Pcod` | character | All ancestor P-codes for `k < N`. Cascade rule.                                  |
+| `year`                | integer   | Vintage of the values in this row. May vary across rows.                          |
+| `area`                | numeric   | Area in km². Usually copied from the geometry layer.                              |
+| `<var_code>`          | numeric   | One column per indicator declared in `metadata` for this `spatial_level`.        |
+
+Indicator columns not declared in `metadata` are silently dropped at template-load time — handy when carrying scratch columns through your prep pipeline, but a debugging hazard otherwise. Full reference at [§2.4](dataprep.html).
+
+## Simple case walkthrough — Adm1 only
+
+The bundled `sample-metadata-adm1.xlsx` covers 3 indicators measured at province level only — poverty rate, adult literacy rate, road density. All three sit in a single pillar.
+
+```r
+#| eval: false
+library(devPTIpack)
+
+mtdt_path <- "sample-data/sample-metadata-adm1.xlsx"
+inp_dta   <- fct_template_reader(mtdt_path)
+
+names(inp_dta)
+#> [1] "general" "metadata" "admin1_Province" "weights_clean"
+
+inp_dta$metadata[, c("var_code", "var_name", "spatial_level", "pillar_name")]
+inp_dta$admin1_Province
+```
+
+Inspect each sheet at the console; `inp_dta$metadata` is the indicator catalogue, and `inp_dta$admin1_Province` is the wide values table. If both look right and `validate_metadata()` is happy (next section), you're done.
+
+## Multi-level case walkthrough — Adm1 + Adm2
+
+The multi-level workbook (`sample-metadata-adm1-adm2.xlsx`) ships the same 3 indicators measured at both province (Adm1) and district (Adm2) level, with `spatial_level` set to `admin2_District` so the PTI calculation runs at the most disaggregated level.
+
+```r
+#| eval: false
+mtdt_path <- "sample-data/sample-metadata-adm1-adm2.xlsx"
+inp_dta   <- fct_template_reader(mtdt_path)
+
+names(inp_dta)
+#> [1] "general" "metadata" "admin1_Province" "admin2_District" "weights_clean"
+```
+
+Notice that both `admin1_Province` and `admin2_District` carry the indicator columns — the pipeline will use Adm2 (because `spatial_level = "admin2_District"`) but the Adm1 sheet remains useful for the Data Explorer tab.
+
+The cascade rule applies here too: every row in `admin2_District` must have an `admin1Pcod` value that exists in `admin1_Province`'s `admin1Pcod` column. If you generated the Adm2 layer with a centroid-in-polygon join (see [Step 1 §E](build-pti-1-shapefiles.html#sec-advanced-multi-level)), the workbook should already inherit those parent P-codes — but `validate_metadata()` re-verifies.
+
+## Validate
+
+There are two complementary validators:
+
+### Structural — `validate_metadata()`
+
+Runs the structural checks plus a dry-run of the full PTI calculation pipeline under all-equal weights:
+
+```r
+#| eval: false
+validate_metadata(
+  shp_path  = "app-data/shapes.rds",
+  mtdt_path = mtdt_path
+)
+```
+
+It returns `pass` / `warn` / `fail` and prints structured issues. Specifically (full list at [§2.6](dataprep.html)):
+
+- The shapes file is a non-empty named list.
+- The metadata file has a non-empty `metadata` sheet.
+- All `fltr_*` columns are read as logical, not strings.
+- The pipeline runs end-to-end and produces the expected number of scored pillars.
+
+### Visual — `app_validate_metadata()`
+
+Pairs the structural validator's output with the bundled Data Explorer modules so you can scan every indicator's values on the map:
+
+```r
+#| eval: false
+shp_dta <- readRDS("app-data/shapes.rds")
+
+app_validate_metadata(
+  shp_dta = shp_dta,
+  inp_dta = inp_dta
+)
+```
+
+The app shows the structured validation report on one tab and a fully interactive Data Explorer on the other — choropleth per indicator at every admin level, with colour scales, tooltips, and admin-level switching. The explorer is **only embedded when validation passes or warns**; on hard fail the app shows the structured report and does not render the explorer (since malformed inputs would crash it).
+
+Use it to spot value-level problems the structural validator can't see:
+
+- Indicators with surprisingly few non-NA polygons.
+- Out-of-range values (a literacy rate of 250%).
+- Geographic outliers consistent with a data-merge bug.
+- Reverse-coded indicators that should have `legend_revert_colours = TRUE`.
+
+## How and where to save
+
+Save the validated workbook to its canonical intermediate location:
+
+```r
+#| eval: false
+dir.create("app-data", showWarnings = FALSE)
+file.copy(
+  from      = mtdt_path,
+  to        = "app-data/metadata-user.xlsx",
+  overwrite = TRUE
+)
+```
+
+`app-data/metadata-user.xlsx` is *intermediate* — Step 5's `compile_pti_data()` merges it with any other intermediate metadata files (e.g. `app-data/metadata-hex.xlsx` from Step 4) into the canonical `app-data/metadata.xlsx`. If your project has only one metadata source, the merge is a passthrough.
+
+## Next
+
+Once `app-data/metadata-user.xlsx` validates cleanly:
+
+- If you also have HEX data, continue with [Step 4 — HEX data](build-pti-4-hex.html) to produce `app-data/metadata-hex.xlsx`.
+- Otherwise, jump to [Step 5 — Compile & finalise](build-pti-5-compile.html) to merge inputs and produce the deployment artefacts.

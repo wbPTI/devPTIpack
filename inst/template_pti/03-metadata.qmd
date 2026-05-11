@@ -1,0 +1,65 @@
+---
+title: "Step 3 -- Prepare metadata Excel"
+format: html
+---
+
+<!-- For detailed instructions, see:
+     https://worldbank.github.io/devPTIpack/articles/build-pti-3-metadata.html -->
+
+This step reads the synthetic Rwanda metadata workbook from
+`sample-data/`, validates it against the shapefile saved in Step 1,
+and copies the workbook to `app-data/metadata-user.xlsx` so it can be
+picked up by Step 5's compile pass.
+
+The Rwanda template ships two sample workbooks:
+
+- `sample-metadata-adm1.xlsx` -- 5 provinces x 3 indicators (simple
+  one-level case).
+- `sample-metadata-adm1-adm2.xlsx` -- same 3 indicators at both Adm1
+  and Adm2 (multi-level case).
+
+This step uses the multi-level workbook by default; switch to the
+Adm1-only workbook by changing the `mtdt_path` variable below.
+
+## Read the metadata template
+
+```{r}
+#| message: false
+library(devPTIpack)
+
+mtdt_path <- "sample-data/sample-metadata-adm1-adm2.xlsx"
+inp_dta   <- fct_template_reader(mtdt_path)
+names(inp_dta)
+```
+
+## Validate against your shapefile
+
+```{r}
+validate_metadata(
+  shp_path  = "app-data/shapes.rds",
+  mtdt_path = mtdt_path
+)
+
+# Visual inspection via standalone Shiny app -- pairs the validator
+# output with the bundled mod_dta_explorer2 modules so you can scan
+# every indicator's values on the map. Commented because `00-master.R`
+# runs this file unattended; uncomment and re-source this file
+# interactively when you want the visual pass.
+# shp_dta <- readRDS("app-data/shapes.rds")
+# app_validate_metadata(shp_dta = shp_dta, inp_dta = inp_dta)
+```
+
+## Stage the workbook for Step 5
+
+`compile_pti_data()` (Step 5) merges every intermediate metadata file
+under `app-data/`. Copy the validated user workbook to its canonical
+location now:
+
+```{r}
+dir.create("app-data", showWarnings = FALSE)
+file.copy(
+  from      = mtdt_path,
+  to        = "app-data/metadata-user.xlsx",
+  overwrite = TRUE
+)
+```

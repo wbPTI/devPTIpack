@@ -1,67 +1,54 @@
-#' weights_rand UI Function
+#' Dev/debug UI placeholder for the random-weights generator
 #'
-#' @description A shiny Module.
+#' Internal placeholder UI used during development to host buttons
+#' that drive `get_rand_weights()` / `get_all_weights_combs()`. Not
+#' wired into the production app surface.
 #'
-#' @param id,input,output,session Internal parameters for {shiny}.
+#' @param id Character. Shiny module namespace ID.
 #'
-#' @noRd 
+#' @return A `shiny.tag` -- a single `uiOutput` slot.
 #'
-#' @importFrom shiny NS tagList actionButton
+#' @importFrom shiny NS uiOutput
+#' @noRd
 mod_weights_rand_ui <- function(id){
   ns <- NS(id)
   uiOutput(ns("rand_weights_ui"))
 
 }
-    
-#' Assign random weights 
-#' 
-#' @noRd 
-#' @importFrom rlang set_names
+
+#' Generate a random list of weighting schemes
+#'
+#' Builds between 1 and 5 weighting schemes (uniform random count),
+#' each named with a random 5-letter prefix and a sequential index,
+#' and each weight drawn from `runif(-2, 2)` then rounded to the
+#' nearest integer. Useful for smoke-testing custom PTI configurations
+#' with realistic-shaped (but meaningless) weights.
+#'
+#' @param indicators_list Tibble with at least a `var_code` column,
+#'   typically the output of `get_indicators_list()`.
+#'
+#' @return A named list of tibbles. Each element is a tibble with
+#'   columns `var_code` and `weight`; element names follow the pattern
+#'   `"<5-letter-prefix> <index>"`.
+#'
+#' @importFrom dplyr select mutate
 #' @importFrom purrr map
-mod_weights_rand_server <- function(id, imported_data){
-  moduleServer( id, function(input, output, session){
-    ns <- session$ns
-    
-    ws_to_plot2 <- reactiveVal()
-    indicators <-  mod_indicarots_srv("id", imported_data)
-    
-    output$rand_weights_ui <- renderUI({
-      tagList(
-        actionButton(ns("new_weights"), "Regenerate random weights"),
-        verbatimTextOutput(ns("weights_tbl"))
-      )
-    }) 
-    
-    out_dta <-
-      eventReactive(#
-        list(indicators(), input$new_weights),
-        {
-          req(indicators())
-          a <- imported_data()
-          a$indicators_list <- indicators()
-          a$weights_clean <- get_rand_weights(a$indicators_list)
-          a
-        }, ignoreNULL = TRUE)
-    
-    output$weights_tbl <-
-      renderPrint({
-        out_dta()$weights_clean %>% map( ~ set_names(.x$weight, .x$var_code))
-      })
-    
-    out_dta
-  })
-}
-
-
-#' @describeIn mod_weights_rand_ui  Computes random weights
-#' 
-#' @noRd
-#' 
+#' @importFrom rlang set_names
+#' @importFrom stringr str_c
+#' @family weights
 #' @export
+#'
+#' @examples
+#' data(rwa_mtdt_full)
+#' set.seed(1)
+#' wts <- get_rand_weights(rwa_mtdt_full$metadata)
+#' length(wts) >= 1 && length(wts) <= 5
+#' all(vapply(wts, function(x) all(c("var_code", "weight") %in% names(x)),
+#'            logical(1)))
 get_rand_weights <- function(indicators_list) {
-  1:(sample(2:5, 1)) %>% 
+  1:(sample(2:5, 1)) %>%
     map(~ {
-    list_nm <- 
+    list_nm <-
       str_c(sample(letters, 5), collapse = "", sep = "") %>%
       str_c(" ", .x)
     wght <- indicators_list %>%
@@ -73,30 +60,52 @@ get_rand_weights <- function(indicators_list) {
 }
 
 
-#' @describeIn mod_weights_rand_ui Produces all combinations of weights
+#' Enumerate all weighting-scheme combinations of a given size
+#'
+#' For each `n_combo` in `n_items`, enumerates every `combn(var_codes,
+#' n_combo)` and returns one weighting scheme per combination, with
+#' weight `1` on the variables in the combination and the others
+#' omitted entirely. Useful for exhaustive batch analyses (e.g. all
+#' 3-of-N PTIs).
+#'
+#' @param var_codes Character vector of variable codes to draw
+#'   combinations from.
+#' @param n_items Integer or integer vector. Combination sizes to
+#'   enumerate. Defaults to `3` (all 3-of-N combinations).
+#'
+#' @return A named list of tibbles. Each element is a tibble with
+#'   columns `var_code` and `weight`; element names follow the pattern
+#'   `"Wght of <n_combo> comb no. <index>"`. Total length is
+#'   `sum(choose(length(var_codes), n_items))`.
+#'
+#' @importFrom dplyr mutate
+#' @importFrom purrr map map2
+#' @importFrom rlang set_names
+#' @importFrom stringr str_c
+#' @importFrom tibble tibble
+#' @family weights
 #' @export
-#' @noRd
+#'
+#' @examples
+#' data(rwa_mtdt_full)
+#' codes <- rwa_mtdt_full$metadata$var_code
+#' combos <- get_all_weights_combs(codes, n_items = 2)
+#' length(combos)
+#' choose(length(codes), 2)
 get_all_weights_combs <- function(var_codes, n_items = 3) {
-  n_items %>% 
+  n_items %>%
     map(~{
       n_combo <- .x
-      
-      combn(var_codes, n_combo, simplify = F) %>% 
+
+      combn(var_codes, n_combo, simplify = F) %>%
         map2(seq_along(.), ~{
           wt_nm <- str_c("Wght of ", n_combo, " comb no. ", .y)
           tibble(var_code = var_codes[var_codes %in% unlist(.x)]) %>%
-            mutate(weight = 1) %>% 
-            list() %>% 
+            mutate(weight = 1) %>%
+            list() %>%
             set_names(wt_nm)
-        }) %>% 
+        }) %>%
         unlist(recursive = F)
-    }) %>% 
+    }) %>%
     unlist(recursive = F)
 }
-
-    
-## To be copied in the UI
-# mod_weights_rand_ui("weights_rand_ui_1")
-    
-## To be copied in the server
-# mod_weights_rand_server("weights_rand_ui_1")

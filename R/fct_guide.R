@@ -1,13 +1,36 @@
-#' Compile guide for lunch PTI
+#' Build the cicerone guided tour for a launched PTI app
 #'
-#' @description A shiny Module.
+#' Internal helper used by `mod_infotab_server` to construct a
+#' `cicerone::Cicerone` instance with one step per UI region the user
+#' should be guided through (PTI name input, weight modification, save
+#' button, delete button, map area, download/upload, tab switcher).
+#' Steps for the comparison and data-explorer tabs are added
+#' conditionally based on whether their tab IDs were supplied to
+#' `launch_pti()`.
 #'
-#' @param id,input,output,session Internal parameters for {shiny}.
+#' Each step's `el` matches a CSS ID injected by the corresponding
+#' module (`step_1_name`, `step_5_modify_weights`, etc.). Step
+#' transitions that need to switch the active tab embed a small JS
+#' snippet referencing `tabpanel_id`.
 #'
-#' @noRd
+#' @param tabpanel_id Character. Input ID of the parent `navbarPage`,
+#'   embedded in the tab-switching JS callbacks. Defaults to
+#'   `"main_sidebar"`.
+#' @param ptitab_id Character. Tab name for the PTI editor; the tour
+#'   snaps to this tab on the first step.
+#' @param comparetab_id Character or `NULL`. When truthy, two
+#'   compare-tab steps are appended.
+#' @param exploretab_id Character or `NULL`. When truthy, two
+#'   explorer-tab steps are appended.
 #'
-#' @importFrom htmltools HTML
+#' @return A `cicerone::Cicerone` R6 object ready for `$init()` and
+#'   `$start()`.
+#'
 #' @importFrom cicerone Cicerone
+#' @importFrom htmltools HTML
+#' @importFrom glue glue
+#' @importFrom stringr str_c
+#' @noRd
 guide_launch_pti <- function(
   tabpanel_id = "main_sidebar", 
   ptitab_id = "PTI",

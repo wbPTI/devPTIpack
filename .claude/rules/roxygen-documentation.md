@@ -8,7 +8,7 @@ When documenting R functions in this package, follow these standards.
 
 - Description = one sentence on *what* the function does, plus optional paragraph(s) on *how*.
 - All `@param` entries must describe type and purpose.
-- Examples must use only package built-in data (`ukr_shp`, `ukr_mtdt_full`).
+- Examples must use only package built-in data. **Prefer `rwa_shp` / `rwa_mtdt_full`** (user-facing tutorial datasets, smaller and CC-BY 4.0 sourced). `ukr_shp` / `ukr_mtdt_full` are also bundled and remain the canonical inputs for the test suite.
 - Examples must pass `devtools::check()`.
 - Use `\dontrun{}` only for Shiny modules or side-effect-heavy code.
 - Never combine `@noRd` with `@export` — this creates exported functions with no help page.

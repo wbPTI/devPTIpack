@@ -3,10 +3,10 @@
 test_that("random weights are generated", {
   expect_success(
     expect_gt({
-      devPTIpack::ukr_mtdt_full %>% 
-        devPTIpack::get_indicators_list() %>% 
-        devPTIpack::get_rand_weights() %>% 
-        bind_rows() %>% 
+      devPTIpack::ukr_mtdt_full %>%
+        get_indicators_list() %>%
+        devPTIpack::get_rand_weights() %>%
+        bind_rows() %>%
         length()
     }, 0)
     
@@ -22,20 +22,20 @@ test_that("generic weigthing of the PTI data works", {
     expect_equal({
       # library(tidyverse)
       set.seed(1221)
-      wgt <- 
-        devPTIpack::ukr_mtdt_full %>% 
-        devPTIpack::get_indicators_list() %>% 
-        devPTIpack::get_rand_weights() 
+      wgt <-
+        devPTIpack::ukr_mtdt_full %>%
+        get_indicators_list() %>%
+        devPTIpack::get_rand_weights()
       # 1 Weighting data according to the existing weighting scheme.
-      
+
       imp_dta <- devPTIpack::ukr_mtdt_full
-      imp_dta$indicators_list <- devPTIpack::get_indicators_list(imp_dta)
+      imp_dta$indicators_list <- get_indicators_list(imp_dta)
       imp_dta$weights_clean <- devPTIpack::get_rand_weights(imp_dta$indicators_list)
-      long_vars <- imp_dta %>% devPTIpack::pivot_pti_dta(imp_dta$indicators_list)
+      long_vars <- imp_dta %>% pivot_pti_dta(imp_dta$indicators_list)
       
-      devPTIpack::get_weighted_data(imp_dta$weights_clean,
-                                   long_vars,
-                                   imp_dta$indicators_list) %>%
+      get_weighted_data(imp_dta$weights_clean,
+                        long_vars,
+                        imp_dta$indicators_list) %>%
         class()
     }, "list")
   )

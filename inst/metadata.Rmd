@@ -1,313 +1,111 @@
 ---
-title: "Metadata for underlining datasets"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
+title: "PTI metadata report"
+date: "`r format(Sys.Date(), '%Y-%m-%d')`"
 output:
   pdf_document:
-    fig_width: 16
-    fig_height: 9
-  html_document: 
-    fig_width: 16
-    fig_height: 9
-editor_options:
-  chunk_output_type: console
+    fig_width: 9
+    fig_height: 6
 params:
+  shp_path: NULL
   mtdt_path: NULL
-  bond_path: NULL
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.width = 12, 
-                      fig.height = 5,
-                      # fig.asp = 3/4,
-                      # out.width = "60%",
-                      # fig.align = "center",
-                      # dpi = 150,
-                      message = FALSE,
-                      echo = FALSE,
-                      warning = FALSE,
-                      error = FALSE,
-                      cache = FALSE
-                      )
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  echo    = FALSE,
+  message = FALSE,
+  warning = FALSE,
+  error   = FALSE,
+  cache   = FALSE,
+  fig.width  = 9,
+  fig.height = 6,
+  out.width  = "100%"
+)
 
-# Packages
-conflictRules("tidyr", mask.ok = c("extract"))
-conflictRules("dplyr", mask.ok = c("filter", "lag", "select"))
-
-pacman::p_load(sf, #raster,
-               rmapshaper, here, fs, tidyverse, dplyr, readxl,
-               ggpubr,gridExtra, patchwork, writexl, scales, leaflet, mapview)
-library(devPTIpack)
-
-mtdt_path <- here::here("app-data") %>% list.files(".xlsx$", full.names = T) %>% `[`(length(.)) %>% `[[`(1)
-bond_path <- here::here("app-data") %>% list.files(full.names = T) %>% 
-  `[`(str_detect(., regex("rds", ignore_case = T))) %>% 
-  `[`(length(.)) %>% `[[`(1)
-
-
-
-mtdt <- 
-  readxl::excel_sheets(mtdt_path) %>% 
-  map(~{
-    set_names(list(readxl::read_xlsx(mtdt_path, sheet = .x)), .x)
-  }) %>% 
-  unlist(recursive = F)
-
-metadata_current <- 
-  mtdt$metadata %>% 
-  filter(!fltr_exclude_pti | !fltr_exclude_explorer)
-
-data_current <- 
-  mtdt %>%
-  `[`(str_detect(names(.), "admin\\d"))
-# names(data_current) <- names(data_current) %>% str_extract("^admin\\d{1,2}")
-
-bounds <-bond_path %>% read_rds()
-
-```
-
-```{r eval=FALSE}
-# Saving shape files in a Zip archive
-shp_fldr <- bond_path %>% str_replace_all("\\.rds", "_shapes")
-shp_path <- str_c(shp_fldr, ".zip")
-if (!file.exists(shp_path) ||
-    file.info(bond_path)$mtime > file.info(shp_path)$mtime) {
-  dir.create(shp_fldr, recursive = T, showWarnings = F)
-  bounds %>%
-    iwalk( ~ {
-      file <- shp_fldr %>% file.path(.y)
-      sf::st_write(.x,
-                   file,
-                   driver = "ESRI Shapefile",
-                   append = FALSE,
-                   quiet = TRUE)
-    })
+if (is.null(params$shp_path) || is.null(params$mtdt_path)) {
+  stop(
+    "metadata.Rmd: params 'shp_path' and 'mtdt_path' must be supplied. ",
+    "Render this template via `compile_pti_data()`, not directly."
+  )
 }
+
+shp_dta <- readRDS(params$shp_path)
+inp_dta <- devPTIpack::fct_template_reader(params$mtdt_path)
 ```
 
-```{r, results='asis'}
-# meta_line <- slice(metadata_current, 5)
-one_section <-
-  function(meta_line,
-           plot_data) {
-    cat("\n\n\n### ", meta_line$var_name, "\n\n\n")
+```{r intro, results = "asis"}
+cat("This report documents every indicator in the merged metadata file ",
+    "with a choropleth map at the indicator's most disaggregated admin ",
+    "level. It is rendered automatically by `compile_pti_data()` and ",
+    "ships alongside `metadata.xlsx` and `shapefiles.zip` as part of the ",
+    "deployment bundle.\n\n", sep = "")
 
-    if (
-      !is.na(meta_line$var_description) &&
-      !identical(meta_line$var_description, character(0)) &&
-        nchar(meta_line$var_description) > 10)
-      cat("**Description:** ", meta_line$var_description, "\n\n\n")
-    
-    spatial_level_adm <- meta_line$spatial_level %>% str_extract(., "admin\\d")
-    var_to_plot_raw <- plot_data[[meta_line$spatial_level]] %>%
-      select(contains(spatial_level_adm), one_of(meta_line$var_code))
-    
-    vals_to_plot <- var_to_plot_raw %>%
-      select(one_of(meta_line$var_code)) %>% pull()
-    
-    legend_info <-
-      legend_map_satelite(
-        vals_to_plot,
-        n_groups = 5,
-        legend_paras = list(legend_revert_colours = meta_line$legend_revert_colours)
-      )
-    
-    # if (length(unique(vals_to_plot)) > 12) {
-      var_to_plot <-
-        var_to_plot_raw %>%
-        mutate(across(
-          any_of(meta_line$var_code),
-          ~ legend_info$recode_function_intervals(.) %>%
-            factor(levels = legend_info$our_labels)
-        ))
-    # } else {
-    #   var_to_plot <-
-    #     var_to_plot %>%
-    #     mutate(across(any_of(meta_line$var_code), ~ as.factor(.)))
-    # }
-    
-    map_gg <-
-      gg_admin_list(var_to_plot, metadata = metadata_current, mt = bounds) %>%
-      `[[`(1) + scale_fill_manual(values = legend_info$pal(legend_info$our_values))
-    
-    local_cols <- brewer_pal("div", 7)(7)
-    labeler <- function(x) {
-      new_num <- try({scales::label_number_auto(x)}, silent = T)
-      if ("try-error" %in% class(new_num)) {
-        new_num <- round(x, 3)
-      }
-      new_num
-      }
-    
-    sum_stats_plot <-
-      gghistogram(
-        var_to_plot_raw,
-        x = meta_line$var_code,
-        add = "median",
-        rug = TRUE,
-        color = local_cols[2],
-        fill = local_cols[2]
-      )
-    
-    sum_stats_plot_dta <- ggplot_build(sum_stats_plot)
-    
-    sum_stats_plot <-
-      sum_stats_plot +
-      geom_text(aes(
-        x = mean(vals_to_plot, na.rm = T),
-        label = "mean",
-        y = max(sum_stats_plot_dta$data[[1]]$count) * 0.85
-      ),
-      colour = local_cols[6]) +
-      geom_text(aes(
-        x = median(vals_to_plot, na.rm = T),
-        label = "median",
-        y = max(sum_stats_plot_dta$data[[1]]$count) * 1.05
-      ),
-      colour = local_cols[2])
-    
-    sum_stats_tab <-
-      psych::describe(vals_to_plot, fast = T, na.rm = TRUE) %>%
-      as_tibble() %>%
-      select(-vars) %>%
-      imap( ~ {
-        labeler(as.numeric(.x))
-      }) %>%
-      as_tibble() %>%
-      gridExtra::tableGrob(theme = gridExtra::ttheme_minimal(base_colour  = local_cols[1]),
-                           rows = NULL)
-    
-    lay <- "AACCCAACCCBBCCC"
-    
-    print((
-      sum_stats_plot / sum_stats_tab + plot_layout(heights =  c(9, 1)) |
-        map_gg
-    ) +
-        plot_layout(widths = c(2, 3)))
-    
+cat("- **Source shapes:** `", basename(params$shp_path), "`  \n",
+    "- **Source metadata:** `", basename(params$mtdt_path), "`  \n",
+    "- **Layers:** ", length(shp_dta), "  \n",
+    "- **Polygons (total):** ",
+    sum(vapply(shp_dta, NROW, integer(1))), "  \n",
+    "- **Indicators:** ", NROW(inp_dta$metadata), "  \n",
+    "- **Pillars:** ",
+    length(unique(inp_dta$metadata$pillar_group)), "\n\n",
+    sep = "")
+```
+
+```{r per-indicator, results = "asis"}
+metadata <- inp_dta$metadata
+metadata <- metadata[order(metadata$pillar_group, metadata$var_order,
+                           metadata$var_name), , drop = FALSE]
+
+prev_pillar <- ""
+
+for (i in seq_len(NROW(metadata))) {
+  row <- metadata[i, , drop = FALSE]
+
+  # New pillar header
+  if (!identical(row$pillar_group, prev_pillar)) {
+    cat("\n\n## ", row$pillar_name, "\n\n", sep = "")
+    prev_pillar <- row$pillar_group
   }
 
+  cat("\n\n### ", row$var_name, "\n\n", sep = "")
+  if (!is.na(row$var_description) &&
+      nchar(row$var_description) > 0L) {
+    cat(row$var_description, "\n\n", sep = "")
+  }
 
+  # Build a one-row plotting frame: a tibble with the admin-level slot
+  # carrying just the keys + this indicator. `gg_admin_list()` then
+  # produces a list of ggplot maps; we take the first.
+  level_slot <- row$spatial_level
+  if (is.na(level_slot) || !nzchar(level_slot)) {
+    # Default to the most disaggregated layer.
+    level_slot <- names(shp_dta)[length(shp_dta)]
+  }
+  layer_df <- inp_dta[[level_slot]]
+  if (is.null(layer_df) || !(row$var_code %in% names(layer_df))) {
+    cat("_Indicator not found at_ `", level_slot, "` _level — skipping._\n\n",
+        sep = "")
+    next
+  }
 
-# var_to_plot <-
-# slice(metadata_current, 60) %>%
-# # meta_line <-
-#   metadata_current %>%
-#   slice(4) %>%
-#   # filter(metadata_current, var_code == "rri") %>%
-#   one_section(data_current)
-# 
-# plot_data <- data_current
+  keep_cols <- c(
+    grep("^admin\\d+(Pcod|Name)$", names(layer_df), value = TRUE),
+    row$var_code
+  )
+  plot_dta <- list()
+  plot_dta[[level_slot]] <- layer_df[, keep_cols, drop = FALSE]
 
+  map_list <- try(
+    devPTIpack::gg_admin_list(plot_dta, mt = shp_dta, metadata = metadata),
+    silent = TRUE
+  )
 
-  
-#   # mutate(across(
-#   #   any_of(meta_line$var_code),
-#   #   ~ cut(
-#   #     .,
-#   #     breaks = legend_info$our_breaks_full,
-#   #     labels = legend_info$our_labels[!is.na(legend_info$our_labels)],
-#   #     include.lowest = T,
-#   #     ordered_result = FALSE
-#   #   ) %>%
-#   #     as_factor() %>%
-#   #     fct_relevel(legend_info$our_labels)
-#   # ))
-# 
-# vals_to_plot <-
-#   var_to_plot %>%
-#   select(one_of(meta_line$var_code)) %>%
-#   pull()
-# 
-# legend_info <-
-#   legend_map_satelite(vals_to_plot, n_groups = 6,
-#                     legend_paras = list(
-#                       legend_revert_colours = meta_line$legend_revert_colours
-#                     ))
-# 
-# vals_to_plot %>%
-#     cut(breaks = legend_info$our_breaks_full,
-#         labels = legend_info$our_labels[!is.na(legend_info$our_labels)],
-#         include.lowest = T,
-#         ordered_result = FALSE
-#         ) %>%
-#   as_factor() %>%
-#   fct_relevel(legend_info$our_labels)
-# 
-# legend_info$recode_function
-# 
-# 
-# 
-# 
-# map_gg <-
-#   gg_admin_list(var_to_plot, metadata = metadata_current)
-# 
-# ppal <- brewer_pal(type = "div", 7)
-# 
-# map_gg[[1]] +
-#     scale_fill_brewer(type = "div", palette = 7)
-# 
-# (
-#     # breaks = legend_info$our_breaks,
-#     midpoint = median(vals_to_plot, na.rm = T)
-#     # colours = terrain.colors(10)
-#   )
-# #   scale_fill_binned(
-# #     type = ppal,
-# #     n = 8
-# #      # guide = guide_coloursteps(even.steps = T, show.limits = T)
-# #   )
-# # 
-# # brewer_pal("")
-# # # map_gg[[1]] +
-# # #   scale_fill_viridis_c(
-# # #     # palette = "RdYlBu",
-# # #     breaks = rev(legend_info$our_breaks),
-# # #     # na.value = "No data" ,
-# # #   # labels = waiver(),
-# # #   guide = guide_coloursteps(even.steps = T, show.limits = T)
-# # #   )
-# # #
-# # #
-# # # binned(
-# # #
-# # #   breaks = legend_info$our_breaks,
-# # #   guide = guide_coloursteps(even.steps = T, show.limits = T)
-# # #   )
-# # #
-# # #
-# # #   option = "C",
-# # #   direction = -1,
-# # #   begin = 0.4#,
-# # #   # breaks = legend_info$our_values,
-# # #   # labels = legend_info$our_labels
-# # # )
+  if (inherits(map_list, "try-error") || length(map_list) == 0L) {
+    cat("_Map render failed for this indicator._\n\n")
+    next
+  }
 
-
+  print(map_list[[1]])
+  cat("\n\n")
+}
 ```
-
-
-```{r, results='asis', warning=FALSE}
-metadata_current %>%
-  # sample_n(10) %>%
-  arrange(pillar_group, var_order, var_name) %>%
-  group_by(pillar_group) %>%
-  nest() %>%
-  pwalk(~ {
-    cat("\n\n\n## ", .y$pillar_name[[1]], "\n\n\n\n\n")
-    
-    .y %>%
-      group_by(row_number()) %>%
-      nest() %>%
-      pwalk( ~ {
-        # browser()
-        # cat(.y$var_name, "\n")
-        try({
-          one_section(.y, data_current)
-        })
-        
-      })
-    
-  })
-
-```
-

@@ -1,22 +1,46 @@
-#' get the list of indicators from metadata
-#' 
+#' Build the indicators-list tibble from a metadata template
+#'
+#' Distils a metadata-template list (the output of
+#' [fct_template_reader()]) down to a one-row-per-indicator tibble that
+#' downstream calculation and weighting code expects. Filters out
+#' indicators excluded by the named `fltr_*` column, drops admin levels
+#' that contain no indicator data, attaches per-indicator availability
+#' (`admin_levels_years`: a nested tibble of admin levels and the years
+#' the indicator is observed at each), and joins pillar metadata.
+#'
+#' @param dta A list-of-tibbles metadata template as returned by
+#'   [fct_template_reader()] (or the bundled [ukr_mtdt_full]).
+#' @param fltr_var Character. Name of the boolean filter column in
+#'   `dta$metadata` whose `TRUE` rows are excluded. Defaults to
+#'   `"fltr_exclude_pti"`. Use `"fltr_exclude_explorer"` to derive the
+#'   explorer-only indicators list.
+#'
+#' @return A tibble with one row per surviving indicator, joined to
+#'   pillar metadata, with a nested-list column `admin_levels_years`
+#'   describing data availability per admin level.
+#'
+#' @importFrom magrittr not extract extract2
+#' @importFrom dplyr filter select arrange mutate across contains distinct_at
+#'   group_by ungroup row_number group_by_at vars semi_join left_join rename any_of
+#' @importFrom purrr map_lgl map walk transpose set_names
+#' @importFrom stringr str_detect str_split regex
+#' @importFrom tibble as_tibble
+#' @importFrom tidyr pivot_longer nest
+#' @importFrom rlang sym
 #' @noRd
-#' @export
-#' 
-#' @importFrom magrittr not
 get_indicators_list <- function(dta, fltr_var = "fltr_exclude_pti") {
   meta_dta <-
     dta$metadata  %>%
     filter(magrittr::not(!!sym(fltr_var))) %>%
     select(-contains("fltr")) %>%
-    arrange(pillar_group, var_order) %>% 
+    arrange(pillar_group, var_order) %>%
     mutate(
       across(contains("pillar_group"), ~ifelse(is.na(.), 9999, .)),
       across(contains("pillar"), ~ifelse(is.na(.), "", .))
     )
-  
+
   element_names <- dta %>% names()
-  
+
   pillars <-
     meta_dta %>%
     distinct_at(vars(contains("pillar"))) %>%
@@ -34,9 +58,9 @@ get_indicators_list <- function(dta, fltr_var = "fltr_exclude_pti") {
     set_names(c("admin_level", "admin_level_name")) %>%
     map(~ unlist(.x)) %>%
     as_tibble()
-  
+
   used_vars <- meta_dta$var_code %>% unique()
-  
+
   levels_with_data <-
     spatial_levels_names$admin_level %>%
     map_lgl( ~ {
@@ -48,21 +72,20 @@ get_indicators_list <- function(dta, fltr_var = "fltr_exclude_pti") {
         length()
       rows != 0
     })
-  
+
   if (any(!levels_with_data)) {
     spatial_levels_names[!levels_with_data, ]$admin_level %>%
       walk(~ {
-        # browser()
         remove <-
           dta %>%
           names() %>%
           magrittr::extract(str_detect(., .x))
         dta[[remove]] <- NULL
       })
-    
+
     spatial_levels_names <-
       spatial_levels_names[levels_with_data,]
-    
+
   }
   vars_admins <-
     spatial_levels_names$admin_level %>%
@@ -81,7 +104,7 @@ get_indicators_list <- function(dta, fltr_var = "fltr_exclude_pti") {
           "year", "var_code"
         )))) %>%
         mutate(admin_level = .x)
-      
+
     }) %>%
     bind_rows() %>%
     left_join(spatial_levels_names, by = "admin_level") %>%
@@ -96,7 +119,7 @@ get_indicators_list <- function(dta, fltr_var = "fltr_exclude_pti") {
     group_by(var_code) %>%
     tidyr::nest() %>%
     rename(admin_levels_years = data)
-  
+
   meta_dta %>%
     select(-contains("pillar_group"),
            -contains("pillar_descr"),
@@ -104,6 +127,5 @@ get_indicators_list <- function(dta, fltr_var = "fltr_exclude_pti") {
     semi_join(vars_admins, by = "var_code") %>%
     left_join(vars_admins, by = "var_code") %>%
     left_join(pillars, by = "pillar_name")
-  
-}
 
+}

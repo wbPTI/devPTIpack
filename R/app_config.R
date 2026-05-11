@@ -1,32 +1,23 @@
-#' Access files in the current app
-#' 
-#' @param ... Character vector specifying directory and or file to
-#'     point to inside the current package.
-#' 
-#' @noRd
-#' 
+#' Resolve a path inside the installed devPTIpack package
+#'
+#' Thin wrapper around [system.file()] that always sets
+#' `package = "devPTIpack"`. Use it from app code or tests to locate
+#' bundled resources (CSS, images, sample template) without having to
+#' repeat the package name at every call site.
+#'
+#' @param ... Character path components passed through to
+#'   [system.file()]. Joined with the system file separator.
+#'
+#' @return A single character string. The absolute path to the
+#'   requested resource if it exists, or `""` if it does not (matching
+#'   [system.file()]'s convention for missing files).
+#'
+#' @family package-utilities
 #' @export
+#'
+#' @examples
+#' app_sys("app", "www")
+#' app_sys("template_pti")
 app_sys <- function(...){
   system.file(..., package = "devPTIpack")
-}
-#' Read App Config
-#' 
-#' @param value Value to retrieve from the config file. 
-#' @param config R_CONFIG_ACTIVE value. 
-#' @param use_parent Logical, scan the parent directory for config file.
-#'     
-#' @importFrom config get
-#' 
-#' @noRd
-get_golem_config <- function(
-  value, 
-  config = Sys.getenv("R_CONFIG_ACTIVE", "default"), 
-  use_parent = TRUE
-){
-  config::get(
-    value = value, 
-    config = config, 
-    file = app_sys("golem-config.yml"), 
-    use_parent = use_parent
-  )
 }

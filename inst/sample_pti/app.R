@@ -7,21 +7,20 @@ library(devPTIpack)
 
 # pkgload::load_all(export_all = FALSE, helpers = FALSE, attach_testthat = FALSE)
 
-run_new_pti(
-  pti.name = "Sample country name",
-  shape_path = "app-data/sample-shapes.Rds",
-  data_path = "app-data/sample-metadata.xlsx",
-  metadata_path = NULL,
-  show_waiter = FALSE,
-  
-  default_adm_level = "admin2",
+shp_dta <- devPTIpack::get_shape(
+  shapes_fldr   = "app-data/",
+  shape_country = "sample-shapes",
+  shape_path    = "app-data/sample-shapes.rds"
+)
+
+inp_dta <- devPTIpack::fct_template_reader("app-data/sample-metadata.xlsx")
+
+devPTIpack::launch_pti(
+  shp_dta         = shp_dta,
+  inp_dta         = inp_dta,
+  app_name        = "Sample country name",
+  show_waiter     = FALSE,
   show_adm_levels = c("admin1", "admin2", "admin3", "admin4"),
-  choose_adm_levels = TRUE,
-  
-  explorer_choose_adm = FALSE,
-  explorer_default_adm = "all",
-  explorer_multiple_var = FALSE,
-  
-  full_ui = FALSE,
-  pti_landing_page = "./landing-page.md"
+  shapes_path     = "app-data/",
+  mtdtpdf_path    = "app-data/"
 )

@@ -1,0 +1,61 @@
+---
+title: "Step 5 -- Compile and finalise"
+format: html
+---
+
+<!-- For detailed instructions, see:
+     https://worldbank.github.io/devPTIpack/articles/build-pti-5-compile.html -->
+
+This step takes the intermediate metadata files produced by Steps 3
+(and optionally Step 4) and `compile_pti_data()` produces the three
+deployment-ready artefacts under `app-data/`:
+
+- `app-data/metadata.xlsx` -- canonical merged metadata workbook.
+- `app-data/shapefiles.zip` -- GeoJSON archive (one file per admin
+  level) for download from the deployed app.
+- `app-data/pti-metadata.pdf` -- printable indicator reference,
+  mapping each indicator at its most-disaggregated admin level (or
+  at the explicit `spatial_level` you set in metadata).
+
+`compile_pti_data()` also re-runs `validate_geometries()` and
+`validate_metadata()` on the combined inputs and prints a verbose
+CLI summary (layers, polygon counts, indicator + pillar counts,
+files produced). On validation failure it errors by default; pass
+`error_on_fail = FALSE` to inspect the structured result instead.
+
+## Run
+
+```{r}
+#| message: false
+library(devPTIpack)
+
+compile_pti_data(
+  shp_path       = "app-data/shapes.rds",
+  metadata_paths = c(
+    "app-data/metadata-user.xlsx"
+    # "app-data/metadata-hex.xlsx"  # uncomment when Step 4 produces output
+  ),
+  output_dir     = "app-data"
+)
+```
+
+## Pre-launch checklist
+
+After `compile_pti_data()` completes you should see all of:
+
+- `app-data/shapes.rds`
+- `app-data/metadata.xlsx`
+- `app-data/pti-metadata.pdf` (skipped with a warning if LaTeX is unavailable)
+- `app-data/shapefiles.zip`
+
+Edit `landing-page.md` (in the project root) to describe your app, then
+launch locally:
+
+```{r}
+#| eval: false
+launch_pti(
+  shp_dta  = readRDS("app-data/shapes.rds"),
+  inp_dta  = fct_template_reader("app-data/metadata.xlsx"),
+  app_name = "My country PTI"
+)
+```
