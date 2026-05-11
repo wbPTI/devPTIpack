@@ -5,6 +5,19 @@
 
 ---
 
+## 2026-05-10 (afternoon — Rwanda package datasets)
+
+| Scope   | Change                                                                                                                                                                                                                                |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Data    | Added `data/rwa_shp.rda` -- named list of 3 sf tibbles (admin0_Country, admin1_Province (5 rows), admin2_District (30 rows); 36 polygons total). Mirrors `ukr_shp` structure but smaller and CC-BY 4.0 (geoBoundaries) so it's safe to render in tutorials and screenshots. Pair with `rwa_mtdt_full` (issue [#76](https://github.com/worldbank/devPTIpack/issues/76) per arch-09 §7.2). |
+| Data    | Added `data/rwa_mtdt_full.rda` -- parsed metadata list mirroring `ukr_mtdt_full` (4 slots: general, admin1_Province, admin2_District, metadata; 3 indicators -- poverty_rate, literacy_rate, road_density -- across 2 pillars). Compiled from `inst/template_pti/sample-data/sample-metadata-adm1-adm2.xlsx` via `fct_template_reader()`. |
+| Tooling | Added `data-raw/generate-rwa-package-data.R` -- re-runnable, deterministic compilation script (no RNG; lifts the GeoJSON-attaching logic from `inst/template_pti/01-shapes.qmd` and uses the bundled multi-level synthetic xlsx for the metadata bundle). Excluded from the source tarball via the existing `^data-raw$` `.Rbuildignore` rule. |
+| Docs    | Documented `rwa_shp` and `rwa_mtdt_full` in `R/data.R` with `@format` (slot-by-slot), `@source` (geoBoundaries CC-BY 4.0 + the synthetic generator), and runnable `@examples`. ASCII-cleaned the existing `ukr_*` docs in the same file (em-dashes → `--`) while in there. |
+| Code    | Migrated `@examples` blocks in 11 exported functions to use `rwa_shp` / `rwa_mtdt_full` instead of `ukr_shp` / `ukr_mtdt_full`: `launch_pti`, `launch_pti_onepage`, `run_pti_pipeline`, `gg_admin_list`, `get_rand_weights`, `get_all_weights_combs`, `get_pti_weights_export`, `get_shape`, `validate_geometries`, `app_validate_shp`, `app_validate_metadata`. Slot-name renames inline (`admin1_Oblast` → `admin1_Province`; `admin2_Rayon` → `admin2_District`). Index adjustments where Rwanda's 3 indicators required tightening (e.g. `get_all_weights_combs` example now uses `length(codes)` instead of hardcoded `5`). Verified: every `@example` runs cleanly under `tools::Rd2ex` + `source()`; `R CMD check` stays at 0 errors / 0 warnings / 3 notes (same baseline as before #76). Test suite unaffected — tests continue to use `ukr_*` per arch-09 §7.2. |
+| Rules   | Updated `.claude/rules/roxygen-documentation.md` and `.claude/CLAUDE.md` to prefer `rwa_*` for new `@examples` while noting that `ukr_*` are also bundled and used by the test suite. |
+
+---
+
 ## 2026-05-10 (afternoon — final integration audit)
 
 | Scope | Change                                                                                                                                                                                                                                |

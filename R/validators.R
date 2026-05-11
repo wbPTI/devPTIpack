@@ -233,7 +233,7 @@ validate_single_geom <- function(focus_geom, full_geom, error_on_fail = TRUE) {
 #' @export
 #'
 #' @examples
-#' result <- validate_geometries(ukr_shp)
+#' result <- validate_geometries(rwa_shp)
 #' result$status
 #' length(result$issues)
 validate_geometries <- function(existing_shapes, error_on_fail = TRUE) {

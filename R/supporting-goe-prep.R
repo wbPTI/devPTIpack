@@ -38,12 +38,12 @@
 #' @export
 #'
 #' @examples
-#' data(ukr_shp)
-#' data(ukr_mtdt_full)
+#' data(rwa_shp)
+#' data(rwa_mtdt_full)
 #' maps <- gg_admin_list(
-#'   dta      = ukr_mtdt_full$admin1_Oblast,
-#'   mt       = ukr_shp,
-#'   metadata = ukr_mtdt_full$metadata
+#'   dta      = rwa_mtdt_full$admin1_Province,
+#'   mt       = rwa_shp,
+#'   metadata = rwa_mtdt_full$metadata
 #' )
 #' length(maps)
 #' inherits(maps[[1]], "ggplot")

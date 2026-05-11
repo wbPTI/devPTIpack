@@ -24,7 +24,7 @@ A golem-based Shiny R package for computing, visualizing, and exploring Project 
 
 - Follow tidyverse style with `|>` pipe.
 - Roxygen2 per `.claude/rules/roxygen-documentation.md`.
-- Examples must use only built-in data: `ukr_shp`, `ukr_mtdt_full`.
+- Examples must use only built-in data. Prefer `rwa_shp` / `rwa_mtdt_full` for user-facing examples; `ukr_shp` / `ukr_mtdt_full` are also bundled and remain in use by the test suite.
 - Tests use `testthat`. Tier 1 (pure functions) → Tier 2 (`shiny::testServer`) → Tier 3 (manual / `shinytest2`).
 - Tests target only the **permanent** functions in arch-01 — do not test code scheduled for deletion.
 - Do not touch legacy/dead code marked for removal in arch-01 unless executing a cleanup batch.

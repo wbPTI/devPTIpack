@@ -11,6 +11,12 @@ data-raw/
 # regeneration scripts that must be tracked (see arch-09 § 9.1, #79).
 !inst/template_pti/data-raw/
 !inst/template_pti/data-raw/**
+# Exception: the package-level data-raw/ regeneration scripts that
+# rebuild data/*.rda from inst/template_pti/sample-data/ inputs.
+# The directory itself is .Rbuildignore-d (^data-raw$), so the scripts
+# don't ship in the source tarball -- they're for maintainer use.
+!data-raw/
+!data-raw/*.R
 docs/
 !.github/docs/
 inst/doc

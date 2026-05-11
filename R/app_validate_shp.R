@@ -42,13 +42,13 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Inspect the bundled Ukraine shapefile.
-#' app_validate_shp(ukr_shp)
+#' # Inspect the bundled Rwanda shapefile.
+#' app_validate_shp(rwa_shp)
 #'
 #' # The app still renders if a layer is structurally broken -- useful
 #' # for spotting *what* is wrong rather than only *that* something is.
-#' broken <- ukr_shp
-#' broken$admin1_Oblast$admin1Pcod <- NULL
+#' broken <- rwa_shp
+#' broken$admin1_Province$admin1Pcod <- NULL
 #' app_validate_shp(broken)
 #' }
 app_validate_shp <- function(shp, app_name = "Validate shapefiles") {

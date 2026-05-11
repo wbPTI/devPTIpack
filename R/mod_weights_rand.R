@@ -38,9 +38,9 @@ mod_weights_rand_ui <- function(id){
 #' @export
 #'
 #' @examples
-#' data(ukr_mtdt_full)
+#' data(rwa_mtdt_full)
 #' set.seed(1)
-#' wts <- get_rand_weights(ukr_mtdt_full$metadata)
+#' wts <- get_rand_weights(rwa_mtdt_full$metadata)
 #' length(wts) >= 1 && length(wts) <= 5
 #' all(vapply(wts, function(x) all(c("var_code", "weight") %in% names(x)),
 #'            logical(1)))
@@ -85,11 +85,11 @@ get_rand_weights <- function(indicators_list) {
 #' @export
 #'
 #' @examples
-#' data(ukr_mtdt_full)
-#' codes <- ukr_mtdt_full$metadata$var_code[1:5]
+#' data(rwa_mtdt_full)
+#' codes <- rwa_mtdt_full$metadata$var_code
 #' combos <- get_all_weights_combs(codes, n_items = 2)
 #' length(combos)
-#' choose(5, 2)
+#' choose(length(codes), 2)
 get_all_weights_combs <- function(var_codes, n_items = 3) {
   n_items %>%
     map(~{

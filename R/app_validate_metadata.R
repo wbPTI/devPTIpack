@@ -49,14 +49,14 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Inspect the bundled Ukraine shapefile + synthetic metadata.
-#' app_validate_metadata(ukr_shp, ukr_mtdt_full)
+#' # Inspect the bundled Rwanda shapefile + synthetic metadata.
+#' app_validate_metadata(rwa_shp, rwa_mtdt_full)
 #'
 #' # Renders even when the geometry validator fails -- useful for
 #' # visualising *what* is broken rather than only *that* something is.
-#' broken_shp <- ukr_shp
-#' broken_shp$admin1_Oblast$admin1Pcod <- NULL
-#' app_validate_metadata(broken_shp, ukr_mtdt_full)
+#' broken_shp <- rwa_shp
+#' broken_shp$admin1_Province$admin1Pcod <- NULL
+#' app_validate_metadata(broken_shp, rwa_mtdt_full)
 #' }
 app_validate_metadata <- function(shp_dta, inp_dta,
                                   app_name = "Validate metadata") {

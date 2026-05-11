@@ -126,9 +126,9 @@ get_pti_scores_export <- function(plotted_dta) {
 #' @export
 #'
 #' @examples
-#' data(ukr_mtdt_full)
-#' weights <- get_rand_weights(ukr_mtdt_full$metadata)
-#' get_pti_weights_export(weights, ukr_mtdt_full$metadata)
+#' data(rwa_mtdt_full)
+#' weights <- get_rand_weights(rwa_mtdt_full$metadata)
+#' get_pti_weights_export(weights, rwa_mtdt_full$metadata)
 get_pti_weights_export <- function(wghts_dta, indic_dta) {
   indic_dta <-
     indic_dta %>%

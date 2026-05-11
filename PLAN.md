@@ -721,7 +721,21 @@ Per arch-04. Concrete cuts:
       notes pre-existing). Real bug found and fixed: `inst/template_pti/05-compile.qmd`
       had `#| eval: false` so `00-master.R`'s Step 05 silently no-op'd despite
       PR #98's claim. End-to-end smoke now produces all 4 expected `app-data/`
-      artefacts. **Pending user sign-off on rendered site.**
+      artefacts.
+- [x] Companion issue §7.2 — Rwanda package datasets
+      (issue [#76](https://github.com/worldbank/devPTIpack/issues/76)):
+      added `data/rwa_shp.rda` (3 layers, 36 polygons) and
+      `data/rwa_mtdt_full.rda` (3 indicators across 2 pillars), both
+      compiled by `data-raw/generate-rwa-package-data.R` from the
+      template's bundled GeoJSONs + synthetic xlsx; `R/data.R` documents
+      both with `@format`, `@source`, `@examples`. Migrated 11 exported
+      functions' `@examples` blocks to use Rwanda data
+      (`launch_pti{,_onepage}`, `run_pti_pipeline`, `gg_admin_list`,
+      `get_rand_weights`, `get_all_weights_combs`, `get_pti_weights_export`,
+      `get_shape`, `validate_geometries`, `app_validate_shp`,
+      `app_validate_metadata`). Updated `.claude/rules/roxygen-documentation.md`
+      + `.claude/CLAUDE.md` to prefer `rwa_*` for new examples. Ukraine
+      datasets unchanged — test suite continues to use them.
 
 ---
 
