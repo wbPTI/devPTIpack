@@ -7,38 +7,123 @@ format: html
      https://worldbank.github.io/devPTIpack/articles/build-pti-4-hex.html -->
 
 ::: {.callout-warning}
-**Feature not ready.** This step depends on the HEX data API, which is
-under active development. Content will be added when the API and
-integration functions are production-ready. This is **not** merely
-unwritten documentation -- the underlying infrastructure does not yet
-exist.
-
-This file ships as a stub. `00-master.R` does **not** render it.
+**Feature not ready.** This step depends on the hex data access pipeline
+(arch-11), which is under active development. The functions referenced
+below do not yet exist. This file ships as a working skeleton — uncomment
+and adapt when the pipeline lands.
 :::
 
-## What this step will do
+## Configuration
 
-Once the HEX track lands, this step will:
+The `INCLUDE_HEX_IN_APP` switch is set in `00-master.R`. When `FALSE`
+(the default), hex-level polygons are excluded from the deployed app but
+all hex-sourced indicator values are still available at admin levels.
 
-1. Fetch pre-computed H3 res-6 hex data for your country via
-   `fetch_hex_data()`.
-2. Let you explore and select variables interactively via
-   `app_explore_hex()` (a standalone mini Shiny app).
-3. Match selected hex variables to your shapefile polygons and
-   generate a standalone metadata workbook via
-   `create_hex_metadata(shp, vars)`.
-4. Save the result to `app-data/metadata-hex.xlsx` so Step 5's
-   `compile_pti_data()` can merge it with the user workbook from
-   Step 3.
+```{r}
+#| eval: false
+# Inherited from 00-master.R:
+# INCLUDE_HEX_IN_APP <- FALSE
+```
+
+## Load shapes and hex layer
+
+```{r}
+#| eval: false
+library(devPTIpack)
+
+my_shp    <- readRDS("app-data/shapes.rds")
+hex_layer <- my_shp$admin9_Hexagon
+hex_ids   <- hex_layer$admin9Pcod
+```
+
+## A. Discover available variables
+
+```{r}
+#| eval: false
+# Browse the full registry catalogue
+list_hex_vars()
+
+# Check live available years for a specific variable
+get_available_years(vars = NULL, "nightlights")
+```
+
+## B. Configure variable selection
+
+```{r}
+#| eval: false
+vars <- use_hex_vars(
+  "nightlights",
+  "poverty_rate",
+  "population",
+  years = c(2015, 2022)
+)
+```
+
+## C. Fetch hex data
+
+```{r}
+#| eval: false
+hex_data <- fetch_hex_data(hex_ids = hex_ids, vars = vars)
+```
+
+## C′. Optional: merge your own local parquet
+
+```{r}
+#| eval: false
+# Uncomment and adapt if you have project-specific indicators.
+# Local parquet must be long format, no population column.
+#
+# my_data <- arrow::open_dataset("data-raw/my_indicators.parquet") |>
+#   dplyr::filter(my_hex_col %in% hex_ids) |>
+#   dplyr::collect() |>
+#   dplyr::rename(hex_id = my_hex_col) |>
+#   tidyr::pivot_wider(
+#     names_from  = year,
+#     values_from = my_variable,
+#     names_prefix = "my_var_"
+#   )
+#
+# hex_data <- dplyr::full_join(hex_data, my_data, by = "hex_id")
+```
+
+## D. Aggregate to admin polygons
+
+```{r}
+#| eval: false
+aggregated <- aggregate_hex_to_shapes(
+  hex_data  = hex_data,
+  hex_layer = hex_layer,
+  shp_dta   = my_shp,
+  strategy  = list(
+    .default    = c(weight = "pop",  fun = "mean"),
+    nightlights = c(weight = "none", fun = "mean"),
+    population  = c(weight = "none", fun = "sum")
+  )
+)
+```
+
+## E. Build metadata Excel
+
+```{r}
+#| eval: false
+build_hex_metadata(
+  aggregated       = aggregated,
+  shp_dta          = my_shp,
+  # indicator_config needed only for non-registry variables:
+  # indicator_config = tibble::tibble(
+  #   canonical_name = "my_var",
+  #   var_name       = "My Variable ({year})",
+  #   pillar_group   = 4,
+  #   pillar_name    = "Custom"
+  # ),
+  country_name = "Rwanda",
+  output_path  = "app-data/metadata-hex.xlsx",
+  include_hex  = INCLUDE_HEX_IN_APP
+)
+```
 
 ## Ordering note
 
 This step is **order-flexible** -- it can be run before or after
 Step 3. The two outputs (`metadata-user.xlsx` and `metadata-hex.xlsx`)
 are independent intermediate files merged together in Step 5.
-
-## Tracking
-
-The HEX integration is tracked under the arch-09 design document
-([`.github/docs/arch-09-documentation.md`](https://github.com/worldbank/devPTIpack/blob/main/.github/docs/arch-09-documentation.md))
-section 4.5 / 6, and the corresponding feature branch is `feat/hex-integration`.

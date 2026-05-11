@@ -2,19 +2,235 @@
 title: "Step 4 — HEX data"
 ---
 
-> ⚠ **This step depends on the HEX data API, which is under active development.**
-> Content will be added when the API and integration functions are production-ready.
-> This is not merely unwritten documentation — the underlying infrastructure
-> does not yet exist.
+> ⚠ **This step depends on the hex data access pipeline, which is under active
+> development.** The design is specified in
+> [arch-11](https://github.com/worldbank/devPTIpack/blob/main/.github/docs/arch-11-hex-data-access.md).
+> Functions described below do not yet exist in the package — this page
+> documents the intended workflow.
 
 ## What HEX data is
 
-## Fetching HEX data
+Pre-computed indicator values stored at H3 hexagonal resolution 6 (~36 km² per
+cell) in online parquet files maintained by the project team. Each parquet
+contains one or more indicator columns keyed by H3 hex index, with an optional
+time dimension (one row per hex × year).
 
-## Exploring available variables
+The hex data pipeline lets you:
 
-## Matching HEX data
+1. **Browse** available indicators via a package-shipped registry.
+2. **Fetch** values for only the hexagons covering your country's boundaries.
+3. **Aggregate** hex values to your admin polygons using configurable
+   weighting and aggregation strategies.
+4. **Produce** a standard `metadata-hex.xlsx` that Step 5's
+   `compile_pti_data()` merges with your user metadata.
+
+Population is always fetched automatically from the registry and is used for
+population-weighted aggregation. It also appears as a visible indicator in the
+deployed app.
+
+## Prerequisites
+
+Step 1 must be complete. You need:
+
+- `app-data/shapes.rds` containing your admin layers **and** an
+  `admin9_Hexagon` layer built by `make_hex_grid()` and enriched by
+  `make_admin_lookup()`.
+
+```r
+my_shp    <- readRDS("app-data/shapes.rds")
+hex_layer <- my_shp$admin9_Hexagon
+hex_ids   <- hex_layer$admin9Pcod
+```
+
+## Discovering available variables
+
+```r
+list_hex_vars()
+```
+
+Returns a tibble — one row per registered variable — showing canonical name,
+display name, units, pillar, whether it has a time dimension, available years
+(hint from registry), and default aggregation strategy.
+
+Filter by pillar or temporal status:
+
+```r
+list_hex_vars(pillar = "Economic Activity")
+list_hex_vars(temporal = TRUE)
+```
+
+To query the **live** parquet for actual available years (not just the registry
+hint):
+
+```r
+get_available_years(vars = NULL, "nightlights")
+#> nightlights (PTI Pre-computed Hex Data): 2013 2014 2015 ... 2022
+```
+
+## Selecting variables and years
+
+```r
+vars <- use_hex_vars(
+  "nightlights",
+  "poverty_rate",
+  "population",
+  years = c(2015, 2022)
+)
+```
+
+`years` applies globally to all temporal variables. Non-temporal variables
+(like a static poverty estimate) are returned regardless.
+
+**Year resolution rules:**
+
+- Exact year available → used as-is.
+- Exact year absent → nearest available year substituted. On equidistant
+  tie, the **later** year is preferred. A warning is emitted.
+- No data within 7 years of a requested year → error with available years
+  listed.
+
+In an interactive session with `years = NULL`, the system prints available
+years and prompts you to choose. In a non-interactive session (e.g.
+`quarto render`), `years = NULL` errors with an actionable message.
+
+## Fetching hex data
+
+```r
+hex_data <- fetch_hex_data(hex_ids = hex_ids, vars = vars)
+```
+
+Only hexagons matching your `hex_ids` are read (parquet predicate pushdown).
+Temporal variables are pivoted wide: `nightlights_2015`, `nightlights_2022`.
+Population is always the first indicator column after `hex_id`.
+
+**Resolution bridge:** if your hex grid is at H5 (coarser than the H6 source
+data), `fetch_hex_data()` transparently expands each H5 cell to its H6
+children, fetches at H6, and aggregates back to H5. Requesting finer than H6
+(e.g. H7) produces an error.
+
+Progress is reported per variable.
+
+## Optional: merging your own data
+
+If you have project-specific indicators in a local parquet file, merge them
+between fetch and aggregate:
+
+```r
+my_data <- arrow::open_dataset("data-raw/conflict.parquet") |>
+  dplyr::filter(h3id %in% hex_ids) |>
+  dplyr::collect() |>
+  dplyr::rename(hex_id = h3id) |>
+  tidyr::pivot_wider(
+    names_from  = year,
+    values_from = conflict_events,
+    names_prefix = "conflict_"
+  )
+
+hex_data <- dplyr::full_join(hex_data, my_data, by = "hex_id")
+```
+
+**Local parquet contract:**
+
+| Requirement | Rule |
+|---|---|
+| Format | Readable by `arrow::open_dataset()` |
+| Layout | Long format — one row per hex × time period |
+| Hex column | Any name — you rename to `hex_id` before merge |
+| Population | Absent (comes from registry) |
+| Values | Numeric columns, one per indicator |
+| Uniqueness | No duplicate hex ID per time period |
+
+## Aggregating to admin polygons
+
+```r
+aggregated <- aggregate_hex_to_shapes(
+  hex_data  = hex_data,
+  hex_layer = hex_layer,
+  shp_dta   = my_shp,
+  strategy  = list(
+    .default    = c(weight = "pop",  fun = "mean"),
+    nightlights = c(weight = "none", fun = "mean"),
+    population  = c(weight = "none", fun = "sum"),
+    conflict    = c(weight = "none", fun = "sum")
+  )
+)
+```
+
+**Strategy has two orthogonal dimensions:**
+
+- **weight**: `"pop"` (population-weighted), `"area"` (area-weighted), or
+  `"none"` (unweighted / plutocratic).
+- **fun**: `"mean"`, `"median"`, `"sum"`, `"min"`, `"max"`.
+
+A `.default` entry covers all variables not explicitly listed. For temporal
+variables, use the **stem** name (e.g. `nightlights` covers both
+`nightlights_2015` and `nightlights_2022`).
+
+Aggregation is always **hex → each admin level directly** (hex→admin1,
+hex→admin2, etc.) — never chained through intermediate levels.
+
+`NA` values are treated as 0. If all hexes in a polygon are `NA` for a
+variable, the result is `NA` with a warning.
+
+## Building the metadata Excel
+
+```r
+build_hex_metadata(
+  aggregated       = aggregated,
+  shp_dta          = my_shp,
+  indicator_config = tibble::tibble(
+    canonical_name        = "conflict",
+    var_name              = "Conflict Events ({year})",
+    var_description       = "ACLED conflict event count.",
+    var_units             = "count",
+    pillar_group          = 4,
+    pillar_name           = "Security",
+    legend_revert_colours = TRUE,
+    fltr_exclude_pti      = FALSE
+  ),
+  country_name = "Rwanda",
+  output_path  = "app-data/metadata-hex.xlsx",
+  include_hex  = INCLUDE_HEX_IN_APP
+)
+```
+
+Registry variables have their metadata auto-populated from the YAML — you only
+need `indicator_config` for non-registry variables (your local parquet
+indicators). You can override any registry default via `indicator_config`.
+
+Temporal variables expand to one metadata row per resolved year, with
+`var_name` generated from the glue template (e.g. `"Night Lights (2015)"`).
+
+### The `INCLUDE_HEX_IN_APP` switch
+
+Set in `00-master.R`:
+
+```r
+INCLUDE_HEX_IN_APP <- FALSE
+```
+
+| Value | Behaviour |
+|---|---|
+| `TRUE` | Hex-level `admin9_Hexagon` sheet included in metadata Excel. Hex polygons shipped with the app. |
+| `FALSE` (default) | Hex sheet omitted. Only aggregated admin-level sheets written. All hex-sourced indicator values still available at admin levels. |
+
+When `include_hex` is not set and the hex grid exceeds 5,000 cells, the system
+warns and prompts interactively (defaults to `FALSE` in non-interactive
+sessions).
 
 ## Supported admin levels
 
+Hex-derived indicators appear on **every** admin-level sheet in the output
+Excel (admin1, admin2, etc.). `spatial_level` in the metadata sheet points to
+the **hex level** (e.g. `admin9_Hexagon`) — the finest available level.
+
 ## Note on ordering
+
+This step is **order-flexible** — it can run before or after Step 3. The two
+outputs (`metadata-user.xlsx` and `metadata-hex.xlsx`) are independent
+intermediate files merged by Step 5's `compile_pti_data()`.
+
+## Next
+
+Once `app-data/metadata-hex.xlsx` is produced, continue with
+[Step 5 — Compile & finalise](build-pti-5-compile.html).
