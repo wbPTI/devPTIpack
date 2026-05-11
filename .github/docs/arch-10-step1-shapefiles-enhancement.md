@@ -344,20 +344,18 @@ No validator exceptions for the hexagon layer.
 
 ### 5.3 Step 4 — HEX data
 
-Step 4 is currently a stub. The following must be specified when the HEX API
-lands:
+Step 4 is now specified in arch-11. Key resolution-related points:
 
-- The HEX API returns data keyed by H3 index at a specific resolution.
-- The `admin9Pcod` values in `shapes.rds` are H3 indices at the resolution used
-  in Step 1 (`make_hex_grid(..., resolution = 6)` by default).
-- **Resolution must match.** If the API returns resolution 7 but `shapes.rds`
-  contains resolution 6, the join will produce zero matches.
-- The join of API data to shapes is on `admin9Pcod == <api_h3_column>`.
-- Resolution mismatch must produce a clear, actionable error:
-
-  > "HEX API returned resolution 7 cells but `shapes.rds` contains resolution 6.
-  > Rebuild the hex grid in Step 1 at resolution 7, or re-fetch API data at
-  > resolution 6."
+- the `admin9Pcod` values in `shapes.rds` are H3 indices at whatever resolution
+  was set via `HEX_RESOLUTION` in `00-master.R` and passed to `make_hex_grid()`
+  in Step 1. That is the **single place** a deployer controls what resolution
+  ships with the app.
+- `fetch_hex_data()` reads the resolution automatically from the H3 index
+  strings in `hex_ids` — no separate configuration needed in Step 4.
+- If `HEX_RESOLUTION = 5` (H5 grid) and the data source provides H6,
+  `fetch_hex_data()` transparently expands H5→H6, fetches, and aggregates back.
+- If `HEX_RESOLUTION = 7`, `fetch_hex_data()` errors with an actionable
+  message pointing back to `HEX_RESOLUTION` in `00-master.R`.
 
 ### 5.4 Step 5 — Compile & finalise
 
@@ -441,6 +439,7 @@ and correct. The `area` column will appear nearly constant; that is not a bug.
 | 17  | `make_admin_lookup()` warns and computes `area` in km² (EPSG:4326, s2-based) if a layer is missing it. Does not error, does not re-project. |
 | 18  | All layers in `my_shp` must be in EPSG:4326. This is the single project CRS standard. No UTM step anywhere in the workflow. |
 | 19  | `rwa_shp` is the output of `data-raw/generate-rwa-package-data.R`, which must be re-run whenever the Step 1 workflow changes. `make_admin_lookup()` must exist before `rwa_shp` can be correctly rebuilt. `data-raw/generate-rwa-package-data.R` must be updated to call `make_admin_lookup()` (replacing the manual centroid-join) and to use `as.numeric(units::set_units(st_area(geometry), "km^2"))` (replacing the current `as.numeric(st_area(geometry))` which produces m²). |
+| 20  | `admin9` level number is a **safe convention** for hex layers, not a structural requirement. The package accepts any digit 0–9 as a level number. Level 9 is chosen because it is unlikely to conflict with real admin levels. `validate_geometries()` treats `admin9_Hexagon` identically to any other named admin level. |
 
 ---
 

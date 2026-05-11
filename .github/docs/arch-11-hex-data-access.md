@@ -37,9 +37,14 @@ column mappings, time dimensions, aggregation defaults, and display metadata.
 
 The deployer's Step 4 script becomes five explicit function calls — no wrapper
 function — so the optional user-parquet merge step slots in naturally between
-fetch and aggregate. A master switch (`INCLUDE_HEX_IN_APP`) in `00-master.R`
-controls whether hex-level polygons ship with the deployed app or only
-admin-level aggregates are included.
+fetch and aggregate. Two switches in `00-master.R` control the pipeline:
+
+- **`HEX_RESOLUTION`** (default `6L`) — the single place a deployer sets what
+  H3 resolution ships with the app. Passed to `make_hex_grid()` in Step 1;
+  automatically detected by `fetch_hex_data()` from the H3 index strings.
+- **`INCLUDE_HEX_IN_APP`** (default `FALSE`) — controls whether hex-level
+  polygons ship with the deployed app or only admin-level aggregates are
+  included.
 
 ---
 
@@ -142,7 +147,7 @@ admin-level aggregates are included.
     with a user metadata file that already contains a `population`
     variable. Population is always fetched and used internally for
     aggregation weighting but is not written as a visible indicator
-    row unless the deployer opts in via `include_hex = TRUE` on
+    row unless the deployer opts in via `include_population = TRUE` on
     `build_hex_metadata()`.
 
 23. As a PTI deployer, I want progress bars during fetch (per variable) and
