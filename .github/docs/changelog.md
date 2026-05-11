@@ -5,6 +5,17 @@
 
 ---
 
+## 2026-05-11 (dev/ folder removal -- closes #12)
+
+| Scope | Change                                                                                                                                                                                                                                |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Code  | Deleted the `dev/` folder (16 scratch files + the legacy `mapDwnldApp/` subdirectory). Per [#12](https://github.com/worldbank/devPTIpack/issues/12), every file had a documented modern replacement in `R/`: dt-numericInput → `mod_DT_inputs.R`, wt-page-layout → `mod_wt_inp.R`, inp-to-exp → `fct_inp_for_exp.R`, one-page-pti → `launch_pti_onepage()`, new-run-pti → `launch_pti()`, new-pti-calc → `mod_calc_pti2.R`, new-pti-plot → `mod_plot_pti2.R`, new-dta-exprt → `mod_export_pti_data.R`, dta-explorer → `mod_dta_explorer2.R`, legend-makers → `fct_legend_map_satelites.R`, profiling/app-examples/run_dev/run_prod = one-off or obsolete. mapDwnldApp's functionality lives in `mod_map_dwnld_srv`. Verified zero live references from `R/`, `tests/`, `inst/`, `vignettes/`, or `DESCRIPTION` before deletion. Git history preserves everything. |
+| Docs  | Ticked the "Delete dev/" checkbox in PLAN.md §7 (Phase 4); arch-09 §12 (workspace restructuring) is now fully closed. |
+
+R CMD check stays at 0 errors / 0 warnings / 0 notes. `testthat::test_local`: PASS 803 / FAIL 0 / SKIP 1 / ERROR 12 (same baseline; environmental). Zero regression.
+
+---
+
 ## 2026-05-11 (R CMD check NOTES cleanup -> 0/0/0)
 
 | Scope   | Change                                                                                                                                                                                                                                |

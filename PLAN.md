@@ -626,7 +626,10 @@ Follow arch-02-docs § "Implementation Order" and use the
 
 Per arch-04. Concrete cuts:
 
-- [ ] Delete `dev/` (git history preserves it).
+- [x] Delete `dev/` (git history preserves it). Removed 16 scratch files
+      and the legacy `mapDwnldApp/` after confirming zero live references
+      from `R/`, `tests/`, `inst/`, `vignettes/`, or `DESCRIPTION`. R CMD
+      check stays at 0/0/0; test suite unchanged.
 - [x] Replace `vignettes/dataprep.qmd` stub with the data-prep
       reference (PR-B `docs/build-pti-content`, per arch-06 §4 — column-by-column
       reference for boundary shapes + metadata template, common pitfalls,
