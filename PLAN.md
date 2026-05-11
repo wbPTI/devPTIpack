@@ -748,6 +748,16 @@ Per arch-04. Concrete cuts:
       titles. Applied `@inheritParams` to collapse the `error_on_fail`
       / `shp_path` / `mtdt_path` doc duplication across `validate_*`
       siblings (3 sites). `R CMD check` stays at 0 / 0 / 3.
+- [x] R CMD check NOTES cleanup (flagged in PR #99 audit, deferred as
+      follow-up): License stub fixed (LICENSE -> LICENSE.md with full
+      MIT text; new LICENSE DCF stub with YEAR + COPYRIGHT HOLDER);
+      removed `inst/template_pti/app-data/.gitkeep` (Step 1/3/5
+      `dir.create()` calls handle the directory creation on first
+      run); cleaned 7 unused Imports — removed 4 truly-unused
+      (`bsplus`, `config`, `tippy`, `pkgload`) and moved 3 to Suggests
+      (`testthat`, `here`, `quarto`). **`R CMD check` is now 0 errors
+      / 0 warnings / 0 notes.** Suite stays at PASS 803 / FAIL 0 /
+      SKIP 1 / ERROR 12 (environmental).
 
 ---
 

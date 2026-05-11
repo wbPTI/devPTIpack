@@ -5,6 +5,19 @@
 
 ---
 
+## 2026-05-11 (R CMD check NOTES cleanup -> 0/0/0)
+
+| Scope   | Change                                                                                                                                                                                                                                |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Config  | DESCRIPTION Imports cleanup. Removed 4 truly-unused packages: `bsplus`, `config`, `tippy`, `pkgload` (0 references anywhere in `R/`, `inst/`, `vignettes/`, or `tests/` -- `pkgload` only appeared in a commented-out line in the legacy `inst/sample_pti/app.R`). Moved 3 packages from Imports to Suggests where the package only needs them for tests / vignettes / template scripts but not at load time: `testthat` (used only by `tests/`), `here` (used only by `vignettes/articles/methodology.qmd` + legacy `inst/sample_pti/app-data/pti-metadata-pdf.Rmd`), `quarto` (used only by `inst/template_pti/00-master.R` and `*.qmd` -- i.e. the user's downstream runtime, not devPTIpack's load path). Also ASCII-cleaned the em-dash in the `Description:` field. |
+| Config  | License stub fix. Renamed full-text MIT license `LICENSE` -> `LICENSE.md`; created new DCF-format `LICENSE` stub (`YEAR: 2026` + `COPYRIGHT HOLDER: World Bank`) matching the canonical R-packaging pattern. DESCRIPTION's `License: MIT + file LICENSE` field now resolves to the stub correctly. |
+| Code    | Removed `inst/template_pti/app-data/.gitkeep`. The empty placeholder was tripping `R CMD check`'s "hidden files" note. Step 1/3/5 of the template pipeline all call `dir.create("app-data", showWarnings = FALSE)` on first run, so the directory materialises lazily — no functional change. |
+| Docs    | Updated PLAN.md §7 (arch-09 documentation redesign) — ticked the new "R CMD check NOTES cleanup" line; arch-09 chain + companions + cleanup-of-followups all closed. |
+
+`R CMD check` now reports **0 errors / 0 warnings / 0 notes** — first clean check on the redesign branch. `testthat::test_local`: PASS 803 / FAIL 0 / SKIP 1 / ERROR 12 (the same 12 environmental `local_mocked_bindings` failures on this box's testthat 3.1.2).
+
+---
+
 ## 2026-05-10 (afternoon — @family-tag migration + reference page restructure)
 
 | Scope  | Change                                                                                                                                                                                                                                |
