@@ -1,6 +1,6 @@
 Package: devPTIpack
 Title: Project Targeting Index: a framework for developing PTI apps and dashboards
-Version: 0.0.0.9941
+Version: 0.0.0.998
 Authors@R: c(
   person('Eduard', 'Bukin', email = 'ebukin@gmail.com', role = c('aut')),
   person('Koichi', 'Ito', email = 'koichi19960406@gmail.com', role = c('cre')),
@@ -10,7 +10,7 @@ Description: A generic framework for computing and visualising Project Targeting
   (PTI) scores -- composite indices derived from weighted socioeconomic indicators
   mapped across hierarchical administrative boundaries.
 License: MIT + file LICENSE
-Depends: R (>= 4.1.0)
+Depends: R (>= 4.5.1)
 Imports:
     golem (>= 0.2.1),
     shiny (>= 1.5.0),
