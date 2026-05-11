@@ -14,9 +14,7 @@
 #'   shapes list (the on-disk form of objects shaped like [ukr_shp]).
 #' @param mtdt_path Character. Path to the metadata `.xlsx` template
 #'   (the on-disk form of [ukr_mtdt_full]).
-#' @param error_on_fail Logical. If `TRUE` (default), throws on any
-#'   `fail`-level issue. Pass `FALSE` to inspect the structured result
-#'   instead.
+#' @inheritParams validate_geometries
 #'
 #' @return Invisibly, a list with components `status` (`"pass"`,
 #'   `"warn"`, or `"fail"`), `summary` (one-line string), and `issues`
@@ -26,6 +24,7 @@
 #' @importFrom purrr map_dfr
 #' @importFrom dplyr count
 #' @importFrom cli cli_h1 cli_alert_success
+#' @family validation
 #' @export
 #'
 #' @examples
@@ -118,11 +117,7 @@ validate_metadata <- function(shp_path, mtdt_path, error_on_fail = TRUE) {
 #' element. Emits one cli alert per check; returns the structured
 #' `list(status, summary, issues)` result invisibly.
 #'
-#' @param shp_path Character. Path to an `.rds` file containing the
-#'   shapes list (the on-disk form of objects shaped like [ukr_shp]).
-#' @param error_on_fail Logical. If `TRUE` (default), throws on any
-#'   `fail`-level issue. Pass `FALSE` to inspect the structured result
-#'   instead.
+#' @inheritParams validate_metadata
 #'
 #' @return Invisibly, a list with components `status` (`"pass"`,
 #'   `"warn"`, or `"fail"`), `summary` (one-line string), and `issues`
@@ -133,6 +128,7 @@ validate_metadata <- function(shp_path, mtdt_path, error_on_fail = TRUE) {
 #' @importFrom stringr str_extract str_detect str_c
 #' @importFrom glue glue
 #' @importFrom cli cli_alert_success
+#' @family validation
 #' @export
 #'
 #' @examples
@@ -215,11 +211,7 @@ validate_read_shp <- function(shp_path, error_on_fail = TRUE) {
 #' cli alert per check; returns the structured `list(status, summary,
 #' issues)` result invisibly.
 #'
-#' @param mtdt_path Character. Path to the metadata `.xlsx` template
-#'   (the on-disk form of [ukr_mtdt_full]).
-#' @param error_on_fail Logical. If `TRUE` (default), throws on any
-#'   `fail`-level issue. Pass `FALSE` to inspect the structured result
-#'   instead.
+#' @inheritParams validate_metadata
 #'
 #' @return Invisibly, a list with components `status` (`"pass"`,
 #'   `"warn"`, or `"fail"`), `summary` (one-line string), and `issues`
@@ -228,6 +220,7 @@ validate_read_shp <- function(shp_path, error_on_fail = TRUE) {
 #' @importFrom dplyr select contains any_of
 #' @importFrom purrr map_lgl is_logical
 #' @importFrom cli cli_alert_success
+#' @family validation
 #' @export
 #'
 #' @examples

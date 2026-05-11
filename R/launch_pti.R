@@ -124,6 +124,7 @@ materialize_dwnld_paths <- function(shp_dta, inp_dta,
 #' @importFrom shiny shinyApp bootstrapPage reactive
 #' @importFrom htmltools tagList
 #' @importFrom golem with_golem_options
+#' @family pti-launch
 #' @export
 #'
 #' @examples
@@ -246,6 +247,7 @@ launch_pti_onepage <-
 #' @importFrom htmltools tagList
 #' @importFrom golem with_golem_options
 #' @importFrom cicerone use_cicerone
+#' @family pti-launch
 #' @export
 #'
 #' @examples

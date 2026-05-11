@@ -20,6 +20,7 @@
 #'
 #' @importFrom shiny NS tagList tags
 #' @importFrom leaflet leafletOutput
+#' @family shiny-modules
 #' @export
 #'
 #' @examples

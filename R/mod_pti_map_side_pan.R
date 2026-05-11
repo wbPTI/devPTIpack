@@ -22,6 +22,7 @@
 #'   panel.
 #'
 #' @importFrom shiny NS tagList absolutePanel tags
+#' @family shiny-modules
 #' @export
 #'
 #' @examples

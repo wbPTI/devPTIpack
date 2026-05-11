@@ -45,6 +45,7 @@
 #'   NS moduleServer reactive showNotification
 #' @importFrom rlang is_missing
 #' @importFrom golem with_golem_options
+#' @family validation
 #' @export
 #'
 #' @examples

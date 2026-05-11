@@ -736,6 +736,18 @@ Per arch-04. Concrete cuts:
       `app_validate_metadata`). Updated `.claude/rules/roxygen-documentation.md`
       + `.claude/CLAUDE.md` to prefer `rwa_*` for new examples. Ukraine
       datasets unchanged — test suite continues to use them.
+- [x] Companion issue §7.1 — `@family`-tag migration + reference-page
+      restructure (issue [#75](https://github.com/worldbank/devPTIpack/issues/75)):
+      added `@family` tags to all 37 exported functions + 4 datasets
+      (41 inserts across 25 files), organised into 10 concept groups
+      (`pti-launch` / `pti-pipeline` / `data-input` / `weights` /
+      `data-export` / `validation` / `visualisation` / `shiny-modules` /
+      `package-utilities` / `sample-data`). Added a `reference:` block
+      to `_pkgdown.yml` driven by `has_concept()` selectors — the
+      reference index page now auto-groups by family with descriptive
+      titles. Applied `@inheritParams` to collapse the `error_on_fail`
+      / `shp_path` / `mtdt_path` doc duplication across `validate_*`
+      siblings (3 sites). `R CMD check` stays at 0 / 0 / 3.
 
 ---
 

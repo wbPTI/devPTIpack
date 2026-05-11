@@ -5,6 +5,19 @@
 
 ---
 
+## 2026-05-10 (afternoon — @family-tag migration + reference page restructure)
+
+| Scope  | Change                                                                                                                                                                                                                                |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Code   | Added `@family` tags to all 37 exported functions + 4 datasets (41 inserts across 25 R/*.R files). 10 concept groups: `pti-launch` (3 fns), `pti-pipeline` (4), `data-input` (2), `weights` (3), `data-export` (3), `validation` (8), `visualisation` (1), `shiny-modules` (11), `package-utilities` (2), `sample-data` (4 datasets). Per arch-09 §7.1 / [issue #75](https://github.com/worldbank/devPTIpack/issues/75). |
+| Code   | Applied `@inheritParams` to collapse param-doc duplication in the validator chain — `validate_metadata` inherits `error_on_fail` from `validate_geometries`; `validate_read_shp` and `validate_read_metadata` inherit (`shp_path` or `mtdt_path`) + `error_on_fail` from `validate_metadata`. Removes 9 duplicated doc lines; centralises the "structured-return / error_on_fail" doc in one place. |
+| Config | Added a `reference:` block to `_pkgdown.yml` driven by `has_concept()` selectors (one entry per family, with a short `desc:` line). The reference index page now auto-groups by family with descriptive section headings (`Launch a PTI app`, `Calculation pipeline`, `Input validation`, etc.) instead of the alphabetical fallback. To regroup a function in the future, edit its `@family` tag in `R/` rather than touching `_pkgdown.yml`. |
+| Docs   | Updated PLAN.md §7 (arch-09 documentation redesign) — ticked the companion §7.1 checkbox for issue #75. |
+
+R CMD check stays at 0 errors / 0 warnings / 3 notes (same baseline as PR #99 / #100). `testthat::test_local`: PASS 803 / FAIL 0 / SKIP 1 / ERROR 12 (the same 12 environmental `local_mocked_bindings` failures on this box).
+
+---
+
 ## 2026-05-10 (afternoon — Rwanda package datasets)
 
 | Scope   | Change                                                                                                                                                                                                                                |

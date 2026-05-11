@@ -288,6 +288,7 @@ agg_pti_scores <- function(extrap_dta, adm_ids, na_rm_pti2 = NULL) {
 #' @importFrom purrr map
 #' @importFrom dplyr mutate
 #' @importFrom glue glue
+#' @family pti-pipeline
 #' @export
 #'
 #' @examples
@@ -325,6 +326,7 @@ label_generic_pti <- function(dta, glue_expr = generic_pti_glue()) {
 #'   `spatial_name`, `pti_name`, and `pti_score`.
 #'
 #' @importFrom stringr str_c
+#' @family pti-pipeline
 #' @export
 #'
 #' @examples

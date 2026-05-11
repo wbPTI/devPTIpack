@@ -35,6 +35,7 @@ mod_weights_rand_ui <- function(id){
 #' @importFrom purrr map
 #' @importFrom rlang set_names
 #' @importFrom stringr str_c
+#' @family weights
 #' @export
 #'
 #' @examples
@@ -82,6 +83,7 @@ get_rand_weights <- function(indicators_list) {
 #' @importFrom rlang set_names
 #' @importFrom stringr str_c
 #' @importFrom tibble tibble
+#' @family weights
 #' @export
 #'
 #' @examples

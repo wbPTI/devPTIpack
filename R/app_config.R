@@ -12,6 +12,7 @@
 #'   requested resource if it exists, or `""` if it does not (matching
 #'   [system.file()]'s convention for missing files).
 #'
+#' @family package-utilities
 #' @export
 #'
 #' @examples

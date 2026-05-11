@@ -35,6 +35,7 @@
 #' @importFrom rlang dots_list
 #' @importFrom purrr pmap
 #' @importFrom ggplot2 ggplot aes geom_sf theme_minimal theme labs
+#' @family visualisation
 #' @export
 #'
 #' @examples

@@ -60,6 +60,7 @@ mod_get_shape_srv <-
 #' @importFrom magrittr extract
 #' @importFrom stringr str_detect str_replace_all str_c
 #' @importFrom readr read_rds
+#' @family data-input
 #' @export
 #'
 #' @examples

@@ -62,6 +62,7 @@ mod_export_pti_data_server <- function(id, plotted_dta, weights_dta){
 #' @importFrom purrr map2 imap reduce set_names
 #' @importFrom sf st_drop_geometry
 #' @importFrom stringr str_detect str_replace str_c
+#' @family data-export
 #' @export
 #'
 #' @examples
@@ -123,6 +124,7 @@ get_pti_scores_export <- function(plotted_dta) {
 #' @importFrom dplyr select left_join rename_with
 #' @importFrom purrr map2 reduce
 #' @importFrom stringr str_c str_replace
+#' @family data-export
 #' @export
 #'
 #' @examples

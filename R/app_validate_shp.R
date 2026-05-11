@@ -38,6 +38,7 @@
 #' @importFrom rlang is_missing
 #' @importFrom sf st_bbox
 #' @importFrom grDevices hcl.colors
+#' @family validation
 #' @export
 #'
 #' @examples

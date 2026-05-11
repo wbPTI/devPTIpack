@@ -86,6 +86,7 @@
 #' @importFrom writexl write_xlsx
 #' @importFrom zip zipr
 #' @importFrom rmarkdown render
+#' @family pti-pipeline
 #' @export
 #'
 #' @examples

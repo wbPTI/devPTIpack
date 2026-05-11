@@ -32,6 +32,7 @@
 #' `golem::get_golem_options("na_rm_pti")` to keep tests hermetic.
 #'
 #' @importFrom purrr imap
+#' @family pti-pipeline
 #' @export
 #'
 #' @examples

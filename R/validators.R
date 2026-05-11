@@ -230,6 +230,7 @@ validate_single_geom <- function(focus_geom, full_geom, error_on_fail = TRUE) {
 #'
 #' @importFrom purrr walk map_dbl
 #' @importFrom cli cli_h2 cli_alert_success cli_alert_danger
+#' @family validation
 #' @export
 #'
 #' @examples

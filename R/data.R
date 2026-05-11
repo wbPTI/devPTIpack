@@ -44,6 +44,7 @@
 #' data(ukr_shp)
 #' names(ukr_shp)
 #' head(ukr_shp[["admin1_Oblast"]])
+#' @family sample-data
 "ukr_shp"
 
 #' Ukraine sample PTI metadata input
@@ -92,6 +93,7 @@
 #' names(ukr_mtdt_full)
 #' ukr_mtdt_full$general
 #' head(ukr_mtdt_full$metadata)
+#' @family sample-data
 "ukr_mtdt_full"
 
 #' Rwanda sample administrative boundaries
@@ -137,6 +139,7 @@
 #' data(rwa_shp)
 #' names(rwa_shp)
 #' head(rwa_shp[["admin1_Province"]])
+#' @family sample-data
 "rwa_shp"
 
 #' Rwanda sample PTI metadata input
@@ -185,4 +188,5 @@
 #' names(rwa_mtdt_full)
 #' rwa_mtdt_full$general
 #' head(rwa_mtdt_full$metadata)
+#' @family sample-data
 "rwa_mtdt_full"
