@@ -1,7 +1,8 @@
 ---
 title: "PTI Methodology"
 description: >
-  What Project Targeting Index (PTI) is and how the PTI process looks like?
+  What the Project Targeting Index (PTI) is, how the data pipeline works,
+  and how the composite index is constructed.
 ---
 
 ```{r setup_lib, include=FALSE}
@@ -18,38 +19,35 @@ knitr::opts_chunk$set(
 
 Tracking how the World Bank's portfolio of activities aligns with evolving
 circumstances in specific countries is challenging. World Bank teams engage with
-countries through important strategic and prioritization exercises, such as the
-Country Partnership Framework (CPF) and the Systematic Country Diagnostic
-(SCD). To maximize the development benefits of activities identified under these
-activities, it is essential to ensure that projects and programs evolve with
+countries through strategic and prioritization exercises, such as the Country
+Partnership Framework (CPF) and the Systematic Country Diagnostic (SCD). To
+maximize the development benefits of activities identified under these
+exercises, it is essential to ensure that projects and programs evolve with
 changing circumstances while reaching the areas that are most in need.
 
 The Project Targeting Index (PTI) offers a framework for project and country
-teams to match objectives with geographic project site selection. Teams can
-ensure that project site selection aligns with the country strategy, and the
-country management unit (CMU) can monitor consistency between project sites and
-the country strategy. Spatially targeting the Bank's interventions based on
-objective criteria and evidence also helps inject transparency into project site
-selection and promote efficiency in reaching intended beneficiaries. Teams can
-use the PTI online dashboard, which serves both as a database of subnational
-indicators and as a user-friendly tool for PTI calculation, to track
-fast-changing emergency situations.
+teams to match development objectives with geographic project site selection
+(Finn & Masaki, 2020; Nguyen & Hoogeveen, 2018). Teams can ensure that project
+site selection aligns with the country strategy, and the country management unit
+(CMU) can monitor consistency between project sites and the strategy. Spatially
+targeting the Bank's interventions based on objective criteria and evidence
+helps inject transparency into project site selection and promote efficiency in
+reaching intended beneficiaries. Teams can use the PTI online dashboard — which
+serves both as a database of subnational indicators and as a user-friendly tool
+for PTI calculation — to track fast-changing emergency situations (Masaki et
+al., 2022).
 
-The purpose of this notes is to provide a guideline on how PTI works, what are
-the steps involved into building a PTI dashboard, and what are the methodological
-aspects and caviets of the PTI itself. We dedicate a separate section to
-[Developing a new PTI project]().
-
-Overall, the process of develping a PTI dashboard can be broken down into four
-distinct but interrelated steps [@fig-pti-process]:
+The purpose of this document is to provide a guideline on how PTI works, what
+data components feed into the PTI dashboard, and what methodological aspects
+underpin the composite index. The process of developing a PTI dashboard can be
+broken down into four distinct but interrelated steps (@fig-pti-process):
 
 1. [Identification](#identification);
 2. [PTI preparation](#pti-prep);
-3. [Application](#application); and
+3. [Methodology](#methodology); and
 4. [Monitoring](#monitoring).
 
-Below, we discuss in details each of these steps and provide a summarise in
-details all the aspects behin the [PTI methodology](#pti-methodology).
+Below, we discuss each of these steps in detail.
 
 ![The PTI process](img/pti-process.png){#fig-pti-process width="100%"}
 
@@ -61,18 +59,18 @@ details all the aspects behin the [PTI methodology](#pti-methodology).
 ## Determine thematic areas of focus
 
 The PTI process starts with the identification of development objectives. A
-clear set of development objectives that can be measured objectively by data and
-evidence, and established in close coordination with the respective country
-teams, lays the groundwork for PTI mapping. Goals outlined in a Country
-Partnership Framework (CPF) are a good starting point to guide selection of
-development objectives. In the case of
+clear set of development objectives that can be measured by data and evidence,
+established in close coordination with the respective country teams, lays the
+groundwork for PTI mapping. Goals outlined in a Country Partnership Framework
+(CPF) are a good starting point to guide selection of development objectives.
+In the case of
 Zambia^[The PTI dashboard for Zambia is available from
 https://wbg-poverty-gp.shinyapps.io/zamPTI/], for instance, there are three
-thematic areas that were taken directly from
+thematic areas taken directly from
 [CPF FY19-23](https://documents1.worldbank.org/curated/en/805841545925652368/pdf/Zambia-Country-Partnership-Framework-for-the-Period-FY19-FY23.pdf):
 
-1. More even territorial development with opportunities and jobs for the rural
-   poor
+1. More even territorial development with opportunities and jobs for the
+   rural poor
 2. Public services and social protection for job participation
 3. Institutions for resilience
 
@@ -82,14 +80,11 @@ Once the key development objectives or thematic areas of focus are determined,
 the next step is to identify indicators pertaining to each of those objectives
 or areas. Since the PTI informs spatial targeting, these indicators need to be
 available at a subnational level (for example, villages, districts, regions,
-provinces). People most familiar with the country context—project teams, country
-experts, and sector specialists alike should provide inputs on indicator
-selection. Teams may also consult GIS specialists in this selection process as a
-rich source of high-resolution socio-economic data is now available to inform
-spatial targeting at a highly disaggregated level.
-
-<!-- Develop an example of the pillars identification based on the past published PTI
-projects, e.g. South Sudan, Zambia, Madagascar, etc.  -->
+provinces). People most familiar with the country context — project teams,
+country experts, and sector specialists — should provide inputs on indicator
+selection. Teams may also consult GIS specialists, as a rich source of
+high-resolution socio-economic data is now available to inform spatial targeting
+at a highly disaggregated level.
 
 ---
 
@@ -98,467 +93,407 @@ projects, e.g. South Sudan, Zambia, Madagascar, etc.  -->
 The next step in the PTI process is to create a PTI dashboard. This dashboard
 primarily serves two purposes:
 
-1. a one-stop shop that offers a wide range of subnational indicators readily
-   available and accessible; and
-2. a user-friendly tool to make the calculation of a PTI easy, flexible and adaptable.
-
-There are
-already a number of countries where the dashboard is already up and running.
-This section walks you through how to build a PTI dashboard from scratch. All
-the baseline infrastructure that goes into the construction of a PTI dashboard
-is prepared in R so please skip the rest of this section if you are not
-responsible for writing R scripts to prepare data and launch the PTI dashboard.
-
-## Setup: Data cleaning
-
-The first thing that you need to do is to prepare data that goes into a PTI
-dashboard. We typically create a new folder called `xxxPTIdata` (where `xxx` is
-ISO-3 country code, e.g., `moz` for Mozambique) to manage scripts for cleaning
-and merging data. Here is a recommended folder structure for `xxxPTIdata`:
-
-```
-+-- data-clean
-|   \-- metadata/metadata.xlsx
-+-- data-raw
-+-- dev
-+-- vignettes
-+-- xxxPTIdata.Rproj
-+-- .gitignore
-```
-
-where `data-clean` contains clean data ready to be merged; `data-raw` all raw
-datasets; `dev` functions used to clean and visualize data; and `vignettes` R
-scripts to clean data. You can find a concrete example for
-[Zambia PTI work](https://github.com/wbPTI/zamPTIdata).^[The
-[`zamPTIdata`](https://github.com/wbPTI/zamPTIdata) repo is a private
-repository so you need to request access. Please
-[contact Taka Masaki](mailto:tmasaki@worldbank.org).] Please note that
-`data-clean/metadata/metadata.xlsx` should contain the description of all
-indicators to be included in the dashboard. We will come back to this topic in
-[Section 3.1.2](#metadata).
-
-In the following sections, we will walk you through several key steps that need
-to be followed to prepare a dataset using the
-[Zambia PTI dashboard](https://wbg-poverty-gp.shinyapps.io/zamPTI/) and the
-[`zamPTIdata`](https://github.com/wbPTI/zamPTIdata) repo as an example.
-
-The scripts to turn raw data into clean data are all stored in the `vignettes`
-folder and make sure that these scripts are numbered in order of how they should
-be sequentially run to produce all the clean datasets needed at the end. And
-clean data should all be saved in the `RDS` format in the `data-clean` folder
-and ensure that *all* baseline shapefiles are included in each of the clean data
-file. See how the `data-clean` folder should look like again in the example of
-the [`zamPTIdata`](https://github.com/wbPTI/zamPTIdata) repo.
-
-### Getting shapefiles ready
-
-The PTI dashboard will allow users to see a wide range of subnational indicators
-at varying levels of geographical disaggregation. The first thing that you need
-to do is to create a `RDS` file that contains a list of shapefiles, which will
-be used for compiling all indicators down the road and then displayed in the
-dashboard.
-
-This `RDS` file should contain a `list` object of all layers of shapefiles
-(e.g., ADM0, ADM1, ADM2, and so on). Each shapefile contained in the `list`
-object should have the following attributes:
-
-- `admin*Pcod`: a location ID (which typically comes with the original shapefile
-  you download online or obtain from colleagues but you can also create your own
-  ID if you like)
-- `admin*Name`: the name of a location
-- `area`: the size of area. This should be computed after properly reprojecting
-  the shapefile in the appropriate EPSG UTM so that the area is expressed in
-  km^2^.
-- For those shapefiles at ADM`x` where `x` < `y` and `y` is the highest level
-  of geographical aggregation (which is almost always admin 0), make sure to
-  include all the `admin*Pcod` from shapefiles at admin `z` > `x` so that the
-  final `RDS` file can make a link across different levels of geographical data
-  using `admin*Pcod`. For example, the shapefile of ADM1 should contain
-  `admin0Pcod` from the shapefile of ADM0 and the shapefile of ADM2 should
-  contain `admin0Pcod` and `admin1Pcod` from the shapefiles of ADM0 and ADM1,
-  and so on.
-- Make sure to include ADM0 shapefile. Otherwise the R package used to launch a
-  PTI dashboard will not run.
-
-With all these points in mind, let's create a `RDS` file that contains a `list`
-object containing all levels of shapefiles. Below is just a sample code from the
-`zamPTIdata` repo:
-
-```{r eval=FALSE, echo=TRUE, comment=TRUE}
-## read ADM1 shapefile
-admin1 <- sf::st_read(
-  here::here(
-    "data-raw", "admin-boundaries", "grid3-zam-admin",
-    "shapefiles", "admin1_provinces.shp"
-  )
-)
-
-## generate ADM0 shapefile from ADM1 shapefile
-admin0 <- admin1 |>
-  dplyr::mutate(admin0Pcod = "ZM", admin0Name = "Zambia") |>
-  dplyr::group_by(admin0Pcod, admin0Name) |>
-  dplyr::summarise(area = sum(area)) |>
-  dplyr::ungroup() |>
-  sf::st_make_valid()
-
-## read ADM2 shapefile
-admin2 <- sf::st_read(
-  here::here(
-    "data-raw", "admin-boundaries", "grid3-zam-admin",
-    "shapefiles", "admin2_districts.shp"
-  )
-)
-
-## read ADM4 shapefile
-admin4 <- sf::st_read(
-  here::here(
-    "data-raw", "admin-boundaries", "grid3-zam-admin",
-    "shapefiles", "admin4_wards.shp"
-  )
-)
-
-## combine all levels
-zam_bnd <- list()
-zam_bnd$admin0_Country   <- admin0
-zam_bnd$admin1_Provinces <- admin1
-zam_bnd$admin2_Districts <- admin2
-zam_bnd$admin4_Wards     <- admin4
-
-## now save this baseline shapefile data in RDS file.
-readr::write_rds(
-  zam_bnd,
-  here::here("data-clean", "app-shapes", "Zambia.rds"),
-  compress = "gz"
-)
-```
-
-Once you create the baseline `RDS` file that contains all levels of
-administrative boundary shapefiles, save it in the `data-clean` folder.
-
-### Generate indicators
-
-Once you have the baseline shapefile data and stored it in the `data-clean`
-folder, you can start generating and integrating indicators. As mentioned
-earlier in [Chapter 2](#identification), a set of indicators that goes into the
-PTI dashboard depends on the objectives of a PTI dashboard. This means that
-there is no one-size-fits-all guideline on how to create these indicators. That
-said, there are a common set of routine data operations that we typically
-perform for all PTI dashboards. In the following subsections, we discuss some of
-these operations and some sample R scripts to perform them.
-
-### Computing zonal statistics
-
-One common data operation that we perform is to compute zonal statistics based
-on raster data. Let's say we want to compute the sum or mean of gridded raster
-population data from [WorldPop](https://www.worldpop.org/) at each level of
-geographical disaggregation. The
-[`exactextractr`](https://cran.r-project.org/web/packages/exactextractr/index.html)
-package and `purrr::map` are very useful for this purpose.^[The utility of using
-`purrr::map` instead of a `for` loop is explained
-[here](https://rpubs.com/christianthieme/589762).] See
-[`vignettes/06.population-high-res-data.R`](https://github.com/wbPTI/zamPTIdata/blob/main/vignettes/06-population-high-res-data.R)
-from the [`zamPTIdata`](https://github.com/wbPTI/zamPTIdata) repo as an
-example.
-
-It is always suggested that zonal statistics generated based on raster data are
-computed at *all* levels of shapefiles. The reason is that when the dashboard is
-launched, these data can be displayed at different levels of aggregation if they
-are prepared for each level of shapefile.
-
-### Manually matching location names
-
-You may need to manually match location names to the baseline shapefiles if the
-input data that you are trying to integrate do not already have unique location
-IDs or names that match perfectly with the respective shapefile. In such
-instances, make sure that you prepare a spreadsheet (either in Excel, CSV, or
-other format alike) that matches the location names between your input data and
-shapefile. See
-[`vignettes/07-zamstat-population-district.R`](https://github.com/wbPTI/zamPTIdata/blob/main/vignettes/07-zamstat-population-district.R),
-which matches a dataset on the district-level population from the population
-census with the district-level shapefile using a cross-over table
-`data-raw/population-data/cso/cso-pop-2020-voters.xlsx`.
-
-### Common indicators to be included
-
-#### Human capital and health
-
-Human capital and health indicators are almost always included in the PTI
-dashboard given that they often serve as one of the key criteria for geographic
-targeting. These indicators are commonly derived from Demographic Health Survey
-(DHS), household budget survey (HBS), Multiple Indicator Cluster Surveys
-(MICS), population census among others. As for DHS, there is a nice
-[website](https://www.statcompiler.com/en/) where you can easily download the
-indicators of your interest and match them with administrative boundary
-shapefiles, which also are available from the DHS geospatial
-[portal](https://spatialdata.dhsprogram.com/home/).
-
-#### Accessibility
-
-Another common set of indicators that we typically generate includes measures of
-accessibility. Two commonly used indices include the Market Access Index
-(MAI)^[While there are many different measures of market access, one that we
-typically use is from Jedwab & Storeygard (2021).] and the Rural Access Index
-(RAI).^[See, for instance, Iimi et al. (2016) and https://rai.azavea.com/.]
-Since these indicators are included in almost all PTI dashboards, we created an
-R package specifically for this purpose. Please refer to
-[the `devaccess` package](https://github.com/wbPTI/devaccess). In the package
-[website](https://github.com/wbPTI/devaccess), you find concrete examples
-walking you through how these indices can be constructed based on publicly
-available data. You can also see how the MAI was calculated for Zambia in
-[`vignettes/13-mai.R`](https://github.com/wbPTI/zamPTIdata/blob/main/vignettes/13-mai.R).
-
-#### Natural disaster and conflict risks
-
-Another set of indicators that are commonly included in a PTI dashboard seeks to
-measure natural disaster and fragility risks. We also generated routine
-functions that are now summarized in the
-[`devdisaster`](https://github.com/wbPTI/devdisaster) package. This package
-allows you to compute various measures of natural disaster and fragility risks.
-See the package [website](https://github.com/wbPTI/devdisaster) for more
-details.
-
-## Setup: Launching a dashboard {#dashboard-setup}
-
-Now that you have clean data ready to be merged in the `data-clean` folder, it
-is time to prepare a dashboard. The way we do this is through `r-shiny`. There
-are many tutorials on `r-shiny` and if you are unfamiliar with it, we highly
-recommend that you take one of these tutorials. The most basic tutorial is
-available from [here](https://shiny.rstudio.com/tutorial/).
-
-That said, you do not necessarily need to know nuts and bolts about `r-shiny` to
-launch a PTI dashboard. Because we routinely create a PTI dashboard with the
-same layout and functionalities for many different countries, we have created an
-R package specifically for this purpose:
-[`devPTIpack`](https://github.com/wbPTI/devPTIpack). The package
-[website](https://github.com/wbPTI/devPTIpack) offers a wide range of functions
-beyond just simply creating a dashboard so if you are interested in digging
-deeper, please refer to the package website. In this guideline, we will
-basically cover minimum steps required to launch an app using the package.
-
-### Install the `devPTIpack` package {#install-devptipack}
-
-The first thing you need to do is to create a folder specifically for your
-dashboard. This folder needs to follow a certain structure. You can create it by
-using `create_new_pti()` in the `devPTIpack` package. For instance, if you want
-to create a dashboard for country `xxx`, you will run the following codes:
-
-```{r pti_setup, echo=TRUE, comment=TRUE, eval=FALSE}
-# Install development version from GitHub
-remotes::install_github("wbPTI/devPTIpack")
-
-# devPTIpack::create_new_pti("PATH-TO-NEW-PROJECT-LOCATION/PROJECT-NAME")
-#
-# - `PATH-TO-NEW-PROJECT-LOCATION` is a relative or an absolute path to the
-#   folder, where the app should be created.
-# - a new sub-folder with the app itself will be created with the name
-#   `PROJECT-NAME`.
-
-# For instance, you can specify a path as follows:
-devPTIpack::create_new_pti("C:/Users/WB495141/GitHub/xxxPTI")
-```
-
-This sample script will create a new folder called `xxxPTI` in this directory
-`C:/Users/WB495141/GitHub`. In it, you find the following file structure:
-
-```
-+-- app-data
-|   \-- metadata.Rmd
-+-- app.R
-+-- xxxPTI.Rproj
-+-- landing-page.md
-\-- R
-    \-- _disable_autoload.R
-```
-
-We will explain what each file does in this new folder in the following sections.
-
-### Create a metadata {#metadata}
-
-Now that all your datasets are cleaned and ready to be merged, you can use
-`xxxPTIdata/vignettes/100-compilation.Rmd`^[You can simply copy this `Rmd` file
-from the [`zamPTIdata`](https://github.com/wbPTI/zamPTIdata) repo. See, for
-example, a sample
-[code](https://github.com/wbPTI/zamPTIdata/blob/main/vignettes/100-compilation.Rmd)
-from the zamPTIdata repository.] to compile all datasets, create a metadata,
-which contains both the descriptions of all the indicators as well as the data
-to be displayed in the dashboard, and save the list data of all the
-administrative boundary shapefiles `admin_bounds.rds` in the `xxxPTI/app-data`
-folder.
-
-The metadata will contain the following sheets:
-
-- `general`: contains country name (e.g., Zambia, Tanzania, Kenya)
-- `metadata`: includes the following variables:
-  - `var_code`: variable name in the dataset
-  - `var_name`: variable name as it appears in the dashboard. **DO NOT USE ":"
-    in variable name because it can break the app compilation in devPTIpack.**
-  - `var_order`: number indicating the order in which variables appear in the
-    dashboard. Variables are sorted by `pillar_group` and `var_order`.
-  - `spatial_level`: the most granular level of disaggregation where a given
-    variable is available in the data. For instance, if an indicator is
-    available at ADM1 and ADM2, you should indicate ADM2 in this column. For
-    instance, in the case of Zambia, this column should state
-    `admin2_Districts` for those indicators available at ADM2 and
-    `admin1_Provinces` for those available at ADM1.
-  - `var_description`: detailed description of a given variable indicating how
-    it's constructed and sources from which the variable is derived.
-  - `var_units`: unit of a variable (e.g., km, tonnes, minutes, USD) (optional)
-  - `pillar_group`: numeric code used to group pillar
-  - `pillar_name`: pillar name. **DO NOT USE ":" in pillar name because it can
-    break the app compilation in devPTIpack.**
-  - `pillar_description`: detailed description of a pillar (optional)
-  - `fltr_exclude_pti`: `TRUE` if you want to exclude a given variable from the
-    PTI tab in the dashboard; `FALSE` otherwise
-  - `fltr_exclude_explorer`: `TRUE` if you want to exclude a given variable
-    from the Data Explorer tab in the dashboard
-  - `fltr_overlay_pti`: Set it all `FALSE`.
-  - `fltr_overlay_explorer`: Set it all `FALSE`
-  - `legend_revert_colours`: `TRUE` if you want to reverse the legend color for
-    a given variable; `FALSE` otherwise.
-- `point_data`: Do not change. It's just a placeholder.
-- `weights_table`: Do not change. It's just a placeholder.
-- `admin##LOCATION`: data at the `LOCATION` level (or ADM ##), which will be
-  displayed in the dashboard.
-
-Note that the `metadata` sheet in the metadata generated in
-`xxxPTIdata/vignettes/100-compilation.Rmd` comes from
-`xxxPTIdata/data-clean/metadata/metadata.xlsx`. You need to manually edit this
-file `xxxPTIdata/data-clean/metadata/metadata.xlsx` to ensure that all
-indicators that you would like to have in the dashboard are included and
-described well in `xxxPTIdata/data-clean/metadata/metadata.xlsx`. When creating
-this metadata file, **make sure that you should provide a description of a
-variable that is as thorough as possible.** It should explain how a given
-indicator is constructed and what sources are used with as much details that you
-can provide as possible. See `zamPTIdata/data-clean/metadata/metadata.xlsx` as
-an example.
-
-Once all manual edits are made in
-`xxxPTIdata/data-clean/metadata/metadata.xlsx`, you can then run
-`xxxPTIdata/vignettes/100-compilation.Rmd` to compile the datasets and produce
-a metadata. Please note that you need to also manually edit
-`xxxPTIdata/vignettes/100-compilation.Rmd` to properly compile all datasets.
-This will leave you with a new metadata `mtdt-TIME.xlsx` and
-`admin_bounds.rds` created in the `xxxPTI/app-data` folder where `TIME` is the
-date and time of when the metadata is generated.
-
-### Generate a PDF document of a metadata {#metadata_pdf}
-
-Once your metadata and `admin_bounds.rds` are both exported into the
-`xxxPTI/app-data` folder, run `xxxPTI/app-data/metadata.Rmd` to generate a PDF
-version of the metadata `metadata.pdf`, which will be made available and
-downloadable from the dashboard.
-
-### Edit contents in the landing page of the dashboard {#landing_page}
-
-What's in `landing-page.md` gets displayed as a landing page for the dashboard.
-Customize the content for your purpose. See a concrete example from
-[`zamPTI/landing-page.md`](https://github.com/wbPTI/zamPTI/blob/main/landing-page.md).
-
-### Prepare zip folder that contains all levels of shapefiles for download
-
-To make the baseline shapefiles also available for users, zip all the shapefiles
-and save them in the `app-data` folder.
-
-### Launch an app
-
-Now you are ready to launch an app. Before that, you make sure that you've
-gotten all the ingredients you would need to launch an app. The final `xxxPTI`
-folder should look like this:
-
-```
-+-- app-data
-|   +-- admin_bounds.rds
-|   +-- metadata.pdf
-|   +-- metadata.Rmd
-|   +-- mtdt.xlsx
-|   \-- shapefiles.rar
-+-- app.R
-+-- xxxPTIapp.Rproj
-+-- landing-page.md
-\-- R
-    \-- _disable_autoload.R
-```
-
-where
-
-- `app-data/admin_bounds.rds`: a list object of all administrative boundary
-  shapefiles
-- `app-data/metadata.pdf`: PDF document of metadata
-- `app-data/mtdt.xlsx`: metadata
-- `app-data/shapefiles.rar`: zipped folder containing all shapefiles for
-  download
-- `app.R`: R script to launch an app
-- `xxxPTIapp.Rproj`: proj file for the app
-- `landing-page.md`: content of the landing page of the dashboard
-
-The `app.R` script launches the app and could be used to deploy such app to an
-external server. Modify this to read all the inputs pertaining to your own
-`xxxPTI` folder:
-
-```r
-# Launch the ShinyApp (Do not remove this comment)
-# To deploy, run: rsconnect::deployApp()
-# Or use the blue button on top of this file
-
-library(shiny)
-library(devPTIpack)
-
-launch_pti(
-  shp_dta        = readRDS("app-data/admin_bounds.rds"),
-  inp_dta        = devPTIpack::fct_template_reader("app-data/mtdt.xlsx"),
-  app_name       = "Example country",
-  show_waiter    = TRUE,
-  show_adm_levels = c("admin2"),
-  shapes_path    = "app-data/shapefiles.zip",
-  mtdtpdf_path   = "app-data/metadata.pdf",
-  pti_landing_page = "./landing-page.md"
-)
-```
-
-While the way you specify each option in the `launch_pti()` function should be
-relatively straightforward, it is worth paying particular attention to
-`show_adm_levels`. This is where you specify at what level(s) of geographical
-disaggregation PTIs will be computed in the dashboard. Let's say you want users
-to calculate PTI only at the ADM2 level, you can specify
-`show_adm_levels = c("admin2")`. If you want to allow users to calculate PTI at
-both ADM2 and ADM4 levels, you then can specify
-`show_adm_levels = c("admin2", "admin4")` and so on. Although you can choose
-whatever level you want users to calculate the PTI, it's recommended that you
-want to simplify this as much as possible so that users won't be overwhelmed by
-the information presented in the dashboard. One way to simplify is to just
-specify this at the lowest level of geographical disaggregation that the data
-allows for.
-
-That's it! Hope you now see a beautiful dashboard show up on your screen.
+1. A **one-stop shop** that offers a wide range of subnational indicators
+   readily available and accessible; and
+2. A **user-friendly tool** to make the calculation of a PTI easy, flexible, and
+   adaptable.
+
+Building a PTI app requires two categories of inputs — spatial boundaries and
+indicator data — which are processed through a reproducible pipeline and
+compiled into four deployment-ready files that power the web application.
+@fig-pti-data-flow illustrates this workflow.
+
+![PTI data flow: from raw inputs to the deployed web application.](img/pti-data-flow.svg){#fig-pti-data-flow width="100%"}
+
+## Spatial boundaries
+
+The foundation of any PTI dashboard is a set of validated administrative
+boundary shapefiles. These define the geographic units at which indicators will
+be displayed and the PTI will be calculated. A typical PTI app includes:
+
+- **Country boundary** (ADM 0) — required as the outer envelope.
+- **Subnational administrative levels** (ADM 1, 2, 3, etc.) — regions,
+  districts, communes, or whatever administrative divisions are relevant.
+- **Hexagonal grid** (optional) — a uniform H3 hexagonal grid covering the
+  country, useful for indicators derived from raster data (population,
+  night-time lights, accessibility). Hexagons avoid the modifiable areal unit
+  problem introduced by irregular administrative polygons.
+
+All spatial layers are cleaned, validated, and combined into a single
+`shapes.rds` file with a parent-child hierarchy linking each administrative
+unit to its parent.
+
+## Indicator data sources
+
+Indicator data feeding into the PTI dashboard typically comes from three
+sources:
+
+1. **Precomputed socioeconomic statistics** — survey-derived indicators (DHS,
+   MICS, household budget surveys, population census), administrative records,
+   or other tabulated data already aggregated at subnational levels.
+
+2. **Zonal statistics** (optional) — indicators extracted from raster surfaces
+   (e.g., population density from WorldPop, night-time lights, vegetation
+   indices) by computing summary statistics within each administrative polygon.
+
+3. **Hex-level data** (optional) — pre-computed indicator values at H3 hexagonal
+   resolution, accessed through an API or prepared as local parquet files.
+
+These indicator sources are combined with descriptive metadata into two
+intermediate Excel workbooks:
+
+- **`metadata-user.xlsx`** — the user-prepared indicator dictionary with
+  variable descriptions, pillar assignments, and per-admin-level data sheets.
+- **`metadata-hex.xlsx`** — hex-sourced indicators with auto-populated metadata,
+  produced when the hex data pipeline is used.
+
+## Compilation
+
+The `compile_pti_data()` function merges all intermediate inputs, re-validates
+the combined data, and produces four deployment-ready files:
+
+| File                | Contents                                            |
+| ------------------- | --------------------------------------------------- |
+| `shapes.rds`        | Validated spatial boundaries for all admin levels   |
+| `metadata.xlsx`     | Merged indicator dictionary and data                |
+| `shapefiles.zip`    | GeoJSON exports of each admin layer for download    |
+| `pti-metadata.pdf`  | Printable indicator atlas (one map per indicator)   |
+
+A fifth file, `landing-page.md`, is manually authored and provides the content
+for the dashboard's landing page.
+
+These five files, together with a short launch script, are all that is needed to
+deploy the PTI web application locally or to a hosting service such as Posit
+Connect.
+
+## Data quality assurance
+
+It is crucial to ensure the quality of the data through manual inspection and
+standardized metadata reports. Key factors that must be accounted for during
+quality assurance include:
+
+1. **Missing observations** — regions with missing values receive no targeting
+   priority in the PTI calculation.
+2. **Presence of variance** — if all regions have the same value for an
+   indicator, z-score normalization will be impossible and the indicator will
+   contribute nothing to the index.
+3. **Extreme observations** — outliers and the magnitude of variables should be
+   carefully inspected, as they can disproportionately influence the
+   standardized scores.
+4. **Spatial boundary quality** — boundaries should be simple and lightweight
+   enough to render in a web browser, free of holes and missing polygons, and
+   carry unique names and regional identifiers.
+
+## Getting started
+
+For step-by-step instructions on setting up a new PTI project, preparing data,
+and deploying the dashboard, see the
+[Build a PTI](build-pti.html) tutorial series.
 
 ---
 
-# Step 3: Application and methodology {#application}
+# Step 3: Methodology {#methodology}
 
-Once the PTI dashboard is launched, you can use it to construct a composite
-weighted index. You first need to select a set of indicators that should be used
-to construct a PTI. The PTI is a composite index of several development
-indicators chosen to inform geographical targeting. Often, some indicators vary
-significantly across a country. One example is the number of poor people living
-in each district. If such an indicator is combined with other indicators with
-limited variation, the composite PTI indicator tends to heavily reflect the
-geographic pattern of the poor population. To avoid this, the PTI standardizes
-all indicators to have mean and variance of 0 and 1 respectively. These
-standardized indicators are then combined into a composite index. The PTI
-aggregates the standardized indicators with weights, which reflect the relative
-importance of each variable. As the weight of an indicator increases, the
-geographic distribution of priority areas of PTI is more affected by that
-indicator. More formally, the PTI can be expressed as follows:
+The initial PTI methodology was proposed as part of "Approaches to Targeting in
+South Sudan" (World Bank, 2019) and has been robustly implemented in the
+`devPTIpack` R package. The PTI is a composite index of several development
+indicators chosen to inform geographical targeting. This section describes in
+detail how the index is constructed: normalization, index calculation, the role
+of weights, and how data is projected across spatial levels.
 
-$$PTI = \sum_{i=1}^{n} z_i \times w_i$$
 
-where $z_i$ is the z-score of indicator $i$ used to compute the PTI and $w_i$
-is the weight assigned to each indicator.
+## 3.1 Normalization (z-score standardization) {#normalization}
 
-To facilitate the process of choosing which weights to assign to different
-indicators, the PTI dashboard can be used to test different variants of the PTI
-using a different permutation of indicators and weights and evaluate how
-priority areas may change under different assumptions.
+Different indicators are measured in different units and have vastly different
+scales. For example, the number of poor people in a district might range from
+thousands to millions, while the share of the population with access to
+electricity ranges from 0 to 1. If these raw values were combined directly, the
+indicator with the larger absolute values would dominate the composite index.
+
+To place all indicators on a common, comparable scale, the PTI standardizes
+them using **z-score normalization**, transforming each indicator to have a mean
+of 0 and a standard deviation of 1:
+
+$$x_{ij}^* = \frac{x_{ij} - \bar{x}_j}{s_j}$$
+
+where:
+
+- $x_{ij}$ is the value of indicator $j$ in region $i$,
+- $\bar{x}_j$ is the mean of indicator $j$ across all regions, and
+- $s_j$ is the sample standard deviation of indicator $j$.
+
+After standardization, each indicator's z-score tells you how many standard
+deviations a region's value lies above or below the national mean. A z-score of
++1.5 means the region is 1.5 standard deviations above average; a z-score of
+−0.8 means it is 0.8 standard deviations below average.
+
+
+### Normalization is performed per spatial level
+
+A critical aspect of the PTI normalization is that **z-scores are computed
+independently at each spatial level of aggregation**. If the poverty rate is
+available at ADM 1 (5 regions) and at ADM 2 (30 districts), the mean and
+standard deviation used for normalization are computed separately among the 5
+regions and among the 30 districts, respectively.
+
+This is necessary because the statistical distribution of an indicator changes
+with the level of aggregation: district-level values typically show more
+variation than regional averages. Normalizing at each level ensures that the
+z-scores reflect a region's position relative to its true peer group, rather
+than being distorted by grouping apples and oranges.
+
+As a consequence, the same raw value can yield different z-scores depending on
+the spatial level at which it is normalized.
+
+
+### Worked example: poverty rate at ADM 1 vs. ADM 2
+
+Consider a country with 3 regions (ADM 1), each containing several districts
+(ADM 2). The poverty rate (%) is available at both levels:
+
+**ADM 1 normalization** (3 regions):
+
+| Region   | Poverty rate (%) | z-score          |
+| -------- | :--------------: | :--------------: |
+| North    | 45               | +1.12            |
+| Central  | 30               | −0.32            |
+| South    | 25               | −0.80            |
+
+Mean = 33.3%, SD = 10.4%. The North region, with the highest poverty, gets
+a positive z-score.
+
+**ADM 2 normalization** (8 districts, shown for the North region's districts):
+
+| District       | Poverty rate (%) | z-score          |
+| -------------- | :--------------: | :--------------: |
+| North-A        | 52               | +1.06            |
+| North-B        | 43               | +0.39            |
+| North-C        | 38               | +0.01            |
+| Central-West   | 35               | −0.22            |
+| Central-East   | 28               | −0.74            |
+| South-West     | 25               | −0.97            |
+| South-Central  | 22               | −1.19            |
+| South-East     | 60               | +1.66            |
+
+Mean = 37.9%, SD = 13.3%. Notice that the South-East district has a very
+high poverty rate that was hidden within the South region's ADM 1 average.
+The z-score distribution at ADM 2 reveals subnational variation that the
+coarser ADM 1 normalization cannot capture.
+
+
+## 3.2 PTI index construction {#index-construction}
+
+Once all indicators are normalized, the PTI composite index for a given
+targeting priority $p$ is computed as a weighted sum of the standardized
+indicators:
+
+$$PTI_p = \sum_{j=1}^{n} x_{ij}^* \cdot w_j$$
+
+where:
+
+- $x_{ij}^*$ is the z-score of indicator $j$ in region $i$, and
+- $w_j$ is the weight assigned to indicator $j$.
+
+These calculations produce a single index number for each region. The regions
+are then ordered and assigned into user-defined quantiles, with the highest PTI
+value leading to targeting **Priority 1** and the lowest PTI value to the
+lowest targeting priority.
+
+
+### The role of positive and negative weights
+
+Users have flexibility to make weights **positive or negative** to control the
+direction of each indicator's contribution to the PTI.
+
+- A **positive weight** means that higher values of the indicator push a region
+  toward **higher priority** (Priority 1).
+- A **negative weight** means that higher values of the indicator push a region
+  toward **lower priority**.
+
+This distinction is essential when combining indicators that point in opposite
+directions relative to the targeting objective. Consider a scenario where the
+goal is to target areas with the highest poverty and the lowest access to
+infrastructure:
+
+| Variable                | Weight | Effect on PTI                                |
+| ----------------------- | :----: | -------------------------------------------- |
+| Poverty rate            | +1     | Higher poverty → higher priority             |
+| Electricity grid access | −1     | Higher access → **lower** priority           |
+
+If both variables were assigned a positive weight, the PTI would identify as
+top priority those regions with *both* the highest poverty *and* the highest
+electricity access — clearly counterintuitive. Setting the electricity access
+weight to −1 reverses its effect: the PTI now scores highest in regions where
+poverty is high *and* electricity access is low, which aligns with the
+targeting objective.
+
+It is also possible to assign weights **greater than 1** (or less than −1) to
+emphasize a variable's relative importance compared to others. For example,
+setting the poverty rate weight to +2 and the electricity access weight to −1
+makes the poverty dimension twice as influential in determining priority areas.
+
+
+### Worked example: PTI with two indicators
+
+Using the ADM 2 z-scores from the example above, suppose we add an indicator
+for electricity access and compute the PTI with weights +1 (poverty) and −1
+(electricity):
+
+| District       | Poverty z | Electricity z | PTI = (+1 × Pov) + (−1 × Elec) |
+| -------------- | :-------: | :-----------: | :-----------------------------: |
+| North-A        | +1.06     | −0.90         | +1.96                           |
+| North-B        | +0.39     | −0.40         | +0.79                           |
+| North-C        | +0.01     | +0.20         | −0.19                           |
+| Central-West   | −0.22     | +0.60         | −0.82                           |
+| Central-East   | −0.74     | +1.10         | −1.84                           |
+| South-West     | −0.97     | +0.80         | −1.77                           |
+| South-Central  | −1.19     | +1.40         | −2.59                           |
+| South-East     | +1.66     | −1.50         | +3.16                           |
+
+The South-East district scores highest: it has both the most severe poverty
+and the lowest electricity access. The South-Central district scores lowest:
+relatively low poverty combined with high electricity access.
+
+![Example of a PTI map for South Sudan, showing priority areas based on
+weighted indicators.](img/sudan-pti-example.png){#fig-sudan-example
+width="100%"}
+
+<!-- TODO: Add a figure showing the PTI weight selection interface -->
+
+
+## 3.3 Data projection across spatial levels {#data-projection}
+
+In practice, not all indicators are available at every spatial level. Some may
+exist only at ADM 1 (regions) while others are available at ADM 2 (districts)
+or at the hexagonal grid level. The PTI handles this mismatch through **data
+projection** — a set of rules that govern how indicator values move between
+spatial levels.
+
+
+### Top-down projection (coarse → fine)
+
+When an indicator is available at a coarser level (e.g., ADM 1) but the PTI is
+being calculated at a finer level (e.g., ADM 2), the indicator's **normalized
+z-score is projected downward** by repeating the parent region's value at
+each child unit.
+
+Critically, **normalization happens before projection**:
+
+1. The indicator is first normalized among the units at its native level
+   (e.g., among the 5 ADM 1 regions).
+2. The resulting z-scores are then copied verbatim to every child unit at the
+   finer level (e.g., each district inherits its parent region's z-score).
+
+The indicator is **not re-normalized** at the finer level after projection. This
+preserves the statistical meaning of the original z-score.
+
+
+### Worked example: projection from ADM 1 to ADM 2
+
+Suppose "school enrollment rate" is available only at ADM 1:
+
+**Step 1 — Normalize at ADM 1:**
+
+| Region   | Enrollment (%) | z-score |
+| -------- | :------------: | :-----: |
+| North    | 72             | −1.07   |
+| Central  | 85             | +0.91   |
+| South    | 80             | +0.15   |
+
+Mean = 79.0%, SD = 6.6%.
+
+**Step 2 — Project to ADM 2 (copy parent z-score):**
+
+| District       | Parent region | Enrollment z-score |
+| -------------- | ------------- | :----------------: |
+| North-A        | North         | −1.07              |
+| North-B        | North         | −1.07              |
+| North-C        | North         | −1.07              |
+| Central-West   | Central       | +0.91              |
+| Central-East   | Central       | +0.91              |
+| South-West     | South         | +0.15              |
+| South-Central  | South         | +0.15              |
+| South-East     | South         | +0.15              |
+
+All districts within the same region receive identical z-scores for this
+indicator. When combined with district-level indicators (like the poverty rate),
+the PTI still differentiates among districts — the projected regional indicator
+simply adds a uniform regional-level signal.
+
+
+### Bottom-up aggregation: data is NOT aggregated upward
+
+The PTI pipeline **does not aggregate fine-level data upward** to coarser
+levels. If an indicator exists at ADM 2, it is not averaged or summed to
+produce ADM 1 values. Each level uses only the data that was originally
+prepared at that level.
+
+The one exception is **hexagonal grid data**, where bottom-up aggregation is
+performed from hex cells to administrative polygons. In this case, the
+aggregation method is **case-dependent**: the appropriate function (mean,
+sum, population-weighted mean, etc.) and weighting scheme (population,
+area, or none) are chosen per indicator based on its statistical nature. For
+example:
+
+| Indicator           | Aggregation function | Weighting |
+| ------------------- | -------------------- | --------- |
+| Night-time lights   | Mean                 | None      |
+| Population count    | Sum                  | None      |
+| Poverty rate        | Mean                 | Population-weighted |
+| Flood exposure      | Sum                  | None      |
+
+Hex-to-admin aggregation is always performed **directly from hex to each admin
+level** (hex → ADM 1, hex → ADM 2, etc.), never chained through intermediate
+levels (never hex → ADM 2 → ADM 1). This avoids compounding aggregation errors.
+
+
+## 3.4 Weight identification {#weight-identification}
+
+Identifying appropriate weights for the PTI is fundamentally a
+**consensus-driven process**. It requires careful deliberation among project
+stakeholders, including the technical team and government counterparts. The
+challenge lies in balancing technical rigor with practical considerations, as
+the choice of weights can significantly influence which areas are prioritized.
+This process is inherently iterative and may involve some ad hoc judgments,
+reflecting the complexity and context-specific nature of development targeting.
+
+The steps involved in finalizing weights are as follows:
+
+1. **Experiment** — The team uses the online PTI platform to experiment with
+   various combinations of indicators and weights. This allows for dynamic
+   exploration of how different choices affect the output.
+
+2. **Sensitivity analysis** — The sensitivity of the ranking of priority areas
+   to these permutations is examined, often using rank correlation analyses.
+   This step reveals how robust or volatile the prioritization is in response
+   to changes in weights and indicator selection.
+
+3. **Consensus** — The team consolidates the weights and indicators based on
+   insights from the sensitivity analysis, as well as through discussions
+   within the project team and with government representatives. This
+   collaborative approach ensures that chosen weights reflect both analytical
+   findings and stakeholder perspectives.
+
+Choosing appropriate weights is always a challenging decision that involves some
+degree of subjectivity. The process must be transparent and carefully evaluated,
+as even small changes in weights can substantially alter the ranking of priority
+areas.
+
+It is essential to scrutinize the selection of weights to ensure that the
+resulting index accurately reflects the intended development priorities. In
+practice, changes in weights may have a pronounced effect on the overall
+ranking, especially when the selected variables are only loosely correlated or
+when few variables are used in constructing the PTI.
+
+For instance, in the South Sudan example, the poverty rate and the number of
+poor are only weakly correlated (World Bank, 2019). This means that adjusting
+their weights can lead to substantial shifts in which counties are identified as
+highest priority. With only a few variables in play, the impact of weighting
+decisions is even more pronounced, underscoring the importance of careful and
+collaborative evaluation.
+
+<!-- TODO: Add figure showing sensitivity analysis example -->
+
 
 ---
 
@@ -571,8 +506,38 @@ unexpected challenges and unknown issues in those priority areas. Such
 context-specific information cannot be systematically collected by surveys or
 compiled from administrative data, but it is highly valuable information for
 future project teams. Therefore, identifying priority areas should not be based
-not solely on the PTI. Project teams should record any challenges or issues they
+solely on the PTI. Project teams should record any challenges or issues they
 face in a project site so that future project teams can easily draw lessons from
 past experiences. These critical pieces of contextual information will be
 analyzed through case studies and, if appropriate, through statistical and
 econometric methods to inform future project design and targeting decisions.
+
+
+---
+
+# References {.unnumbered}
+
+- Finn, A., & Masaki, T. (2020). *Subnational Targeting of Project Sites Using
+  Project Targeting Index (PTI)*. Poverty and Equity Notes: Tools & Methods,
+  No. 33. World Bank, Washington, DC.
+  <https://openknowledge.worldbank.org/handle/10986/34311>
+
+- Masaki, T., Bosch, L., Finn, A., Meyer, M., Haider, S. Z., & Bukin, E.
+  (2022). *Dashboards for development: the power of geospatial data at your
+  fingertips*. Poverty and Equity Notes, Issue 47. World Bank, Washington,
+  DC. <http://documents.worldbank.org/curated/en/099552206032228352>
+
+- Nguyen, N. T. V., & Hoogeveen, J. (2018). *Assessing the poverty footprint
+  of World Bank projects at sub-national levels*. Poverty and Equity Notes:
+  Tools & Methods, No. 16. World Bank, Washington, DC.
+
+- World Bank. (2019). *Approaches to targeting in South Sudan: Strengthening
+  targeting — South Sudan — Guidance framework*. Washington, DC: World Bank
+  Group.
+  <http://documents.worldbank.org/curated/en/325101561441344607>
+
+- World Bank. (2022). *Pakistan Portfolio Footprint Analysis*. Washington, DC:
+  World Bank Group.
+
+- World Bank. (2022). *2022 Summer University: Introduction to R and R-shiny as
+  Tools for Building Interactive Geospatial Dashboards*.
