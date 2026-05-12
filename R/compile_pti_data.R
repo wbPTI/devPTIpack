@@ -34,19 +34,19 @@
 #'
 #' ## Output files (in `output_dir`)
 #'
-#' - `metadata.xlsx` — canonical merged metadata workbook, readable
+#' - `metadata.xlsx` -- canonical merged metadata workbook, readable
 #'   by [fct_template_reader()].
-#' - `shapefiles.zip` — one GeoJSON per admin level (filename =
+#' - `shapefiles.zip` -- one GeoJSON per admin level (filename =
 #'   slot name, e.g. `admin1_Province.geojson`).
-#' - `pti-metadata.pdf` — rendered from the bundled
+#' - `pti-metadata.pdf` -- rendered from the bundled
 #'   `inst/metadata.Rmd` template; one choropleth map per indicator.
-#'   Skipped (with a warning) when LaTeX is not available — the rest
+#'   Skipped (with a warning) when LaTeX is not available -- the rest
 #'   of the artefacts still produced.
 #'
 #' @param shp_path Character. Path to the compiled shapes `.rds`
 #'   produced by Step 1 (`01-shapes.qmd`). Must be readable by
 #'   [base::readRDS()] and validate via [validate_geometries()].
-#' @param metadata_paths Character vector of length 1 or more —
+#' @param metadata_paths Character vector of length 1 or more --
 #'   filesystem paths to intermediate metadata Excel files (typically
 #'   the Step 3 output `metadata-user.xlsx` and / or the Step 4 output
 #'   `metadata-hex.xlsx`). Each must be readable by
@@ -62,15 +62,15 @@
 #'
 #' @return Invisibly, a list with the same shape as the existing
 #'   validators:
-#'   - `status` — `"pass"` / `"warn"` / `"fail"`, the worse of the
+#'   - `status` -- `"pass"` / `"warn"` / `"fail"`, the worse of the
 #'     two underlying validators' statuses.
-#'   - `summary` — character vector of free-text summary lines.
-#'   - `issues` — list of all validation issues (concatenation of the
+#'   - `summary` -- character vector of free-text summary lines.
+#'   - `issues` -- list of all validation issues (concatenation of the
 #'     two validators' `issues`).
 #'   Plus three extra fields:
-#'   - `metadata_path` — path to the canonical merged xlsx.
-#'   - `shapefiles_path` — path to the shapefiles zip.
-#'   - `pdf_path` — path to the rendered PDF, or `NA_character_` if
+#'   - `metadata_path` -- path to the canonical merged xlsx.
+#'   - `shapefiles_path` -- path to the shapefiles zip.
+#'   - `pdf_path` -- path to the rendered PDF, or `NA_character_` if
 #'     PDF rendering was skipped.
 #'
 #' @seealso [validate_geometries()], [validate_metadata()],
@@ -290,7 +290,7 @@ compile_pti_data <- function(
 #' kept. Each is renamed `<var_code>__<source_label>` where
 #' `source_label` is derived from the input file's basename by stripping
 #' the leading `metadata-` prefix (if present) and the `.xlsx` extension
-#' (e.g. `metadata-hex.xlsx` → `hex`, `my-indicators.xlsx` →
+#' (e.g. `metadata-hex.xlsx` -> `hex`, `my-indicators.xlsx` ->
 #' `my-indicators`). The same renaming is applied to the matching
 #' indicator columns in every `admin<N>_*` sheet so column names stay
 #' in sync with `var_code` values.
@@ -309,10 +309,10 @@ compile_merge_metadata <- function(parsed_list, source_labels) {
     stop("internal: empty parsed_list passed to compile_merge_metadata.")
   }
 
-  # general — first wins.
+  # general -- first wins.
   general <- parsed_list[[1]]$general
 
-  # metadata — identify colliding var_codes and suffix both sides.
+  # metadata -- identify colliding var_codes and suffix both sides.
   all_metadata <- mapply(
     function(p, lbl) {
       tbl <- p$metadata
@@ -339,7 +339,7 @@ compile_merge_metadata <- function(parsed_list, source_labels) {
   if (length(dup_codes) > 0L) {
     cli::cli_alert_warning(
       c(
-        "Duplicate var_code{?s} across metadata inputs — both kept with source suffix:",
+        "Duplicate var_code{?s} across metadata inputs -- both kept with source suffix:",
         "*" = "{.val {dup_codes}}"
       )
     )
@@ -356,7 +356,7 @@ compile_merge_metadata <- function(parsed_list, source_labels) {
   metadata_raw$.source_label <- NULL
   metadata <- metadata_raw
 
-  # admin sheets — full_join on key columns; apply same var_code renames.
+  # admin sheets -- full_join on key columns; apply same var_code renames.
   admin_slots <- unique(unlist(lapply(parsed_list, function(p) {
     grep("^admin\\d", names(p), value = TRUE)
   })))
@@ -410,7 +410,7 @@ compile_merge_metadata <- function(parsed_list, source_labels) {
     )
   }
 
-  # weights_table — first non-empty wins.
+  # weights_table -- first non-empty wins.
   weights_table <- NULL
   weights_count <- 0L
   for (p in parsed_list) {

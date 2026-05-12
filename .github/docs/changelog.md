@@ -5,6 +5,21 @@
 
 ---
 
+## 2026-05-12 (arch-10 §2 -- `make_hex_grid()`; closes #108)
+
+| Scope  | Change |
+| ------ | ------ |
+| Code   | New exported function `make_hex_grid(country_polygon, resolution = 6)` in `R/fct_make_hex_grid.R` per arch-10 §2. Builds an H3 hex grid as an `sf` tibble conforming to the `admin9_Hexagon` layer contract (`admin0Pcod`, `admin9Pcod`, `admin9Name`, `area`, `geometry`); output passes `validate_geometries()` without exceptions. Three-step algorithm: (1) coarse spatial filter via `h3jsr::polygon_to_cells()` at `resolution - 2`; (2) deterministic H3 child expansion via `h3jsr::get_children()` -- pure H3 math, no spatial ops; (3) centroid-in-polygon retention via `sf::st_within()`. Both spatial steps wrapped in an `s2` fallback (private `with_s2_fallback()` helper); `on.exit()` guard restores the caller's `sf::sf_use_s2()` state regardless of outcome. Input handling: unions multi-row input via `sf::st_union()`; reprojects to EPSG:4326 if needed; inherits `admin0Pcod` from the input or warns + sets `NA`. Validates `resolution %in% c(5, 6, 7)` and refuses empty / non-sf input with actionable errors. `@family data-input`. |
+| Config | `DESCRIPTION` Imports: added `h3jsr (>= 1.3.0)` (arch-10 Decision 13 resolved -- V8/JS bindings; mature; on CRAN since 2019; same install profile as `sf`'s GDAL dependency tree). `h3o` (Rust/extendr) was the alternative but adds Rust-toolchain install friction on shinyapps / posit-connect deploy targets. Also added `units (>= 0.8)` to support the explicit `units::set_units()` import (sf already pulled it in transitively; making it explicit removes a "missing import" risk). |
+| Tests  | New `tests/testthat/test-make-hex-grid.R` -- 15 test blocks / 30 PASS / 1 SKIP at testthat 3.1.2 (skip is the `local_mocked_bindings` s2-fallback test, which lands in testthat 3.2.0; CI runs it). Coverage: column contract (5 blocks), input handling (4 blocks including warn-on-missing-`admin0Pcod`, single-row vs multi-row union path), error handling (4 blocks), and s2-fallback (2 blocks: mocked-error retry + sf_use_s2 state restoration). All use `rwa_shp$admin0_Country` + `rwa_shp$admin1_Province` at `resolution = 5` (~100 cells over Rwanda) so the suite stays fast. |
+| Docs   | `arch-10-step1-shapefiles-enhancement.md` Decision 13 resolved (h3jsr; rationale + alternatives recorded). PLAN.md §7 arch-10 sub-section: #108 box ticked with one-paragraph algorithm + Decision-13 note. |
+| Code   | ASCII cleanup in `R/compile_pti_data.R` (pre-existing non-ASCII warning from PR #63 surfaced by R CMD check after this branch's DESCRIPTION update). Replaced 7 em-dashes (`—` U+2014) and 2 right-arrows (`→` U+2192) in `#'` roxygen, `#` inline comments, and one `cli::cli_alert_warning()` string with their ASCII equivalents (`--` and `->`). Restores `R CMD check` to 0/0/0 (was 1 WARNING on this branch's tip before the fix). |
+| Code   | `R/devPTIpack-package.R` -- added five entries to `utils::globalVariables()` for the new column-name bindings used in `make_hex_grid`'s `dplyr::mutate()` / `dplyr::select()`: `admin0Pcod`, `admin9Pcod`, `admin9Name`, `area`, `geometry`. Matches the existing project convention of bare-name NSE column refs with a globalVariables() declaration (rather than `.data$<col>` pronoun). |
+
+`R CMD check` (no --as-cran): **0 errors / 0 warnings / 0 notes** -- baseline restored after the compile_pti_data.R ASCII cleanup. `testthat::test_dir`: 30 PASS / 1 SKIP for the new file. Other pre-existing 12 environmental `local_mocked_bindings` failures on this box (testthat 3.1.2) unchanged; CI passes.
+
+---
+
 ## 2026-05-12 (arch-10 §1 -- Step 1 vignette doc fixes; closes #106)
 
 | Scope | Change |

@@ -795,8 +795,14 @@ package-data rebuild. Spec:
       no-spaces / no-colons constraint; `validate_geometries()`
       blind-spots note (CRS mismatch, area units, topological
       validity, coverage gaps).
-- [ ] arch-10 §2 -- implement `make_hex_grid()` + tests (issue
-      [#108](https://github.com/worldbank/devPTIpack/issues/108)).
+- [x] arch-10 §2 -- implement `make_hex_grid()` + tests (issue
+      [#108](https://github.com/worldbank/devPTIpack/issues/108)). H3
+      package = `h3jsr` (arch-10 Decision 13 resolved). Algorithm:
+      coarse pre-filter at `resolution - 2`, deterministic H3 child
+      expansion, centroid-in-polygon retention; both spatial steps
+      wrapped in an `s2` fallback with `on.exit()` guard restoring the
+      caller's `sf_use_s2()` state. Output passes `validate_geometries()`
+      as an `admin9_Hexagon` layer.
 - [ ] arch-10 §3 -- implement `make_admin_lookup()` + tests (issue
       [#109](https://github.com/worldbank/devPTIpack/issues/109);
       blocked by #108).
