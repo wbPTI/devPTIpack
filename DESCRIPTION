@@ -1,6 +1,6 @@
 Package: devPTIpack
-Title: Project Targeting Index: a framework for developing PTI apps and dashboards
-Version: 0.0.0.998
+Title: Project Targeting Index: a framework for improving portfolio targeting with geospatial dashboards
+Version: 0.0.0.9981
 Authors@R: c(
   person('Eduard', 'Bukin', email = 'ebukin@gmail.com', role = c('aut')),
   person('Koichi', 'Ito', email = 'koichi19960406@gmail.com', role = c('cre')),
@@ -8,7 +8,9 @@ Authors@R: c(
   person('Arden', 'Finn', email = 'afinn1@worldbank.org', role = c('rev')))
 Description: A generic framework for computing and visualising Project Targeting Index
   (PTI) scores -- composite indices derived from weighted socioeconomic indicators
-  mapped across hierarchical administrative boundaries.
+  mapped across hierarchical administrative boundaries in the context of development
+  project portfolio management. The package provides a set of tools for computing
+  PTI scores, visualising them on interactive geospatial dashboards using R and Shiny.
 License: MIT + file LICENSE
 Depends: R (>= 4.5.1)
 Imports:
@@ -55,4 +57,4 @@ LazyData: true
 RoxygenNote: 7.3.3
 Config/testthat/edition: 3
 VignetteBuilder: knitr
-URL: https://worldbank.github.io/devPTIpack/, https://stunning-engine-gzjwl6l.pages.github.io/
+URL: https://worldbank.github.io/devPTIpack/
