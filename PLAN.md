@@ -801,11 +801,22 @@ package-data rebuild. Spec:
       coarse pre-filter at `resolution - 2`, deterministic H3 child
       expansion, centroid-in-polygon retention; both spatial steps
       wrapped in an `s2` fallback with `on.exit()` guard restoring the
-      caller's `sf_use_s2()` state. Output passes `validate_geometries()`
-      as an `admin9_Hexagon` layer.
-- [ ] arch-10 §3 -- implement `make_admin_lookup()` + tests (issue
-      [#109](https://github.com/worldbank/devPTIpack/issues/109);
-      blocked by #108).
+      caller's `sf_use_s2()` state. Output is a **partial**
+      `admin9_Hexagon` layer (admin0Pcod + admin9Pcod + admin9Name +
+      area + geometry); `make_admin_lookup()` (§3 / #109) populates
+      the parent Pcods before `validate_geometries()` is run.
+- [x] arch-10 §3 -- implement `make_admin_lookup()` + tests (issue
+      [#109](https://github.com/worldbank/devPTIpack/issues/109)).
+      Parses level digits from `admin<N>_<HumanName>` slot names,
+      sorts coarsest -> finest (non-contiguous levels OK),
+      pre-flight validates each layer (no-NA / unique Pcod + Name;
+      auto-computes `area` in km^2 if absent), then iterates parent
+      -> child pairs doing centroid-in-polygon `sf::st_join()` with
+      `s2` fallback. Tie-break warns + picks one parent at random
+      per boundary-ambiguous child; orphans (no parent match) are
+      hard errors. Cascade propagates so every layer carries all
+      ancestor Pcods. `admin9_Hexagon` handled identically -- no
+      cascade exceptions.
 - [ ] arch-10 §6 -- Step 1 vignette §E rewrite + new §F hex
       workflow (issue
       [#111](https://github.com/worldbank/devPTIpack/issues/111);
