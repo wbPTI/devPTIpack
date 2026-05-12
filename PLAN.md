@@ -886,9 +886,19 @@ generation. Spec:
       `pti_hex_source()` with field validation. Year-resolution
       logic (nearest-year substitution, 7-year tolerance) deferred
       to issue [#110](https://github.com/worldbank/devPTIpack/issues/110).
-- [ ] arch-11 §"Year resolution" -- year resolver
-      (issue [#110](https://github.com/worldbank/devPTIpack/issues/110);
-      blocked by #105).
+- [x] arch-11 §"Year resolution" -- year resolver
+      (issue [#110](https://github.com/worldbank/devPTIpack/issues/110)).
+      Three internal helpers in `R/fct_hex_year_resolver.R`:
+      `resolve_years()` (pure, per-variable: exact / nearest /
+      later-on-tie / 7-year tolerance error), `resolve_years_for_vars()`
+      (walks a `pti_hex_var` list, calls `get_available_years()` unless
+      a test stub is passed, stamps resolved years onto each var,
+      emits one consolidated `cli::cli_warn()` listing every
+      substitution by canonical name), `prompt_or_error_for_years()`
+      (interactive `cli::cli_inform()` + `utils::menu()` single-select
+      for `years = NULL`; non-interactive errors with actionable
+      message). Network-free unit tests (28 PASS / 0 FAIL) via the
+      `available_years_lookup` test seam.
 - [ ] arch-11 §"Fetching" -- `fetch_hex_data()` with H5/H6 resolution
       bridge (issue [#112](https://github.com/worldbank/devPTIpack/issues/112);
       blocked by #105 + #109 + #110).
