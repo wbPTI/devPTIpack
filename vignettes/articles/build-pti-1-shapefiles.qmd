@@ -10,16 +10,20 @@ This page walks through the Rwanda template: 5 provinces (Adm1) with 30 district
 
 ## A. Requirements
 
-Each layer is a single `sf` tibble. The list slot name follows the package convention `admin<N>_<HumanName>`, e.g. `admin1_Province`. Required columns at minimum:
+Each layer is a single `sf` tibble. The list slot name follows the package convention `admin<N>_<HumanName>`, e.g. `admin1_Province`. The `<HumanName>` slot must be a single word with no spaces or colons — `admin1_East Region` and `admin2_Sub:District` will silently fail to parse. The `<N>` digit ranges 0–9 and need not be contiguous (e.g. `admin0`, `admin1`, `admin2`, `admin9` is a valid set, used when an `admin9_Hexagon` layer is included).
+
+Required columns at minimum:
 
 | Column          | Type                  | Purpose                                                                  |
 | --------------- | --------------------- | ------------------------------------------------------------------------ |
-| `admin<N>Pcod`  | `character`           | Unique polygon identifier (P-code) at this level. One per row.           |
-| `admin<N>Name`  | `character`           | Human-readable polygon name. One per row.                                |
+| `admin<N>Pcod`  | `character`           | Unique polygon identifier (P-code) at this level. One per row, no `NA`.  |
+| `admin<N>Name`  | `character`           | Human-readable polygon name. Unique within the layer, no `NA`.           |
 | `area`          | `numeric`             | Polygon area in km². Compute in EPSG:4326 using `units::set_units(sf::st_area(geometry), "km^2")`. |
 | `geometry`      | `sfc_(MULTI)POLYGON`  | Spatial geometry. `POLYGON` or `MULTIPOLYGON` only.                      |
 
 Sub-admin layers must also carry every parent layer's `admin<k>Pcod` column (the cascade rule). For Rwanda, the `admin2_District` layer carries both `admin0Pcod` and `admin1Pcod` so districts join up to provinces and the country.
+
+`admin0_Country` is **mandatory**. It must always be present in `my_shp`, even when the deployed app does not display country-level data — both the structural validator and the cascade rule depend on it.
 
 | Topic                             | Quick rule                                                                   |
 | --------------------------------- | ---------------------------------------------------------------------------- |
@@ -70,11 +74,28 @@ adm1 <- adm1_raw |>
   select(admin0Pcod, admin1Pcod, admin1Name, area, geometry)
 ```
 
+Do the same for the country layer — `admin0_Country` is required even in a single sub-admin-level app:
+
+```r
+#| eval: false
+adm0 <- adm0_raw |>
+  st_transform(4326) |>
+  mutate(
+    admin0Pcod = "RWA",
+    admin0Name = shapeName,
+    area       = as.numeric(units::set_units(st_area(geometry), "km^2"))
+  ) |>
+  select(admin0Pcod, admin0Name, area, geometry)
+```
+
 Assemble the list. Slot names are case-sensitive and must match exactly what the metadata workbook will reference:
 
 ```r
 #| eval: false
-my_shp <- list(admin1_Province = adm1)
+my_shp <- list(
+  admin0_Country  = adm0,
+  admin1_Province = adm1
+)
 ```
 
 Run the structural validator:
@@ -85,6 +106,8 @@ validate_geometries(my_shp)
 ```
 
 It reports `pass` / `warn` / `fail` and prints the underlying issues (P-code duplicates, geometry types, parent–child orphans, missing required columns, cascade-rule failures). The full check list lives in [§1.7 of the data preparation reference](dataprep.html).
+
+A `pass` from `validate_geometries()` does **not** guarantee the layers are deployment-ready. It does not check for: CRS inconsistency between layers, whether `area` is in km² or m² (only that the column is numeric), topological validity beyond geometry type, or coverage gaps between sub-admin polygons. Run `sf::st_is_valid()` and a quick CRS audit (`purrr::map(my_shp, sf::st_crs)`) separately to catch these.
 
 For visual inspection — does the country actually look right on a map? — call the standalone Shiny app:
 
@@ -120,7 +143,7 @@ Re-run `validate_geometries()` after each change until it passes. Then save:
 ```r
 #| eval: false
 dir.create("app-data", showWarnings = FALSE)
-saveRDS(my_shp, "app-data/shapes.rds")
+saveRDS(my_shp, "app-data/shapes.rds", compress = "gz")
 ```
 
 Keep the original `.geojson` files under `sample-data/` (or wherever your raw inputs live) as the source-of-truth for re-runs. The `.rds` under `app-data/` is the *deployment* artefact — disposable, regenerable from the raw inputs.
@@ -155,7 +178,7 @@ adm2 <- adm2_raw |>
     admin0Pcod = "RWA",
     admin2Pcod = shapeID,
     admin2Name = shapeName,
-    area       = as.numeric(st_area(geometry))
+    area       = as.numeric(units::set_units(st_area(geometry), "km^2"))
   ) |>
   select(admin0Pcod, admin1Pcod, admin2Pcod, admin2Name, area, geometry)
 ```
