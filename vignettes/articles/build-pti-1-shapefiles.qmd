@@ -150,10 +150,20 @@ Keep the original `.geojson` files under `sample-data/` (or wherever your raw in
 
 ## E. Advanced: multiple admin levels {#sec-advanced-multi-level}
 
-Most real PTI apps need at least two admin levels — provinces and districts, regions and communes. The list grows accordingly:
+Most real PTI apps need at least two admin levels — provinces and districts, regions and communes. Rename each level into the package convention as in §C (each layer gets its own `admin<N>Pcod`, `admin<N>Name`, and `area`), then assemble the list:
 
 ```r
 #| eval: false
+adm2 <- adm2_raw |>
+  st_transform(4326) |>
+  mutate(
+    admin0Pcod = "RWA",
+    admin2Pcod = shapeID,
+    admin2Name = shapeName,
+    area       = as.numeric(units::set_units(st_area(geometry), "km^2"))
+  ) |>
+  select(admin0Pcod, admin2Pcod, admin2Name, area, geometry)
+
 my_shp <- list(
   admin0_Country  = adm0,
   admin1_Province = adm1,
@@ -161,33 +171,62 @@ my_shp <- list(
 )
 ```
 
-The cascade rule kicks in here: each sub-admin layer must carry the parent's P-code. Rwanda's geoBoundaries data does not include `admin1Pcod` on the admin2 file, so derive it via a centroid-in-polygon join:
+Notice that the `admin2_District` layer carries only its own `admin2Pcod` + `admin2Name` (plus `admin0Pcod` because Rwanda is a single country). It does **not** yet carry `admin1Pcod` — the cascade rule requires every sub-admin layer to carry every parent's P-code, but Rwanda's geoBoundaries data does not include `admin1Pcod` on the admin2 file, and the package's pipeline expects it.
+
+[`make_admin_lookup()`](../reference/make_admin_lookup.html) fills in the cascade by spatial-joining each child's centroid against its parent's polygons:
 
 ```r
 #| eval: false
-adm2_centroids <- suppressWarnings(st_centroid(adm2_raw))
-parent_lookup  <- suppressWarnings(
-  st_join(adm2_centroids, adm1_raw, join = st_within, suffix = c("", "_p"))
-) |>
-  st_drop_geometry() |>
-  transmute(child_id = shapeID, admin1Pcod = shapeID_p)
-
-adm2 <- adm2_raw |>
-  left_join(parent_lookup, by = c("shapeID" = "child_id")) |>
-  mutate(
-    admin0Pcod = "RWA",
-    admin2Pcod = shapeID,
-    admin2Name = shapeName,
-    area       = as.numeric(units::set_units(st_area(geometry), "km^2"))
-  ) |>
-  select(admin0Pcod, admin1Pcod, admin2Pcod, admin2Name, area, geometry)
+my_shp <- make_admin_lookup(my_shp)
+validate_geometries(my_shp)
+saveRDS(my_shp, "app-data/shapes.rds", compress = "gz")
 ```
 
-Then assemble and validate as before. `validate_geometries()` catches orphan children — a district's `admin1Pcod` that doesn't appear in any province's `admin1Pcod`.
+After `make_admin_lookup()` runs, every sub-admin layer carries all ancestor `admin<k>Pcod` columns. `validate_geometries()` then catches structural problems — orphan children (a district centroid outside every province), duplicate Pcods, missing required columns. Boundary-ambiguous children get assigned to one parent at random and a warning lists the count of affected polygons.
 
-The bundled `ukr_shp` demonstrates this pattern at four levels (country → oblast → rayon → hexagon). Inspect it with `data(ukr_shp); str(ukr_shp, max.level = 2)` for a worked example.
+The bundled `ukr_shp` demonstrates the post-`make_admin_lookup()` shape at four levels (country → oblast → rayon → hexagon). Inspect it with `data(ukr_shp); str(ukr_shp, max.level = 2)` for a worked example.
 
 **When to use multi-level:** include extra admin levels only if you have indicator data measured at that level. The PTI calculation pipeline runs at the most disaggregated level for which an indicator is available, so adding an unused level just inflates the deployed app's data size.
+
+**Adding a hex grid.** If your project needs hex-level indicators (population rasters, night-time lights, accessibility), add an `admin9_Hexagon` slot to `my_shp` before calling `make_admin_lookup()`. The H3 resolution is controlled by **`HEX_RESOLUTION` in `00-master.R`** — the single deployer control point that threads through Step 1, Step 4, and Step 5. See §F below for motivation, the resolution guide, and the canonical 4-layer workflow.
+
+## F. Optional: build an H3 hexagon grid {#sec-hex-grid}
+
+For indicators available only as raster surfaces (population, night-time lights, accessibility), hexagons provide a uniform spatial unit that avoids the modifiable areal unit problem introduced by irregular admin polygons. The `admin9_Hexagon` layer in `shapes.rds` is the spatial join key that Step 4 (HEX data) uses to match indicator values fetched from online sources to your app.
+
+Hex resolution is a single deployer choice, set by `HEX_RESOLUTION` in `00-master.R` of the project template — that is the **one** place that controls what grid ships with the app. The choices:
+
+| `HEX_RESOLUTION` | Approx. cell area | Typical use                          |
+| ---------------- | ----------------- | ------------------------------------ |
+| `5L`             | ~252 km²          | Very large countries; coarse view    |
+| `6L` (default)   | ~36 km²           | Most country-level PTI apps          |
+| `7L`             | ~5.2 km²          | Small countries or high-detail apps  |
+
+All hex cells at a given resolution have **near-identical area** — this is expected and correct. The `area` column on `admin9_Hexagon` will appear nearly constant; that is not a bug.
+
+[`make_hex_grid()`](../reference/make_hex_grid.html) takes any layer (typically the country boundary) and returns the `admin9_Hexagon` layer ready for inclusion in `my_shp`. Slot it alongside the regular admin layers and run `make_admin_lookup()` over the combined list — hexagons are treated identically to any other admin layer, with parent `admin<k>Pcod` columns populated by the same centroid-in-polygon cascade:
+
+```r
+#| eval: false
+# Set once in 00-master.R; threaded through Step 1, Step 4, Step 5.
+HEX_RESOLUTION <- 6L
+
+my_shp <- list(
+  admin0_Country  = adm0,
+  admin1_Province = adm1,
+  admin2_District = adm2,
+  admin9_Hexagon  = make_hex_grid(adm0, resolution = HEX_RESOLUTION)
+)
+
+my_shp <- make_admin_lookup(my_shp)
+validate_geometries(my_shp)
+saveRDS(my_shp, "app-data/shapes.rds", compress = "gz")
+```
+
+Two notes on resolution choice:
+
+- A large country at H6 can exceed 5,000 cells. The deployed Leaflet map renders ~5,000 polygons comfortably; beyond that, consider H5 or exclude hex polygons from the deployed app entirely via `INCLUDE_HEX_IN_APP <- FALSE` in `00-master.R` (Step 4 still aggregates hex-sourced indicators to admin levels in that mode).
+- `HEX_RESOLUTION` is encoded in every H3 index string written to `shapes.rds`. Step 4 (`fetch_hex_data()`) detects the resolution automatically from the indices — no second control point is needed.
 
 ## Next
 

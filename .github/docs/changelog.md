@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-05-12 (arch-10 §6 -- Step 1 vignette §E rewrite + new §F hex workflow; closes #111)
+
+| Scope | Change |
+| ----- | ------ |
+| Docs  | Rewrote §E "Advanced: multiple admin levels" in `vignettes/articles/build-pti-1-shapefiles.qmd` per arch-10 §3.7. Removed the 20-line manual centroid-join code that derived `admin1Pcod` on the admin2 layer; replaced it with the canonical 3-step workflow: assemble the raw multi-level `my_shp` list -> call `make_admin_lookup()` to populate every parent `admin<k>Pcod` column -> `validate_geometries()` + `saveRDS(..., compress = "gz")`. §E now ends with an explicit forward-reference to §F naming `HEX_RESOLUTION` in `00-master.R` as the single deployer control point for grid resolution (it threads through Step 1, Step 4, and Step 5). |
+| Docs  | Added new §F "Optional: build an H3 hexagon grid" per arch-10 §6. Covers: (a) **motivation** -- raster indicators (population, night-time lights, accessibility) need a uniform spatial unit to avoid the modifiable areal unit problem from irregular admin polygons; the `admin9_Hexagon` layer is also the spatial join key for Step 4 hex data; (b) **resolution guide table** -- H5 ~252 km^2 / H6 ~36 km^2 (default) / H7 ~5.2 km^2 with typical-use guidance; (c) **canonical 4-layer workflow** -- `make_hex_grid(adm0, resolution = HEX_RESOLUTION)` slotted alongside the regular admin layers, then `make_admin_lookup()` over the combined list (hexagons handled identically to any other admin layer per arch-10 §3.4); (d) **near-constant area caveat** -- H3 cells at a given resolution have near-identical area, so the `area` column appears nearly constant -- this is expected, not a bug; (e) **`INCLUDE_HEX_IN_APP` escape hatch** -- for large countries at H6 (>5,000 cells), set `INCLUDE_HEX_IN_APP <- FALSE` in `00-master.R` to keep hex-sourced indicators at admin-level aggregations only. |
+| Docs  | PLAN.md §7 arch-10 sub-section: #111 box ticked. |
+
+`R CMD check` baseline unchanged at 0/0/0 (no `R/` or `tests/` changes; pure vignette markdown). `rmarkdown::render()` on the modified vignette completes without errors locally; pkgdown CI exercises the full Quarto pipeline.
+
+---
+
 ## 2026-05-12 (arch-10 §3 -- `make_admin_lookup()`; closes #109)
 
 | Scope  | Change |
