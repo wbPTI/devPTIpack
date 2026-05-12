@@ -855,10 +855,60 @@ package-data rebuild. Spec:
 ## 8. Phase 5 — Hex ingestion (#13, independent)
 
 Independent track. Five new exported functions, all developer-facing, all
-pre-deployment. Spec: arch-05.
+pre-deployment. Spec: arch-05 (original sketch); **arch-11 supersedes**
+the design (issue [#107](https://github.com/worldbank/devPTIpack/issues/107)).
 
 **Decision:** deferred until Phases 1–4 are complete. The calculation pipeline
 is geometry-agnostic so this is non-blocking.
+
+### arch-11 Hexagonal Data Access Pipeline ([#107](https://github.com/worldbank/devPTIpack/issues/107))
+
+Registry-driven hex variable access, fetch, aggregate, metadata
+generation. Spec:
+[`arch-11-hex-data-access.md`](.github/docs/arch-11-hex-data-access.md).
+
+- [x] arch-11 §"Registry" -- hex variable registry + reader functions
+      (issue [#105](https://github.com/worldbank/devPTIpack/issues/105)).
+      New `inst/hex_vars_registry.yaml` ships with the package
+      (registry_version `0.1.0`; one source `wb_flood_exposure`
+      pointing at the WB Space2Stats parquet, two variables:
+      `population` + `flood_exposure_15cm_1in100`). Schema verified
+      live via `arrow::open_dataset()`: `hex_id` (string), `pop`
+      (float), `pop_flood` (double), 3.67M rows, H3-6 global
+      coverage. New exports: `list_hex_vars()` (tibble browser),
+      `use_hex_vars(..., years)` (resolves canonical names against
+      the registry, auto-injects population tagged `internal = TRUE`,
+      suffixes duplicate names with `__<source-label>`),
+      `get_available_years()` (queries the live parquet's
+      `time_col` for ground-truth temporal coverage; returns
+      `integer(0)` for non-temporal vars without touching the
+      network). Internal S3 constructors `pti_hex_var()` /
+      `pti_hex_source()` with field validation. Year-resolution
+      logic (nearest-year substitution, 7-year tolerance) deferred
+      to issue [#110](https://github.com/worldbank/devPTIpack/issues/110).
+- [ ] arch-11 §"Year resolution" -- year resolver
+      (issue [#110](https://github.com/worldbank/devPTIpack/issues/110);
+      blocked by #105).
+- [ ] arch-11 §"Fetching" -- `fetch_hex_data()` with H5/H6 resolution
+      bridge (issue [#112](https://github.com/worldbank/devPTIpack/issues/112);
+      blocked by #105 + #109 + #110).
+- [ ] arch-11 §"Aggregation" -- `aggregate_hex_to_shapes()`
+      (issue [#113](https://github.com/worldbank/devPTIpack/issues/113);
+      blocked by #112).
+- [ ] arch-11 §"Metadata Excel output" -- `build_hex_metadata()`
+      with `include_hex` gating (issue
+      [#115](https://github.com/worldbank/devPTIpack/issues/115);
+      blocked by #113).
+- [ ] arch-11 §"compile_pti_data() multi-file merge" -- extend
+      `compile_pti_data()` (issue
+      [#116](https://github.com/worldbank/devPTIpack/issues/116);
+      blocked by #115). (Note: the source-label suffix logic in
+      `compile_merge_metadata()` landed earlier via Eduard's PR
+      #63 commit `9e45918`.)
+- [ ] arch-11 §"Step 4 vignette" -- `build-pti-4-hex.qmd`
+      walkthrough (issue
+      [#117](https://github.com/worldbank/devPTIpack/issues/117);
+      blocked by #112 + #113 + #115).
 
 ---
 
