@@ -6,9 +6,9 @@
 # Workflow derived from r-lib/actions examples.
 on:
   push:
-    branches: [main, koichi-arch-redesign]
+    branches: [main]
   pull_request:
-    branches: [main, koichi-arch-redesign]
+    branches: [main]
   workflow_dispatch:
 
 name: tests

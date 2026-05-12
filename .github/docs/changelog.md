@@ -5,6 +5,22 @@
 
 ---
 
+## 2026-05-12 (chore -- merge arch-redesign integration branch into main; switch convention)
+
+| Scope   | Change |
+| ------- | ------ |
+| Code    | Merged `worldbank/koichi-arch-redesign` (17 commits ahead, 1 behind `worldbank/main`) into `main`. The 17 commits comprise: arch-09 vignette polish (PRs #89-#93, #84, #94, #95); arch-10 Step 1 enhancement end-to-end (PRs #119/#120/#121/#122/#123/#124, sub-issues #106/#108/#109/#111/#114 + parent #104); arch-11 §Registry (PR #125 / #105). The 1 commit behind was the eb-docs-pkgdown -> main merge (a880910) which had not been backported. Clean 3-way merge, no conflicts. New integration target going forward is `main` (the repo's default branch). |
+| Config  | `.github/workflows/pkgdown.yaml`: changed `on.push.branches` from `[eb-docs-pkgdown]` to `[main]`. The pkgdown deploy trigger had been gated on the now-retired `eb-docs-pkgdown` branch even after that branch was merged into `main` (#118), so live-docs deploys had silently stalled. Switching to `main` re-activates the deploy and aligns with the new branching convention. |
+| Config  | `.github/workflows/tests.yaml` + `.github/workflows/R-CMD-check.yaml`: trimmed `on.push.branches` and `on.pull_request.branches` from `[main, koichi-arch-redesign]` to `[main]`. `koichi-arch-redesign` is now a historical branch and need not gate CI. `test-coverage.yaml` was already on `[main, master]` and required no change. |
+| Rules   | `.claude/CLAUDE.md` §"Branching": rewrote to declare `main` as the default + integration branch. Removed the cross-base auto-close caveat (PRs to `main` auto-close their `Closes #N` references; manual close is now fallback-only). Updated the skills table row for `close-issue-on-merge` to flag it as a fallback. Added a historical-context paragraph naming the two retired integration branches. |
+| Tooling | `.claude/skills/close-issue-on-merge/SKILL.md`: rewrote the description + body to position the skill as a fallback for the residual cases (forgotten keyword, parent tracker issues, GitHub-missed auto-close, user-requested closes) rather than a mandatory after-every-merge step. Trimmed the auto-close comment template -- no need to apologise for cross-base merges any more. |
+| Tooling | `.claude/skills/cleanup-batch/SKILL.md` + `.claude/agents/r-package-reviewer.md`: updated the branch-strategy references that named `koichi-arch-redesign` as the cut point or diff anchor; both now point at `main`. |
+| Docs    | `PLAN.md` §3.1 "Branch strategy (resolved)": rewrote to declare `main` as the integration target; added a historical-note bullet naming both retired integration branches (`koichi-arch-redesign`, earlier `eb-docs-pkgdown`) so the rationale isn't lost. Existing narrative on lines 33-37 + 199-202 left intact -- they document what happened during the redesign and shouldn't be back-edited. |
+
+`R CMD check` (no `--as-cran`, `--no-tests --no-vignettes --no-manual`): **0 errors / 1 warning (pre-existing R-version dependence) / 2 notes (pre-existing)**. No code changes -- this is a workflow / convention PR.
+
+---
+
 ## 2026-05-12 (arch-11 §Registry -- hex variable registry + reader fns; closes #105)
 
 | Scope | Change |
