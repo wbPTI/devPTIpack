@@ -229,9 +229,16 @@ make_hex_grid <- function(country_polygon, resolution = 6) {
 #' Run a spatial operation with an s2-disabled fallback
 #'
 #' Wraps `op` so that an error raised under `sf::sf_use_s2(TRUE)` is
-#' retried under `sf::sf_use_s2(FALSE)`. The outer caller is
-#' responsible for the surrounding `on.exit(sf::sf_use_s2(<initial>))`
-#' guard that restores the global state.
+#' retried under `sf::sf_use_s2(FALSE)`. After the fallback path
+#' returns (success or failure), `sf::sf_use_s2(TRUE)` is restored
+#' so that subsequent calls inside `make_hex_grid()` (e.g.
+#' `sf::st_area()`) see s2 enabled -- without it, EPSG:4326 area
+#' computation requires the `lwgeom` package, which may not be
+#' installed on every deployment.
+#'
+#' The outer caller is still responsible for the surrounding
+#' `on.exit(sf::sf_use_s2(<caller-initial>))` guard that restores
+#' the caller's chosen global state when `make_hex_grid()` returns.
 #'
 #' @param op A zero-argument function performing the spatial
 #'   computation. Should be deterministic enough to be safely retried.
@@ -243,6 +250,7 @@ with_s2_fallback <- function(op) {
     op(),
     error = function(e) {
       sf::sf_use_s2(FALSE)
+      on.exit(sf::sf_use_s2(TRUE), add = TRUE)
       op()
     }
   )
