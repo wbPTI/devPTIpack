@@ -46,7 +46,8 @@ Project-scoped tooling under `.claude/`:
 | `cleanup-batch`          | skill     | Execute one arch-01 cleanup batch end-to-end (delete, document, test, check)          |
 | `roxygen-document`       | skill     | Add/upgrade roxygen2 per `.claude/rules/roxygen-documentation.md`                     |
 | `issue-progress-comment` | skill     | Draft a status comment for a GitHub issue from the recent diff/work                   |
-| `close-issue-on-merge`   | skill     | After a PR lands, close the issue(s) it claims to close (GitHub auto-close does NOT fire because PRs target `eb-docs-pkgdown`, not the default branch) |
+| `close-issue-on-merge`   | skill     | After a PR lands, close the issue(s) it claims to close (GitHub auto-close does NOT fire because PRs target `eb-docs-pkgdown` or `koichi-arch-redesign`, not the default branch) |
+| `pr-manual-verification` | skill     | Classify a PR's manual-verification needs as **None / Optional / REQUIRED** with item-level rationale; produces the `## Verification` markdown block + the chat-text one-liner |
 | `r-package-reviewer`     | sub-agent | Review diffs for R-package conventions (NAMESPACE, exports, examples, no `browser()`) |
 
 Invoke skills via the Skill tool by name. Spawn the sub-agent via the Agent tool with `subagent_type: r-package-reviewer`.
@@ -54,8 +55,23 @@ Invoke skills via the Skill tool by name. Spawn the sub-agent via the Agent tool
 **Issue-close workflow (compulsory after every PR merge):** invoke
 `close-issue-on-merge` immediately after the user reports a PR has
 merged. GitHub's auto-close fires only on PRs that land on the repo's
-default branch (`main`); our redesign PRs target `eb-docs-pkgdown`, so
-`Closes #N` lines never trigger and issues silently rot otherwise.
+default branch (`main`); our redesign PRs target `eb-docs-pkgdown` or
+`koichi-arch-redesign`, so `Closes #N` lines never trigger and issues
+silently rot otherwise.
+
+**PR verification convention (compulsory before "ready to merge"):**
+every PR opened on this repo must include a `## Verification` section
+in its description with two sub-blocks -- "Done (locally / by CI)" and
+"Manual verification (you)". The manual block is classified as one of
+`None`, `Optional`, or `REQUIRED`. Invoke the `pr-manual-verification`
+skill to produce this section before opening the PR and again before
+telling the user a PR is ready to merge. The same classification ends
+the chat-text summary as a single-line `**Manual verification:** <X>`
+field so the user can decide at a glance. Reserve `REQUIRED` for items
+CI provably cannot catch (deployed Shiny UX, broken image links in
+vignettes, Quarto auto-anchor footgun on cross-page links, package
+data rebuilds) -- defaulting to `REQUIRED` to be safe trains the user
+to ignore the label.
 
 ## PLAN.md Sync (COMPULSORY)
 

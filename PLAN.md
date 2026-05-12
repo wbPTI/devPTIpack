@@ -30,6 +30,19 @@ are next. R-CMD-check workflow gates merge with `error-on:
 new Tier-1 test file with 2 test_that blocks / 8 expectations
 covering the missing-`mt` error and the bundled-data success path).
 
+**Update (2026-05-12):** PR #63 (`eb-docs-pkgdown` -> `koichi-arch-redesign`)
+merged on 2026-05-12 (merge commit `effb832`), bringing the full arch-09
+documentation chain (PRs #89-#103) and Eduard's new arch-10 + arch-11
+design docs onto the integration line. `R CMD check` is at **0/0/0**.
+Two new work tracks are now active off `koichi-arch-redesign`:
+**arch-10** (Step 1 shapefiles enhancement, parent
+[#104](https://github.com/worldbank/devPTIpack/issues/104)) opens with
+[#106](https://github.com/worldbank/devPTIpack/issues/106) -- Step 1
+vignette doc fixes (this PR); **arch-11** (hex data access pipeline,
+parent [#107](https://github.com/worldbank/devPTIpack/issues/107))
+supersedes arch-05 and provides the concrete implementation track for
+[#13](https://github.com/worldbank/devPTIpack/issues/13).
+
 | Concern | Source of truth |
 |---|---|
 | Architecture overview & redesign workflow | [`.github/docs/arch-00-overview.md`](.github/docs/arch-00-overview.md) |
@@ -39,7 +52,9 @@ covering the missing-`mt` error and the bundled-data success path).
 | Calculation pipeline test spec (~71 cases) | [`.github/docs/arch-02.01-testing-calc-pipeline.md`](.github/docs/arch-02.01-testing-calc-pipeline.md) |
 | Three-tier testing strategy + per-fn test map | [`.github/docs/arch-03-testing.md`](.github/docs/arch-03-testing.md) |
 | Workspace, vignettes & pkgdown plan | [`.github/docs/arch-04-workspace.md`](.github/docs/arch-04-workspace.md) |
-| Hex (H3) ingestion design | [`.github/docs/arch-05-hex-ingestion.md`](.github/docs/arch-05-hex-ingestion.md) |
+| Hex (H3) ingestion design (superseded by arch-11) | [`.github/docs/arch-05-hex-ingestion.md`](.github/docs/arch-05-hex-ingestion.md) |
+| Step 1 shapefiles enhancement (`make_hex_grid`, `make_admin_lookup`) | [`.github/docs/arch-10-step1-shapefiles-enhancement.md`](.github/docs/arch-10-step1-shapefiles-enhancement.md) |
+| Hex data access pipeline (registry, fetch, aggregate, metadata) | [`.github/docs/arch-11-hex-data-access.md`](.github/docs/arch-11-hex-data-access.md) |
 | Per-change log (compulsory) | [`.github/docs/changelog.md`](.github/docs/changelog.md) |
 | Project conventions for AI agents | [`.claude/CLAUDE.md`](.claude/CLAUDE.md) |
 
@@ -49,7 +64,9 @@ GitHub issues map:
 - [#8](https://github.com/worldbank/devPTIpack/issues/8) — legacy cleanup (subsumes #2/#3/#4)
 - [#11](https://github.com/worldbank/devPTIpack/issues/11) — roxygen2 documentation
 - [#12](https://github.com/worldbank/devPTIpack/issues/12) — workspace, vignettes, pkgdown site
-- [#13](https://github.com/worldbank/devPTIpack/issues/13) — hex ingestion pipeline (independent)
+- [#13](https://github.com/worldbank/devPTIpack/issues/13) — hex ingestion pipeline (independent; superseded by #107)
+- [#104](https://github.com/worldbank/devPTIpack/issues/104) — arch-10: Step 1 shapefiles enhancement (`make_hex_grid`, `make_admin_lookup`)
+- [#107](https://github.com/worldbank/devPTIpack/issues/107) — arch-11: hex data access pipeline (supersedes arch-05/#13)
 - [#5](https://github.com/worldbank/devPTIpack/issues/5), [#7](https://github.com/worldbank/devPTIpack/issues/7), [#6](https://github.com/worldbank/devPTIpack/issues/6), [#1](https://github.com/worldbank/devPTIpack/issues/1) — relate to upstream/global DB and validation; partially superseded by #9 sub-issues, see arch-00 § "Relationship to Pre-Existing Issues"
 
 ---
@@ -762,15 +779,136 @@ Per arch-04. Concrete cuts:
       / 0 warnings / 0 notes.** Suite stays at PASS 803 / FAIL 0 /
       SKIP 1 / ERROR 12 (environmental).
 
+### arch-10 Step 1 shapefiles enhancement ([#104](https://github.com/worldbank/devPTIpack/issues/104))
+
+Step 1 vignette + two new exported geometry helpers + Rwanda
+package-data rebuild. Spec:
+[`arch-10-step1-shapefiles-enhancement.md`](.github/docs/arch-10-step1-shapefiles-enhancement.md).
+
+- [x] arch-10 §1 -- fix six documentation gaps in
+      `vignettes/articles/build-pti-1-shapefiles.qmd` (issue
+      [#106](https://github.com/worldbank/devPTIpack/issues/106), this PR):
+      `area` km² fix in §E; `admin0_Country` mandatory callout +
+      simple-example inclusion; `saveRDS(..., compress = "gz")`;
+      non-contiguous level numbers note; `admin<N>Name` uniqueness +
+      no-NA rules in requirements table; `<HumanName>`
+      no-spaces / no-colons constraint; `validate_geometries()`
+      blind-spots note (CRS mismatch, area units, topological
+      validity, coverage gaps).
+- [x] arch-10 §2 -- implement `make_hex_grid()` + tests (issue
+      [#108](https://github.com/worldbank/devPTIpack/issues/108)). H3
+      package = `h3jsr` (arch-10 Decision 13 resolved). Algorithm:
+      coarse pre-filter at `resolution - 2`, deterministic H3 child
+      expansion, centroid-in-polygon retention; both spatial steps
+      wrapped in an `s2` fallback with `on.exit()` guard restoring the
+      caller's `sf_use_s2()` state. Output is a **partial**
+      `admin9_Hexagon` layer (admin0Pcod + admin9Pcod + admin9Name +
+      area + geometry); `make_admin_lookup()` (§3 / #109) populates
+      the parent Pcods before `validate_geometries()` is run.
+- [x] arch-10 §3 -- implement `make_admin_lookup()` + tests (issue
+      [#109](https://github.com/worldbank/devPTIpack/issues/109)).
+      Parses level digits from `admin<N>_<HumanName>` slot names,
+      sorts coarsest -> finest (non-contiguous levels OK),
+      pre-flight validates each layer (no-NA / unique Pcod + Name;
+      auto-computes `area` in km^2 if absent), then iterates parent
+      -> child pairs doing centroid-in-polygon `sf::st_join()` with
+      `s2` fallback. Tie-break warns + picks one parent at random
+      per boundary-ambiguous child; orphans (no parent match) are
+      hard errors. Cascade propagates so every layer carries all
+      ancestor Pcods. `admin9_Hexagon` handled identically -- no
+      cascade exceptions.
+- [x] arch-10 §6 -- Step 1 vignette §E rewrite + new §F hex
+      workflow (issue
+      [#111](https://github.com/worldbank/devPTIpack/issues/111)).
+      §E now uses `make_admin_lookup()` as the canonical cascade
+      step (replacing the manual centroid-join code) and ends with
+      a forward-ref to §F naming `HEX_RESOLUTION` in `00-master.R`
+      as the single resolution control point. New §F covers hex
+      motivation (raster indicators, MAUP), resolution guide table
+      (H5 ~252 km^2, H6 ~36 km^2 default, H7 ~5.2 km^2), the
+      canonical 4-layer `make_hex_grid()` -> `make_admin_lookup()`
+      workflow, the near-constant `area` caveat, and the
+      `INCLUDE_HEX_IN_APP` escape hatch for large countries.
+- [x] arch-10 §5 -- rebuild `rwa_shp` with hex layer; propagate
+      `shapes.rds` through Steps 2-5 (issue
+      [#114](https://github.com/worldbank/devPTIpack/issues/114)).
+      `data-raw/generate-rwa-package-data.R` now uses
+      `make_hex_grid()` + `make_admin_lookup()` and computes area
+      in km^2 via `units::set_units(...,"km^2")`. Regenerated
+      `data/rwa_shp.rda` -> 4 layers (admin0/1/2/9_Hexagon), 543
+      polygons total (1 country + 5 provinces + 30 districts + 507
+      H3-6 hex cells). R/data.R roxygen updated to document the
+      4-level structure + km^2 area unit. Step 2 vignette: loads
+      from `shapes.rds`, uses `admin2Pcod` as join key, gains a
+      hex-extraction example with population vs area weighting
+      note. Step 3 vignette: new callout that an `admin9_Hexagon`
+      metadata sheet is required when Step 1 built a hex layer;
+      cross-ref to Step 4 / arch-11 for the registry-driven hex
+      pipeline that produces it. Step 5 vignette: callout on
+      `admin9_Hexagon.geojson` shipping in `shapefiles.zip` by
+      default + file-size controlled by resolution choice only
+      (`st_simplify()` is meaningless for regular hex cells);
+      polygon counts in the CLI example updated to 543.
+
 ---
 
 ## 8. Phase 5 — Hex ingestion (#13, independent)
 
 Independent track. Five new exported functions, all developer-facing, all
-pre-deployment. Spec: arch-05.
+pre-deployment. Spec: arch-05 (original sketch); **arch-11 supersedes**
+the design (issue [#107](https://github.com/worldbank/devPTIpack/issues/107)).
 
 **Decision:** deferred until Phases 1–4 are complete. The calculation pipeline
 is geometry-agnostic so this is non-blocking.
+
+### arch-11 Hexagonal Data Access Pipeline ([#107](https://github.com/worldbank/devPTIpack/issues/107))
+
+Registry-driven hex variable access, fetch, aggregate, metadata
+generation. Spec:
+[`arch-11-hex-data-access.md`](.github/docs/arch-11-hex-data-access.md).
+
+- [x] arch-11 §"Registry" -- hex variable registry + reader functions
+      (issue [#105](https://github.com/worldbank/devPTIpack/issues/105)).
+      New `inst/hex_vars_registry.yaml` ships with the package
+      (registry_version `0.1.0`; one source `wb_flood_exposure`
+      pointing at the WB Space2Stats parquet, two variables:
+      `population` + `flood_exposure_15cm_1in100`). Schema verified
+      live via `arrow::open_dataset()`: `hex_id` (string), `pop`
+      (float), `pop_flood` (double), 3.67M rows, H3-6 global
+      coverage. New exports: `list_hex_vars()` (tibble browser),
+      `use_hex_vars(..., years)` (resolves canonical names against
+      the registry, auto-injects population tagged `internal = TRUE`,
+      suffixes duplicate names with `__<source-label>`),
+      `get_available_years()` (queries the live parquet's
+      `time_col` for ground-truth temporal coverage; returns
+      `integer(0)` for non-temporal vars without touching the
+      network). Internal S3 constructors `pti_hex_var()` /
+      `pti_hex_source()` with field validation. Year-resolution
+      logic (nearest-year substitution, 7-year tolerance) deferred
+      to issue [#110](https://github.com/worldbank/devPTIpack/issues/110).
+- [ ] arch-11 §"Year resolution" -- year resolver
+      (issue [#110](https://github.com/worldbank/devPTIpack/issues/110);
+      blocked by #105).
+- [ ] arch-11 §"Fetching" -- `fetch_hex_data()` with H5/H6 resolution
+      bridge (issue [#112](https://github.com/worldbank/devPTIpack/issues/112);
+      blocked by #105 + #109 + #110).
+- [ ] arch-11 §"Aggregation" -- `aggregate_hex_to_shapes()`
+      (issue [#113](https://github.com/worldbank/devPTIpack/issues/113);
+      blocked by #112).
+- [ ] arch-11 §"Metadata Excel output" -- `build_hex_metadata()`
+      with `include_hex` gating (issue
+      [#115](https://github.com/worldbank/devPTIpack/issues/115);
+      blocked by #113).
+- [ ] arch-11 §"compile_pti_data() multi-file merge" -- extend
+      `compile_pti_data()` (issue
+      [#116](https://github.com/worldbank/devPTIpack/issues/116);
+      blocked by #115). (Note: the source-label suffix logic in
+      `compile_merge_metadata()` landed earlier via Eduard's PR
+      #63 commit `9e45918`.)
+- [ ] arch-11 §"Step 4 vignette" -- `build-pti-4-hex.qmd`
+      walkthrough (issue
+      [#117](https://github.com/worldbank/devPTIpack/issues/117);
+      blocked by #112 + #113 + #115).
 
 ---
 

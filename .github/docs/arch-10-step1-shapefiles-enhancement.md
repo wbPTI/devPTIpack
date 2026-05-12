@@ -432,7 +432,7 @@ and correct. The `area` column will appear nearly constant; that is not a bug.
 | 10  | `admin9_Hexagon` carries all parent Pcods — no cascade exceptions.                                      |
 | 11  | s2 fallback with `on.exit()` guard in both functions.                                                   |
 | 12  | `make_admin_lookup()` returns enriched `my_shp` list (not the internal lookup table).                   |
-| 13  | H3 package dependency (`h3jsr` or `h3o`) decided at implementation time.                                |
+| 13  | H3 package dependency = **`h3jsr`** (resolved 2026-05-12 with #108 / PR #N — V8/JS bindings; mature; on CRAN since 2019; same install profile as `sf`'s GDAL/V8 dependency tree). `h3o` (Rust/extendr) was the alternative — faster but adds Rust-toolchain install friction on shinyapps / posit-connect deploy targets. |
 | 14  | Rwanda (`rwa_shp`) used as guide example throughout. Ukraine `admin4_Hexagon` not referenced.           |
 | 15  | Step 4 resolution-mismatch must produce a clear error with actionable message.                          |
 | 16  | `admin9_Hexagon` included in `shapefiles.zip` by default. File size managed via resolution choice only. |
