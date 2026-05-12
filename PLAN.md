@@ -30,6 +30,19 @@ are next. R-CMD-check workflow gates merge with `error-on:
 new Tier-1 test file with 2 test_that blocks / 8 expectations
 covering the missing-`mt` error and the bundled-data success path).
 
+**Update (2026-05-12):** PR #63 (`eb-docs-pkgdown` -> `koichi-arch-redesign`)
+merged on 2026-05-12 (merge commit `effb832`), bringing the full arch-09
+documentation chain (PRs #89-#103) and Eduard's new arch-10 + arch-11
+design docs onto the integration line. `R CMD check` is at **0/0/0**.
+Two new work tracks are now active off `koichi-arch-redesign`:
+**arch-10** (Step 1 shapefiles enhancement, parent
+[#104](https://github.com/worldbank/devPTIpack/issues/104)) opens with
+[#106](https://github.com/worldbank/devPTIpack/issues/106) -- Step 1
+vignette doc fixes (this PR); **arch-11** (hex data access pipeline,
+parent [#107](https://github.com/worldbank/devPTIpack/issues/107))
+supersedes arch-05 and provides the concrete implementation track for
+[#13](https://github.com/worldbank/devPTIpack/issues/13).
+
 | Concern | Source of truth |
 |---|---|
 | Architecture overview & redesign workflow | [`.github/docs/arch-00-overview.md`](.github/docs/arch-00-overview.md) |
@@ -39,7 +52,9 @@ covering the missing-`mt` error and the bundled-data success path).
 | Calculation pipeline test spec (~71 cases) | [`.github/docs/arch-02.01-testing-calc-pipeline.md`](.github/docs/arch-02.01-testing-calc-pipeline.md) |
 | Three-tier testing strategy + per-fn test map | [`.github/docs/arch-03-testing.md`](.github/docs/arch-03-testing.md) |
 | Workspace, vignettes & pkgdown plan | [`.github/docs/arch-04-workspace.md`](.github/docs/arch-04-workspace.md) |
-| Hex (H3) ingestion design | [`.github/docs/arch-05-hex-ingestion.md`](.github/docs/arch-05-hex-ingestion.md) |
+| Hex (H3) ingestion design (superseded by arch-11) | [`.github/docs/arch-05-hex-ingestion.md`](.github/docs/arch-05-hex-ingestion.md) |
+| Step 1 shapefiles enhancement (`make_hex_grid`, `make_admin_lookup`) | [`.github/docs/arch-10-step1-shapefiles-enhancement.md`](.github/docs/arch-10-step1-shapefiles-enhancement.md) |
+| Hex data access pipeline (registry, fetch, aggregate, metadata) | [`.github/docs/arch-11-hex-data-access.md`](.github/docs/arch-11-hex-data-access.md) |
 | Per-change log (compulsory) | [`.github/docs/changelog.md`](.github/docs/changelog.md) |
 | Project conventions for AI agents | [`.claude/CLAUDE.md`](.claude/CLAUDE.md) |
 
@@ -49,7 +64,9 @@ GitHub issues map:
 - [#8](https://github.com/worldbank/devPTIpack/issues/8) — legacy cleanup (subsumes #2/#3/#4)
 - [#11](https://github.com/worldbank/devPTIpack/issues/11) — roxygen2 documentation
 - [#12](https://github.com/worldbank/devPTIpack/issues/12) — workspace, vignettes, pkgdown site
-- [#13](https://github.com/worldbank/devPTIpack/issues/13) — hex ingestion pipeline (independent)
+- [#13](https://github.com/worldbank/devPTIpack/issues/13) — hex ingestion pipeline (independent; superseded by #107)
+- [#104](https://github.com/worldbank/devPTIpack/issues/104) — arch-10: Step 1 shapefiles enhancement (`make_hex_grid`, `make_admin_lookup`)
+- [#107](https://github.com/worldbank/devPTIpack/issues/107) — arch-11: hex data access pipeline (supersedes arch-05/#13)
 - [#5](https://github.com/worldbank/devPTIpack/issues/5), [#7](https://github.com/worldbank/devPTIpack/issues/7), [#6](https://github.com/worldbank/devPTIpack/issues/6), [#1](https://github.com/worldbank/devPTIpack/issues/1) — relate to upstream/global DB and validation; partially superseded by #9 sub-issues, see arch-00 § "Relationship to Pre-Existing Issues"
 
 ---
@@ -761,6 +778,36 @@ Per arch-04. Concrete cuts:
       (`testthat`, `here`, `quarto`). **`R CMD check` is now 0 errors
       / 0 warnings / 0 notes.** Suite stays at PASS 803 / FAIL 0 /
       SKIP 1 / ERROR 12 (environmental).
+
+### arch-10 Step 1 shapefiles enhancement ([#104](https://github.com/worldbank/devPTIpack/issues/104))
+
+Step 1 vignette + two new exported geometry helpers + Rwanda
+package-data rebuild. Spec:
+[`arch-10-step1-shapefiles-enhancement.md`](.github/docs/arch-10-step1-shapefiles-enhancement.md).
+
+- [x] arch-10 §1 -- fix six documentation gaps in
+      `vignettes/articles/build-pti-1-shapefiles.qmd` (issue
+      [#106](https://github.com/worldbank/devPTIpack/issues/106), this PR):
+      `area` km² fix in §E; `admin0_Country` mandatory callout +
+      simple-example inclusion; `saveRDS(..., compress = "gz")`;
+      non-contiguous level numbers note; `admin<N>Name` uniqueness +
+      no-NA rules in requirements table; `<HumanName>`
+      no-spaces / no-colons constraint; `validate_geometries()`
+      blind-spots note (CRS mismatch, area units, topological
+      validity, coverage gaps).
+- [ ] arch-10 §2 -- implement `make_hex_grid()` + tests (issue
+      [#108](https://github.com/worldbank/devPTIpack/issues/108)).
+- [ ] arch-10 §3 -- implement `make_admin_lookup()` + tests (issue
+      [#109](https://github.com/worldbank/devPTIpack/issues/109);
+      blocked by #108).
+- [ ] arch-10 §6 -- Step 1 vignette §E rewrite + new §F hex
+      workflow (issue
+      [#111](https://github.com/worldbank/devPTIpack/issues/111);
+      blocked by #108 + #109).
+- [ ] arch-10 §5 -- rebuild `rwa_shp` with hex layer; propagate
+      `shapes.rds` through Steps 2-5 (issue
+      [#114](https://github.com/worldbank/devPTIpack/issues/114);
+      blocked by #109 + #111).
 
 ---
 

@@ -5,6 +5,17 @@
 
 ---
 
+## 2026-05-12 (arch-10 §1 -- Step 1 vignette doc fixes; closes #106)
+
+| Scope | Change |
+| ----- | ------ |
+| Docs  | Fixed six documentation gaps in `vignettes/articles/build-pti-1-shapefiles.qmd` per arch-10 §1 / issue [#106](https://github.com/worldbank/devPTIpack/issues/106). (1) §E `area = as.numeric(st_area(geometry))` -> `as.numeric(units::set_units(st_area(geometry), "km^2"))` so the multi-level workflow no longer ships m² where the contract specifies km². (2) Added an `admin0_Country` mandatory callout in §A and an `adm0` prep block + assembly in the §C-§D simple example -- the validator and cascade rule both require it but the simple example silently omitted it. (3) `saveRDS(my_shp, "app-data/shapes.rds")` -> `saveRDS(..., compress = "gz")` per reference §1.6. (4) New §A note that `<N>` level numbers range 0-9 and need not be contiguous (e.g. `admin0`/`admin1`/`admin2`/`admin9` for hex-bearing apps). (5) Requirements table updated: `admin<N>Pcod` and `admin<N>Name` both gain "no NA" rules, `admin<N>Name` gains uniqueness rule. (6) Slot-naming sentence extended with the `<HumanName>` one-word / no-spaces / no-colons constraint so `admin1_East Region` and `admin2_Sub:District` failure modes are documented. Plus a `validate_geometries()` blind-spots note (CRS inconsistency between layers, area-units ambiguity, topological validity, coverage gaps; suggests `sf::st_is_valid()` separately). |
+| Docs  | PLAN.md §1 status snapshot updated with 2026-05-12 state -- PR #63 (`eb-docs-pkgdown` -> `koichi-arch-redesign`) merged at commit `effb832`, arch-09 chain landed onto integration line, two new active tracks (arch-10 / arch-11). Source-of-truth table gains arch-10 + arch-11 rows; GitHub issues map gains #104 + #107. New §7 sub-section "arch-10 Step 1 shapefiles enhancement" enumerates the five sub-issues (#106 ticked, #108 / #109 / #111 / #114 open with dependency notes). |
+
+No `R/` or `tests/` changes; `R CMD check` baseline unchanged at 0/0/0. Vignette renders via existing pkgdown CI.
+
+---
+
 ## 2026-05-11 (dev/ folder removal -- closes #12)
 
 | Scope | Change                                                                                                                                                                                                                                |
