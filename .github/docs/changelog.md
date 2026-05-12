@@ -5,6 +5,22 @@
 
 ---
 
+## 2026-05-12 (arch-10 §5 -- rebuild `rwa_shp` with hex layer; propagate `shapes.rds` through Steps 2-5; closes #114)
+
+| Scope | Change |
+| ----- | ------ |
+| Data  | Rebuilt `data/rwa_shp.rda` via the updated `data-raw/generate-rwa-package-data.R`. The bundled Rwanda fixture now has **4 layers** (admin0_Country / admin1_Province / admin2_District / admin9_Hexagon) and **543 polygons total** (1 country + 5 provinces + 30 districts + 507 H3-6 hex cells covering the country envelope, retained by the centroid-in-polygon filter inside `make_hex_grid()`). All `area` values are in **km^2** -- not m^2 -- via `as.numeric(units::set_units(st_area(geometry), "km^2"))`. Cascade columns populated by `make_admin_lookup()`: `admin9_Hexagon` carries `admin0Pcod`/`admin1Pcod`/`admin2Pcod`; `admin2_District` carries `admin0Pcod`/`admin1Pcod`; `admin1_Province` carries `admin0Pcod`. |
+| Code  | Rewrote `data-raw/generate-rwa-package-data.R` per arch-10 §5 / Decision 19. Replaced the 20-line manual centroid-join (that derived `admin1Pcod` on admin2) with `make_admin_lookup()` over the assembled list. Added `HEX_RESOLUTION <- 6L` constant + `make_hex_grid(adm0, resolution = HEX_RESOLUTION)` for the new `admin9_Hexagon` slot. Updated all three `area` columns from `as.numeric(st_area(geometry))` (m^2) to `as.numeric(units::set_units(st_area(geometry), "km^2"))`. Script is `.Rbuildignore`-d via the existing `^data-raw$` rule. |
+| Docs  | `R/data.R` `rwa_shp` roxygen updated: documents 4-level structure (3 -> 4 slots), includes the new `admin9_Hexagon` element in the `@format` block, calls out `area` is in km^2, names the build-time helpers (`make_hex_grid()` + `make_admin_lookup()`), and adds `head(rwa_shp[["admin9_Hexagon"]])` to the `@examples` block. |
+| Docs  | `vignettes/articles/build-pti-2-zonal-stats.qmd` -- replaced `read_sf("sample-data/rwa_adm2.geojson")` raw load with `my_shp <- readRDS("app-data/shapes.rds"); adm2 <- my_shp$admin2_District`. Join key swapped from `shapeID` to `admin2Pcod`. Added new "Hex-level extraction (optional)" section with `adm9 <- my_shp$admin9_Hexagon` + a note on choosing `weight = "pop"` vs the default per-cell unweighted mean (H3-6 cells are near-uniform area so area-weighting is moot, but population-weighting is the usually-correct choice for human-development indicators). |
+| Docs  | `vignettes/articles/build-pti-3-metadata.qmd` -- new `::: callout-note` explaining that an `admin9_Hexagon` metadata sheet is required when Step 1 built a hex layer with any indicator at `spatial_level = "admin9_Hexagon"`; cross-refs Step 4 / `build-pti-4-hex` (arch-11 / #107) as the canonical way to produce it; notes the workbook can omit the sheet entirely if no hex-level indicators ship. Cross-ref tweak: replaced the obsolete "centroid-in-polygon join" wording with `make_admin_lookup()`. |
+| Docs  | `vignettes/articles/build-pti-5-compile.qmd` -- `shapefiles.zip` description gains "Includes `admin9_Hexagon.geojson` by default when Step 1 built a hex layer". New callout on hex GeoJSON file size: `compile_pti_data()` ships the hex layer unsimplified (`st_simplify()` is not meaningful for regular hex cells); the only knob is the resolution chosen in Step 1, or `INCLUDE_HEX_IN_APP <- FALSE` in `00-master.R` to exclude hex polygons from the deployed app entirely. CLI example polygon count updated 66 -> 543 to match the rebuilt Rwanda fixture. |
+| Docs  | PLAN.md §7 arch-10 sub-section: #114 box ticked with the multi-part description of script + data + docs changes. |
+
+`R CMD check` (no --as-cran): **0 errors / 0 warnings / 0 notes**. testthat: full suite passes (`test-make-hex-grid.R`: 30 PASS / 1 SKIP; `test-make-admin-lookup.R`: 33 PASS / 1 SKIP; `test-template-integration.R`: 34 PASS / 0 SKIP -- existing reliance on `rwa_shp` continues to work because admin0/1/2 slot names and Pcod columns are unchanged). `rmarkdown::render()` on all three modified vignettes: RENDERED OK. The `data-raw/generate-rwa-package-data.R` smoke check (validate_geometries + validate_metadata at the bottom of the script) passes status = "pass" on the rebuilt fixture.
+
+---
+
 ## 2026-05-12 (arch-10 §6 -- Step 1 vignette §E rewrite + new §F hex workflow; closes #111)
 
 | Scope | Change |

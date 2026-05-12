@@ -99,46 +99,55 @@
 #' Rwanda sample administrative boundaries
 #'
 #' A named list of `sf` tibbles representing Rwanda's administrative
-#' boundaries at three hierarchical levels. Bundled with the package
-#' as the canonical sample geometry input for user-facing `@examples`
-#' across exported functions, and the worked-example country in the
-#' Build-a-PTI website tutorial.
+#' boundaries at four hierarchical levels, including an H3-6 hex grid.
+#' Bundled with the package as the canonical sample geometry input
+#' for user-facing `@examples` across exported functions, and the
+#' worked-example country in the Build-a-PTI website tutorial.
 #'
 #' Slot names follow the package convention `adminN_HumanName`. The
-#' bundled sample uses levels 0, 1, and 2: country (1 polygon), 5
-#' provinces, and 30 districts. Pair with [rwa_mtdt_full] for a
+#' bundled sample uses levels 0, 1, 2, and 9: country (1 polygon),
+#' 5 provinces, 30 districts, and 507 H3-6 hexagons (~36 km^2 each)
+#' covering the country envelope. Pair with [rwa_mtdt_full] for a
 #' working PTI calculation.
 #'
-#' Compared with the test-suite-oriented [ukr_shp]: smaller (66 vs
-#' 2,596 polygons), simpler (no synthetic admin4 hex grid), and built
-#' from a public CC-BY 4.0 source -- safe to render in tutorials and
-#' embed in screenshots.
+#' Compared with the test-suite-oriented [ukr_shp]: smaller (~543 vs
+#' 2,596 polygons), built from a public CC-BY 4.0 source, and safe to
+#' render in tutorials and embed in screenshots.
 #'
-#' @format A named list of length 3. Each element is an `sf` / `tbl_df`:
+#' @format A named list of length 4. Each element is an `sf` / `tbl_df`:
 #' \describe{
 #'   \item{admin0_Country}{1 row -- country polygon (Rwanda).}
 #'   \item{admin1_Province}{5 rows -- provinces.}
 #'   \item{admin2_District}{30 rows -- districts.}
+#'   \item{admin9_Hexagon}{507 rows -- H3-6 hex cells covering the
+#'     country envelope, retained by centroid-in-polygon filter.}
 #' }
 #'
-#' Each tibble carries the standard `adminNPcod` / `adminNName` / `area`
-#' / `geometry` columns plus parent-level P-codes on sub-admin layers
-#' (`admin1_Province` carries `admin0Pcod`; `admin2_District` carries
-#' both `admin0Pcod` and `admin1Pcod`). The admin1-parent-of-admin2
-#' relationship is derived in `data-raw/generate-rwa-package-data.R`
-#' via a centroid-in-polygon spatial join.
+#' Each tibble carries the standard `adminNPcod` / `adminNName` /
+#' `area` / `geometry` columns plus every ancestor `admin<k>Pcod` on
+#' sub-admin layers. **`area` is in km^2** (EPSG:4326 + s2 geodesic
+#' computation). On `admin9_Hexagon`, `admin9Pcod` is the H3 index
+#' string at resolution 6 (globally unique) and `admin9Name` is the
+#' same value -- hexagons have no human name.
+#'
+#' Built by `data-raw/generate-rwa-package-data.R` via
+#' [make_hex_grid()] (for the hex layer) and [make_admin_lookup()]
+#' (for the parent Pcod cascade).
 #'
 #' @source Boundary geometries: geoBoundaries
 #'   (\url{https://www.geoboundaries.org}) `gbOpen` release for Rwanda
 #'   (`shapeISO = "RWA"`), licensed CC-BY 4.0. See the raw GeoJSONs
 #'   under `inst/template_pti/sample-data/` (`rwa_adm0.geojson`,
 #'   `rwa_adm1.geojson`, `rwa_adm2.geojson`) and the compilation
-#'   script at `data-raw/generate-rwa-package-data.R`.
+#'   script at `data-raw/generate-rwa-package-data.R`. The hex layer
+#'   is computed deterministically from `admin0_Country` at H3-6 via
+#'   [make_hex_grid()].
 #'
 #' @examples
 #' data(rwa_shp)
 #' names(rwa_shp)
 #' head(rwa_shp[["admin1_Province"]])
+#' head(rwa_shp[["admin9_Hexagon"]])
 #' @family sample-data
 "rwa_shp"
 

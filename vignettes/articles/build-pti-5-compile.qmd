@@ -50,8 +50,21 @@ result <- compile_pti_data(
 | File                  | What it is                                                                                                          |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | `metadata.xlsx`       | Canonical merged metadata workbook. Round-trips cleanly through `fct_template_reader()`.                            |
-| `shapefiles.zip`      | One GeoJSON file per admin layer (filename = slot name from `shapes.rds`). Served by the dashboard's download tab.   |
+| `shapefiles.zip`      | One GeoJSON file per admin layer (filename = slot name from `shapes.rds`). Served by the dashboard's download tab. **Includes `admin9_Hexagon.geojson` by default** when Step 1 built a hex layer. |
 | `pti-metadata.pdf`    | Printable indicator atlas, one map per indicator. **Skipped with a warning when LaTeX is unavailable** — the rest of the artefacts still produce. |
+
+::: callout-note
+## Hex layer size in `shapefiles.zip`
+
+For large countries at H3-6 (`HEX_RESOLUTION <- 6L` in `00-master.R`),
+`admin9_Hexagon.geojson` can run to several MB. The file is shipped
+**unsimplified** -- `sf::st_simplify()` is not meaningful for regular
+hex cells, and `compile_pti_data()` does not attempt it. File size is
+controlled by one knob only: the resolution chosen in Step 1. Choose
+H5 (`~252 km²` per cell, fewer hexes) or set
+`INCLUDE_HEX_IN_APP <- FALSE` in `00-master.R` (see Step 4) if the
+deployed app size is a constraint.
+:::
 
 ### CLI summary
 
@@ -59,7 +72,7 @@ The function prints a structured `cli` summary as it runs — admin levels, poly
 
 ```
 ── Compiling PTI deployment artefacts ──
-ℹ Read shapes: 4 layers (66 polygons total).
+ℹ Read shapes: 4 layers (543 polygons total).
 ℹ Read metadata: 1 input file.
 ℹ Merged metadata: 3 indicators across 2 pillars.
 ✔ Wrote metadata.xlsx.
@@ -71,12 +84,14 @@ The function prints a structured `cli` summary as it runs — admin levels, poly
 ✔ Wrote pti-metadata.pdf.
 ── Summary ──
 * Layers: 4
-* Polygons (total): 66
+* Polygons (total): 543
 * Indicators: 3
 * Pillars: 2
 * Metadata sources: 1
 ✔ compile_pti_data: all checks passed.
 ```
+
+(Polygon count for the bundled Rwanda template: 1 country + 5 provinces + 30 districts + 507 H3-6 hex cells = 543.)
 
 ### Return value
 
