@@ -1,0 +1,27 @@
+bibentry(
+  bibtype = "Manual",
+  title = "devPTIpack: Project Targeting Index Framework",
+  author = c(
+    person("Eduard", "Bukin", email = "ebukin@gmail.com", role = c("aut")),
+    person(
+      "Koichi",
+      "Ito",
+      email = "koichi19960406@gmail.com",
+      role = c("cre")
+    ),
+    person(
+      "Takaaki",
+      "Masaki",
+      email = "tmasaki@worldbank.org",
+      role = c("ctb")
+    ),
+    person("Arden", "Finn", email = "afinn1@worldbank.org", role = c("rev"))
+  ),
+  journal = "World Bank Open Source Software",
+  year = 2026,
+  # volume = ,
+  # number = ,
+  # pages = ,
+  # doi =
+  url = "https://worldbank.github.io/devPTIpack/"
+)
