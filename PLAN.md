@@ -817,10 +817,18 @@ package-data rebuild. Spec:
       hard errors. Cascade propagates so every layer carries all
       ancestor Pcods. `admin9_Hexagon` handled identically -- no
       cascade exceptions.
-- [ ] arch-10 §6 -- Step 1 vignette §E rewrite + new §F hex
+- [x] arch-10 §6 -- Step 1 vignette §E rewrite + new §F hex
       workflow (issue
-      [#111](https://github.com/worldbank/devPTIpack/issues/111);
-      blocked by #108 + #109).
+      [#111](https://github.com/worldbank/devPTIpack/issues/111)).
+      §E now uses `make_admin_lookup()` as the canonical cascade
+      step (replacing the manual centroid-join code) and ends with
+      a forward-ref to §F naming `HEX_RESOLUTION` in `00-master.R`
+      as the single resolution control point. New §F covers hex
+      motivation (raster indicators, MAUP), resolution guide table
+      (H5 ~252 km^2, H6 ~36 km^2 default, H7 ~5.2 km^2), the
+      canonical 4-layer `make_hex_grid()` -> `make_admin_lookup()`
+      workflow, the near-constant `area` caveat, and the
+      `INCLUDE_HEX_IN_APP` escape hatch for large countries.
 - [ ] arch-10 §5 -- rebuild `rwa_shp` with hex layer; propagate
       `shapes.rds` through Steps 2-5 (issue
       [#114](https://github.com/worldbank/devPTIpack/issues/114);
