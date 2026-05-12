@@ -34,6 +34,7 @@
 #'   modules subscribing to the explorer's state read this reactive.
 #'
 #' @importFrom shiny reactive req
+#' @family shiny-modules
 #' @export
 #'
 #' @examples
@@ -139,6 +140,7 @@ mod_dta_explorer2_server <-
 #'
 #' @importFrom shiny NS tagList fluidRow tags
 #' @importFrom leaflet leafletOutput
+#' @family shiny-modules
 #' @export
 #'
 #' @examples

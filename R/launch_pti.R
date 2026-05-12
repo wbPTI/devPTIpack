@@ -124,14 +124,15 @@ materialize_dwnld_paths <- function(shp_dta, inp_dta,
 #' @importFrom shiny shinyApp bootstrapPage reactive
 #' @importFrom htmltools tagList
 #' @importFrom golem with_golem_options
+#' @family pti-launch
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' launch_pti_onepage(shp_dta = ukr_shp, inp_dta = ukr_mtdt_full)
+#' launch_pti_onepage(shp_dta = rwa_shp, inp_dta = rwa_mtdt_full)
 #'
-#' launch_pti_onepage(shp_dta = ukr_shp,
-#'                    inp_dta = ukr_mtdt_full,
+#' launch_pti_onepage(shp_dta = rwa_shp,
+#'                    inp_dta = rwa_mtdt_full,
 #'                    ui_type = "box",
 #'                    show_waiter = FALSE)
 #' }
@@ -246,16 +247,17 @@ launch_pti_onepage <-
 #' @importFrom htmltools tagList
 #' @importFrom golem with_golem_options
 #' @importFrom cicerone use_cicerone
+#' @family pti-launch
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' launch_pti(shp_dta = ukr_shp,
-#'            inp_dta = ukr_mtdt_full,
-#'            app_name = "Ukraine PTI demo")
+#' launch_pti(shp_dta = rwa_shp,
+#'            inp_dta = rwa_mtdt_full,
+#'            app_name = "Rwanda PTI demo")
 #'
-#' launch_pti(shp_dta = ukr_shp,
-#'            inp_dta = ukr_mtdt_full,
+#' launch_pti(shp_dta = rwa_shp,
+#'            inp_dta = rwa_mtdt_full,
 #'            tabs = c("info", "compare", "explorer", "how"))
 #' }
 launch_pti <-

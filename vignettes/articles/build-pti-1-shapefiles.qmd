@@ -1,0 +1,174 @@
+---
+title: "Step 1 — Shapefiles"
+---
+
+Prepare the administrative-boundary shapefiles that anchor every other input to the PTI app — load, validate, fix, and save them to `app-data/`.
+
+The end product of this step is a single file: `app-data/shapes.rds`, a named list of `sf` tibbles, one per administrative level. Step 3's metadata workbook keys against the polygon codes in this file, and the deployed app reads it on launch.
+
+This page walks through the Rwanda template: 5 provinces (Adm1) with 30 districts (Adm2). The advanced section at the bottom covers the multi-level case (Adm1 + Adm2 together).
+
+## A. Requirements
+
+Each layer is a single `sf` tibble. The list slot name follows the package convention `admin<N>_<HumanName>`, e.g. `admin1_Province`. Required columns at minimum:
+
+| Column          | Type                  | Purpose                                                                  |
+| --------------- | --------------------- | ------------------------------------------------------------------------ |
+| `admin<N>Pcod`  | `character`           | Unique polygon identifier (P-code) at this level. One per row.           |
+| `admin<N>Name`  | `character`           | Human-readable polygon name. One per row.                                |
+| `area`          | `numeric`             | Polygon area in km². Compute in EPSG:4326 using `units::set_units(sf::st_area(geometry), "km^2")`. |
+| `geometry`      | `sfc_(MULTI)POLYGON`  | Spatial geometry. `POLYGON` or `MULTIPOLYGON` only.                      |
+
+Sub-admin layers must also carry every parent layer's `admin<k>Pcod` column (the cascade rule). For Rwanda, the `admin2_District` layer carries both `admin0Pcod` and `admin1Pcod` so districts join up to provinces and the country.
+
+| Topic                             | Quick rule                                                                   |
+| --------------------------------- | ---------------------------------------------------------------------------- |
+| Projection for the saved file     | **EPSG:4326** — all layers must use this CRS. Re-project with `sf::st_transform(layer, 4326)` if needed. |
+| `area` units                      | km² — compute directly in EPSG:4326: `as.numeric(units::set_units(sf::st_area(geometry), "km^2"))`. No UTM step needed. |
+| Geometry simplification           | Trade off file size against rendering performance. `sf::st_simplify()` is your friend; tolerances of 50–500 m work well for most country-level apps. |
+| Single layer vs. multi-level      | Single layer = simplest case; multi-level requires nesting + parent P-codes (see §E). |
+
+For the full column reference, P-code uniqueness rules, cascade-rule enforcement, and what `validate_geometries()` checks vs. doesn't, see the [Data preparation reference §1](dataprep.html).
+
+## B. Load pre-existing official shapefiles
+
+> ⚠ **Feature under development.** A future `load_official_shp(country)`
+> helper will pull World Bank internal official boundaries (with consistent
+> P-codes and naming) so deployers don't need to download or rename
+> anything. Until that lands, follow §C–§D below using the publicly
+> available geoBoundaries data shipped with the template.
+
+If you already have official shapefiles for your country, skip to §C — `validate_geometries()` accepts any input that conforms to the column contract above.
+
+## C. Load and validate your shapefile
+
+Load the Rwanda GeoJSONs from the template's `sample-data/`:
+
+```r
+#| eval: false
+library(sf)
+library(dplyr)
+library(devPTIpack)
+
+adm0_raw <- read_sf("sample-data/rwa_adm0.geojson")
+adm1_raw <- read_sf("sample-data/rwa_adm1.geojson")
+adm2_raw <- read_sf("sample-data/rwa_adm2.geojson")
+```
+
+geoBoundaries gives every polygon a `shapeID` and `shapeName`. Re-project to EPSG:4326, rename into the package convention, and compute `area` in km²:
+
+```r
+#| eval: false
+adm1 <- adm1_raw |>
+  st_transform(4326) |>
+  mutate(
+    admin0Pcod = "RWA",
+    admin1Pcod = shapeID,
+    admin1Name = shapeName,
+    area       = as.numeric(units::set_units(st_area(geometry), "km^2"))
+  ) |>
+  select(admin0Pcod, admin1Pcod, admin1Name, area, geometry)
+```
+
+Assemble the list. Slot names are case-sensitive and must match exactly what the metadata workbook will reference:
+
+```r
+#| eval: false
+my_shp <- list(admin1_Province = adm1)
+```
+
+Run the structural validator:
+
+```r
+#| eval: false
+validate_geometries(my_shp)
+```
+
+It reports `pass` / `warn` / `fail` and prints the underlying issues (P-code duplicates, geometry types, parent–child orphans, missing required columns, cascade-rule failures). The full check list lives in [§1.7 of the data preparation reference](dataprep.html).
+
+For visual inspection — does the country actually look right on a map? — call the standalone Shiny app:
+
+```r
+#| eval: false
+app_validate_shp(my_shp)
+```
+
+It opens a leaflet map with one tab per admin level, hover popups for `admin<N>Pcod` / `admin<N>Name`, and a side-panel summary of the structural validator's output. Use it to spot holes between polygons, wrong boundaries, or duplicate names that the structural checks can't catch from columns alone. The app is read-only — it does not edit your data.
+
+## D. Fix problems and save
+
+Common fixes you'll do here, on the way to a clean save:
+
+```r
+#| eval: false
+# All layers must be in EPSG:4326. st_transform() is a no-op if already correct.
+adm1 <- st_transform(adm1, 4326)
+
+# Snap to valid geometries — fixes self-intersections, slivers.
+adm1 <- st_make_valid(adm1)
+
+# Simplify to control file size (tolerance in metres for projected CRSs;
+# in degrees for EPSG:4326 — values 0.001–0.01 are typical).
+adm1 <- st_simplify(adm1, dTolerance = 0.001, preserveTopology = TRUE)
+
+# Drop any column that is not in the required set.
+adm1 <- adm1 |> select(admin0Pcod, admin1Pcod, admin1Name, area, geometry)
+```
+
+Re-run `validate_geometries()` after each change until it passes. Then save:
+
+```r
+#| eval: false
+dir.create("app-data", showWarnings = FALSE)
+saveRDS(my_shp, "app-data/shapes.rds")
+```
+
+Keep the original `.geojson` files under `sample-data/` (or wherever your raw inputs live) as the source-of-truth for re-runs. The `.rds` under `app-data/` is the *deployment* artefact — disposable, regenerable from the raw inputs.
+
+## E. Advanced: multiple admin levels {#sec-advanced-multi-level}
+
+Most real PTI apps need at least two admin levels — provinces and districts, regions and communes. The list grows accordingly:
+
+```r
+#| eval: false
+my_shp <- list(
+  admin0_Country  = adm0,
+  admin1_Province = adm1,
+  admin2_District = adm2
+)
+```
+
+The cascade rule kicks in here: each sub-admin layer must carry the parent's P-code. Rwanda's geoBoundaries data does not include `admin1Pcod` on the admin2 file, so derive it via a centroid-in-polygon join:
+
+```r
+#| eval: false
+adm2_centroids <- suppressWarnings(st_centroid(adm2_raw))
+parent_lookup  <- suppressWarnings(
+  st_join(adm2_centroids, adm1_raw, join = st_within, suffix = c("", "_p"))
+) |>
+  st_drop_geometry() |>
+  transmute(child_id = shapeID, admin1Pcod = shapeID_p)
+
+adm2 <- adm2_raw |>
+  left_join(parent_lookup, by = c("shapeID" = "child_id")) |>
+  mutate(
+    admin0Pcod = "RWA",
+    admin2Pcod = shapeID,
+    admin2Name = shapeName,
+    area       = as.numeric(st_area(geometry))
+  ) |>
+  select(admin0Pcod, admin1Pcod, admin2Pcod, admin2Name, area, geometry)
+```
+
+Then assemble and validate as before. `validate_geometries()` catches orphan children — a district's `admin1Pcod` that doesn't appear in any province's `admin1Pcod`.
+
+The bundled `ukr_shp` demonstrates this pattern at four levels (country → oblast → rayon → hexagon). Inspect it with `data(ukr_shp); str(ukr_shp, max.level = 2)` for a worked example.
+
+**When to use multi-level:** include extra admin levels only if you have indicator data measured at that level. The PTI calculation pipeline runs at the most disaggregated level for which an indicator is available, so adding an unused level just inflates the deployed app's data size.
+
+## Next
+
+Once `app-data/shapes.rds` is in place:
+
+- If you have **raster data** to extract zonal stats from, continue with [Step 2 — Zonal stats](build-pti-2-zonal-stats.html).
+- Otherwise, jump to [Step 3 — Metadata Excel](build-pti-3-metadata.html) to prepare your indicator workbook.

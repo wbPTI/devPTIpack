@@ -1,12 +1,173 @@
-url: https://ebukin.github.io/devPTIpack/
+url: https://worldbank.github.io/devPTIpack/
+
 home:
-  title: PTI package for dashboards development
+  title: devPTIpack — Project Targeting Index for Shiny Dashboards
+  description: >
+    A framework for building geo-spatial Project Targeting Index (PTI)
+    dashboards. Combine socioeconomic indicators, aggregate them using a
+    flexible weighting scheme, and visualise PTI scores across administrative
+    levels in an interactive Shiny application.
+  links:
+    - text: Report a bug
+      href: https://github.com/worldbank/devPTIpack/issues/new
+    - text: Browse source code
+      href: https://github.com/worldbank/devPTIpack
+    - text: Cite this package
+      href: authors.html#citation
+    - text: License (MIT)
+      href: LICENSE-text.html
+    - text: World Bank IGO License Rider
+      href: WB-IGO-RIDER.html
+
 authors:
   Eduard Bukin:
     href: https://EBukin.github.io/
+    comment: Package Author
+  Koichi Ito:
+    href: https://koichi-ito.github.io/
+    comment: Package Maintainer
   Takaaki Masaki:
     href: https://takaakimasaki.github.io/
+    comment: Contributor
+  Arden Finn:
+    href: https://www.worldbank.org/
+    comment: Reviewer
+
 template:
   bootstrap: 5
+  bootswatch: flatly
+  bslib:
+    primary: "#00457C"
+    navbar-light-color: "#ffffff"
+    navbar-light-active-color: "#ffffff"
+    navbar-light-bg: "#00457C"
+    navbar-dark-brand-color: "#ffffff"
+    font-scale: 1.05
+
 lang: en
 
+navbar:
+  structure:
+    left:  [about, methodology, build-pti]
+    right: [search, reference, resources, github]
+  components:
+    about:
+      text: About
+      href: index.html
+    methodology:
+      text: PTI Methodology
+      menu:
+        - text: Detailed methodology
+          href: articles/methodology.html
+        - text: Overview paper
+          href: articles/overview-paper.html
+        - text: "---"
+        - text: Past Projects
+          href: articles/past-projects.html
+    build-pti:
+      text: Build a PTI
+      menu:
+        - text: Overview
+          href: articles/build-pti.html
+        - text: "---"
+        - text: "Step 0 — Setup new project"
+          href: articles/build-pti-0-setup.html
+        - text: "Step 1 — Shapefiles"
+          href: articles/build-pti-1-shapefiles.html
+        - text: "Step 2 — Zonal stats (optional)"
+          href: articles/build-pti-2-zonal-stats.html
+        - text: "Step 3 — Metadata Excel"
+          href: articles/build-pti-3-metadata.html
+        - text: "Step 4 — HEX data"
+          href: articles/build-pti-4-hex.html
+        - text: "Step 5 — Compile & finalise"
+          href: articles/build-pti-5-compile.html
+        - text: "Step 6 — Deploy"
+          href: articles/build-pti-6-deploy.html
+        - text: "---"
+        - text: Data preparation reference
+          href: articles/dataprep.html
+    reference:
+      text: Reference
+      href: reference/index.html
+    resources:
+      text: Resources
+      menu:
+        - text: PTI Apps (GitHub — wbPTI org)
+          href: https://github.com/wbPTI
+        - text: GeoPov — World Bank Internal
+          href: https://worldbankgroup.sharepoint.com/:u:/r/sites/FPG/SitePages/PublishingPages/GeoPov-1770874931043.aspx?csf=1&web=1&e=g2uDT0
+        - text: "---"
+        - text: Report a bug
+          href: https://github.com/worldbank/devPTIpack/issues/new
+        - text: License (MIT)
+          href: LICENSE-text.html
+        - text: World Bank IGO License Rider
+          href: WB-IGO-RIDER.html
+    github:
+      icon: fab fa-github fa-lg
+      href: https://github.com/worldbank/devPTIpack
+      aria-label: GitHub
+
+articles:
+  - title: PTI Methodology
+    contents:
+      - articles/methodology
+      - articles/overview-paper
+      - articles/past-projects
+  - title: Build a PTI
+    contents:
+      - articles/build-pti
+      - articles/build-pti-0-setup
+      - articles/build-pti-1-shapefiles
+      - articles/build-pti-2-zonal-stats
+      - articles/build-pti-3-metadata
+      - articles/build-pti-4-hex
+      - articles/build-pti-5-compile
+      - articles/build-pti-6-deploy
+      - articles/dataprep
+
+# Reference page groupings: driven by roxygen2 @family tags via
+# pkgdown's has_concept() selector. To regroup a function, edit its
+# @family tag in R/ rather than editing this list. See issue #75.
+reference:
+  - title: Launch a PTI app
+    desc: Entry points that scaffold a project and serve the Shiny dashboard.
+    contents:
+      - has_concept("pti-launch")
+  - title: Calculation pipeline
+    desc: Compute scores, label outputs, and compile deployment artefacts.
+    contents:
+      - has_concept("pti-pipeline")
+  - title: Data input
+    desc: Read shapes and metadata workbooks from disk.
+    contents:
+      - has_concept("data-input")
+  - title: Weighting schemes
+    desc: Build weight sets passed to the calculation pipeline.
+    contents:
+      - has_concept("weights")
+  - title: Data export
+    desc: Bundle scores and weight tables for the dashboard's download buttons.
+    contents:
+      - has_concept("data-export")
+  - title: Input validation
+    desc: Structural and visual checks on shapes and metadata inputs.
+    contents:
+      - has_concept("validation")
+  - title: Visualisation helpers
+    desc: ggplot2-based map builders shared by the dashboard and the PDF render.
+    contents:
+      - has_concept("visualisation")
+  - title: Shiny modules
+    desc: The reactive building blocks behind `launch_pti()`.
+    contents:
+      - has_concept("shiny-modules")
+  - title: Package utilities
+    desc: golem boilerplate and resource resolvers.
+    contents:
+      - has_concept("package-utilities")
+  - title: Bundled sample data
+    desc: Datasets ready to feed the pipeline. Rwanda for user-facing examples; Ukraine for the test suite.
+    contents:
+      - has_concept("sample-data")

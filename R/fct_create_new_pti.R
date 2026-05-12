@@ -26,6 +26,7 @@
 #' @importFrom cli cat_rule cat_bullet
 #' @importFrom yesno yesno
 #' @importFrom rstudioapi isAvailable initializeProject openProject
+#' @family pti-launch
 #' @export
 #'
 #' @examples

@@ -24,7 +24,9 @@ To do this we follow a workflow:
 8. Ensure clean and nice deployment of the package to GitHub as well as the package website on GitHub Pages.
 
 9. Implement new data ingestion pathways — enabling hexagonal API data sources as inputs to the PTI pipeline. Developer-oriented pre-deployment tooling to prepare app data from custom shapefiles via H3 hex queries.
-   See: [./arch-05-hex-ingestion.md](./arch-05-hex-ingestion.md) for the design plan.
+   See: [./arch-05-hex-ingestion.md](./arch-05-hex-ingestion.md) for the original high-level sketch (superseded).
+   See: [./arch-10-step1-shapefiles-enhancement.md](./arch-10-step1-shapefiles-enhancement.md) for `make_hex_grid()` and `make_admin_lookup()`.
+   See: [./arch-11-hex-data-access.md](./arch-11-hex-data-access.md) for the authoritative hex data access pipeline design (supersedes arch-05).
 
 
 
@@ -38,7 +40,7 @@ To do this we follow a workflow:
 
 ## Package Summary
 
-**devPTIpack** is a `golem`-based Shiny R package for computing, visualizing, and exploring **Priority Targeting Indices (PTI)** — composite scores from weighted indicators mapped across hierarchical administrative boundaries.
+**devPTIpack** is a `golem`-based Shiny R package for computing, visualizing, and exploring **Project Targeting Index (PTI)** scores — composite scores from weighted indicators mapped across hierarchical administrative boundaries.
 
 ---
 

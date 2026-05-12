@@ -18,3 +18,5 @@
 ^PLAN\.md$
 ^README\.Rmd$
 ^inst/sample_pti/.*/\.keep$
+^vignettes/\.quarto$
+^vignettes/articles$

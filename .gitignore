@@ -7,6 +7,16 @@
 *_files
 
 data-raw/
+# Exception: the template scaffold's data-raw/ ships seeded
+# regeneration scripts that must be tracked (see arch-09 § 9.1, #79).
+!inst/template_pti/data-raw/
+!inst/template_pti/data-raw/**
+# Exception: the package-level data-raw/ regeneration scripts that
+# rebuild data/*.rda from inst/template_pti/sample-data/ inputs.
+# The directory itself is .Rbuildignore-d (^data-raw$), so the scripts
+# don't ship in the source tarball -- they're for maintainer use.
+!data-raw/
+!data-raw/*.R
 docs/
 !.github/docs/
 inst/doc
@@ -17,3 +27,62 @@ inst/doc
 .claude/settings.local.json
 # Claude Code: ScheduleWakeup lock file — runtime artefact, never commit.
 .claude/scheduled_tasks.lock
+
+# History files
+.Rhistory
+.Rapp.history
+
+# Session Data files
+.RData
+.RDataTmp
+
+# User-specific files
+.Ruserdata
+
+# Example code in package build process
+*-Ex.R
+
+# Output files from R CMD build
+/*.tar.gz
+
+# Output files from R CMD check
+/*.Rcheck/
+
+# RStudio files
+.Rproj.user/
+
+# produced vignettes
+vignettes/*.html
+vignettes/*.pdf
+
+# OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
+.httr-oauth
+
+# knitr and R markdown default cache directories
+*_cache/
+/cache/
+
+# Temporary files created by R markdown
+*.utf8.md
+*.knit.md
+
+# R Environment Variables
+.Renviron
+
+# pkgdown site
+docs/
+
+# translation temp files
+po/*~
+
+# RStudio Connect folder
+rsconnect/
+
+/.quarto/
+**/*.quarto_ipynb
+_site/*
+
+.DS_Store
+/docs/
+!.github/docs/
+man/

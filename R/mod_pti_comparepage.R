@@ -13,6 +13,7 @@
 #'   layout.
 #'
 #' @importFrom shiny NS tagList bootstrapPage column fluidRow div
+#' @family shiny-modules
 #' @export
 #'
 #' @examples
@@ -73,6 +74,7 @@ mod_pti_comparepage_ui <- function(id) {
 #'   two side-by-side leaflet maps within the Shiny session).
 #'
 #' @importFrom shiny moduleServer
+#' @family shiny-modules
 #' @export
 #'
 #' @examples

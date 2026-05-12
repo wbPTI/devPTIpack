@@ -23,6 +23,7 @@
 #'   when the input contains a `weights_table` sheet.
 #'
 #' @import dplyr purrr stringr readxl
+#' @family data-input
 #' @export
 #'
 #' @examples

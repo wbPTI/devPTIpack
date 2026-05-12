@@ -17,6 +17,7 @@
 #'
 #' @importFrom shiny tags
 #' @importFrom golem add_resource_path activate_js favicon bundle_resources get_golem_options
+#' @family package-utilities
 #' @export
 #'
 #' @examples

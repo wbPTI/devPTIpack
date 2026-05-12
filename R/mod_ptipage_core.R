@@ -33,6 +33,7 @@
 #'   layout, optionally wrapped by a waiter overlay.
 #'
 #' @importFrom shiny NS tagList column div fillPage bootstrapPage
+#' @family shiny-modules
 #' @export
 #'
 #' @examples
@@ -90,6 +91,7 @@ mod_ptipage_twocol_ui <- function(id,
 #'   inside an absolute side panel overlaid on a full-viewport map. Used
 #'   when a single PTI is the only thing on screen.
 #'
+#' @family shiny-modules
 #' @export
 mod_ptipage_box_ui <- function(id,
                                full_ui = FALSE,
@@ -167,6 +169,7 @@ mod_ptipage_box_ui <- function(id,
 #'
 #' @importFrom shiny moduleServer reactive reactiveValues observe req
 #'   isTruthy
+#' @family shiny-modules
 #' @export
 #'
 #' @examples

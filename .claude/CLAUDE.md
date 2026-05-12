@@ -1,6 +1,6 @@
 # Project: devPTIpack
 
-A golem-based Shiny R package for computing, visualizing, and exploring Priority Targeting Indices (PTI).
+A golem-based Shiny R package for computing, visualizing, and exploring Project Targeting Indices (PTI).
 
 ## Architecture
 
@@ -24,7 +24,7 @@ A golem-based Shiny R package for computing, visualizing, and exploring Priority
 
 - Follow tidyverse style with `|>` pipe.
 - Roxygen2 per `.claude/rules/roxygen-documentation.md`.
-- Examples must use only built-in data: `ukr_shp`, `ukr_mtdt_full`.
+- Examples must use only built-in data. Prefer `rwa_shp` / `rwa_mtdt_full` for user-facing examples; `ukr_shp` / `ukr_mtdt_full` are also bundled and remain in use by the test suite.
 - Tests use `testthat`. Tier 1 (pure functions) → Tier 2 (`shiny::testServer`) → Tier 3 (manual / `shinytest2`).
 - Tests target only the **permanent** functions in arch-01 — do not test code scheduled for deletion.
 - Do not touch legacy/dead code marked for removal in arch-01 unless executing a cleanup batch.
@@ -40,15 +40,22 @@ A golem-based Shiny R package for computing, visualizing, and exploring Priority
 
 Project-scoped tooling under `.claude/`:
 
-| Tool | Type | Purpose |
-|---|---|---|
-| `tdd-permanent-fn` | skill | Scaffold Tier-1 tests for a permanent function per arch-03 / arch-02.01 |
-| `cleanup-batch` | skill | Execute one arch-01 cleanup batch end-to-end (delete, document, test, check) |
-| `roxygen-document` | skill | Add/upgrade roxygen2 per `.claude/rules/roxygen-documentation.md` |
-| `issue-progress-comment` | skill | Draft a status comment for a GitHub issue from the recent diff/work |
-| `r-package-reviewer` | sub-agent | Review diffs for R-package conventions (NAMESPACE, exports, examples, no `browser()`) |
+| Tool                     | Type      | Purpose                                                                               |
+| ------------------------ | --------- | ------------------------------------------------------------------------------------- |
+| `tdd-permanent-fn`       | skill     | Scaffold Tier-1 tests for a permanent function per arch-03 / arch-02.01               |
+| `cleanup-batch`          | skill     | Execute one arch-01 cleanup batch end-to-end (delete, document, test, check)          |
+| `roxygen-document`       | skill     | Add/upgrade roxygen2 per `.claude/rules/roxygen-documentation.md`                     |
+| `issue-progress-comment` | skill     | Draft a status comment for a GitHub issue from the recent diff/work                   |
+| `close-issue-on-merge`   | skill     | After a PR lands, close the issue(s) it claims to close (GitHub auto-close does NOT fire because PRs target `eb-docs-pkgdown`, not the default branch) |
+| `r-package-reviewer`     | sub-agent | Review diffs for R-package conventions (NAMESPACE, exports, examples, no `browser()`) |
 
 Invoke skills via the Skill tool by name. Spawn the sub-agent via the Agent tool with `subagent_type: r-package-reviewer`.
+
+**Issue-close workflow (compulsory after every PR merge):** invoke
+`close-issue-on-merge` immediately after the user reports a PR has
+merged. GitHub's auto-close fires only on PRs that land on the repo's
+default branch (`main`); our redesign PRs target `eb-docs-pkgdown`, so
+`Closes #N` lines never trigger and issues silently rot otherwise.
 
 ## PLAN.md Sync (COMPULSORY)
 

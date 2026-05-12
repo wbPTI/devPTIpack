@@ -626,17 +626,141 @@ Follow arch-02-docs § "Implementation Order" and use the
 
 Per arch-04. Concrete cuts:
 
-- [ ] Delete `dev/` (git history preserves it).
-- [ ] Replace `vignettes/dataprep.Rmd` stub with the grouped articles in
-      arch-04 §"Vignette Groups". **Highest-value first:**
-      `calculation-pipeline.Rmd`, `data-preparation.Rmd`.
-- [ ] Source for `pti-overview.Rmd` / `project-history.Rmd`: the
+- [x] Delete `dev/` (git history preserves it). Removed 16 scratch files
+      and the legacy `mapDwnldApp/` after confirming zero live references
+      from `R/`, `tests/`, `inst/`, `vignettes/`, or `DESCRIPTION`. R CMD
+      check stays at 0/0/0; test suite unchanged.
+- [x] Replace `vignettes/dataprep.qmd` stub with the data-prep
+      reference (PR-B `docs/build-pti-content`, per arch-06 §4 — column-by-column
+      reference for boundary shapes + metadata template, common pitfalls,
+      worked example using bundled `ukr_shp` / `ukr_mtdt_full`).
+- [x] Fill `vignettes/articles/build-pti.qmd` with the task-oriented
+      walkthrough (PR-B, per arch-06 §3 — scaffold → prep shapes → prep
+      metadata → validate → launch → deploy → troubleshoot).
+- [ ] Slim `vignettes/articles/methodology.qmd` to conceptual content
+      ([#73](https://github.com/worldbank/devPTIpack/issues/73), follow-up to PR-B
+      per arch-06 §5).
+- [ ] Fill `vignettes/articles/past-projects.qmd` (deferred — out of
+      arch-06 scope per §9).
+- [ ] Source for additional methodology / project-history pages: the
       [WB OpenKnowledge PTI article](https://openknowledge.worldbank.org/server/api/core/bitstreams/1fa677a7-7c1c-5a39-8705-511a7038e3a2/content).
-- [ ] Update `_pkgdown.yml` to add grouped article navigation per arch-04
-      §"_pkgdown.yml Updates".
-- [ ] Add a GitHub Action for pkgdown build & GitHub Pages deploy.
+- [x] Update `_pkgdown.yml` to add grouped article navigation per arch-04
+      §"_pkgdown.yml Updates" (landed via PR #63).
+- [x] Add a GitHub Action for pkgdown build & GitHub Pages deploy
+      (landed via PR #63).
+- [x] Validator UX pass: cli output + structured return
+      (`list(status, summary, issues)`) + `error_on_fail` parameter
+      (PR-B, per arch-06 §6 — minimal subset of issue
+      [#7](https://github.com/worldbank/devPTIpack/issues/7); CSV /
+      auto-metadata / Shiny upload module deferred).
+- [x] arch-09 PR #B — `app_validate_shp(shp)` exported (issue
+      [#80](https://github.com/worldbank/devPTIpack/issues/80)):
+      standalone Shiny launcher for visual shapefile inspection,
+      renders leaflet map with one toggleable layer per admin level
+      and the `validate_geometries()` summary in a sidebar; 12-test
+      Tier-1+Tier-2 file (`tests/testthat/test-app-validate-shp.R`).
+- [x] arch-09 PR #C — `app_validate_metadata(shp_dta, inp_dta)`
+      exported (issue
+      [#81](https://github.com/worldbank/devPTIpack/issues/81)):
+      standalone Shiny launcher running both validators with
+      `error_on_fail = FALSE`, surfacing their statuses in a sidebar,
+      and embedding the existing `mod_dta_explorer2_*` Data Explorer
+      for visual indicator inspection; 13-test Tier-1+Tier-2 file
+      (`tests/testthat/test-app-validate-metadata.R`).
+- [x] arch-09 template smoke gate — Tier-1 integration test
+      (`tests/testthat/test-template-integration.R`, 34 expectations,
+      ~6 s) that gates #83 by walking the template end-to-end:
+      `create_new_pti()` → render Step 01 → `validate_geometries()` →
+      `validate_metadata()` (simple + advanced xlsx) → `app_validate_*()`
+      smoke → `launch_pti()` smoke. Issue
+      [#82](https://github.com/worldbank/devPTIpack/issues/82).
+- [x] arch-09 PR #D — `compile_pti_data(shp_path, metadata_paths,
+      output_dir, error_on_fail)` exported (issue
+      [#83](https://github.com/worldbank/devPTIpack/issues/83)):
+      merges 1+ intermediate metadata xlsx files, writes canonical
+      `metadata.xlsx` + `shapefiles.zip` + `pti-metadata.pdf`, runs
+      both validators on the combined inputs, prints a verbose CLI
+      summary, returns the validator-style structured result.
+      `inst/metadata.Rmd` rewritten — parameterised, dropped
+      `pacman` / `here` / heavy plotting stack; one-map-per-indicator
+      using `gg_admin_list()` + ggplot2. `inst/template_pti/05-compile.qmd`
+      now a working step (no longer a stub). `DESCRIPTION` Imports
+      gains `zip (>= 2.3)`. 23-test file
+      (`tests/testthat/test-compile-pti-data.R`).
 - [ ] Confirm `R CMD check` builds vignettes cleanly.
 - [ ] **After this phase:** add `shinytest2` automation for Tier 3.
+
+### arch-09 documentation redesign (PRD [#77](https://github.com/worldbank/devPTIpack/issues/77))
+
+- [x] Restructure `_pkgdown.yml` navbar to "About / PTI Methodology / Build a PTI"
+      with Steps 0–6 dropdown (arch-09 §2, [#78](https://github.com/worldbank/devPTIpack/issues/78)).
+- [x] Drop manual `reference:` groupings from `_pkgdown.yml` (arch-09 §1, §7.1);
+      `@family`-tag migration tracked in [#75](https://github.com/worldbank/devPTIpack/issues/75).
+- [x] Create 8 stub vignettes in `vignettes/articles/` (Steps 0–6 + `overview-paper`)
+      per arch-09 §3–§4 ([#78](https://github.com/worldbank/devPTIpack/issues/78)).
+  - Issue #78 — PR draft on `docs/navbar-restructure` (commit pending stop-hook autodraft).
+- [x] arch-09 PR #E — write Steps 0, 1, 2 (stub), 3 vignette prose
+      (issue [#84](https://github.com/worldbank/devPTIpack/issues/84)):
+      Rwanda worked example throughout, `eval=FALSE` code blocks,
+      condensed column-requirement tables in Steps 1 and 3 with links
+      to `dataprep.qmd`, advanced multi-level subsection in Step 1,
+      simple + multi-level walkthroughs in Step 3, both validator UX
+      flows (`validate_*` + `app_validate_*`) wired into Steps 1 and 3.
+- [x] arch-09 PR #F — rewrite `build-pti.qmd` overview + write Steps 5–6 vignettes
+      (issue [#85](https://github.com/worldbank/devPTIpack/issues/85)):
+      `build-pti.qmd` collapsed from 9-section walkthrough to short journey-map
+      overview (input contract table, < 5-line Rwanda quickstart, 7-step journey
+      table linking out, `00-master.R` pointer, where-to-start FAQ); Step 5
+      written against the merged `compile_pti_data()` (inputs / outputs / CLI
+      summary / structured return / failure-recovery flow / pre-launch checklist
+      / `launch_pti()` tab tour); Step 6 written end-to-end (deployment-target
+      table, permissions setup, CLI + UI walkthroughs, post-deploy permissions
+      + custom URL, optional GitHub Pages, help links).
+- [x] arch-09 final integration audit — pkgdown links, R CMD check,
+      user sign-off (issue [#86](https://github.com/worldbank/devPTIpack/issues/86)).
+      Automated checks: `pkgdown::build_site()` clean; all cross-references
+      resolve; 26/26 R code blocks across 8 vignettes parse; NAMESPACE consistent;
+      `R CMD check` 0 errors / 0 warnings / 3 notes (down from 1/2/4 — remaining
+      notes pre-existing). Real bug found and fixed: `inst/template_pti/05-compile.qmd`
+      had `#| eval: false` so `00-master.R`'s Step 05 silently no-op'd despite
+      PR #98's claim. End-to-end smoke now produces all 4 expected `app-data/`
+      artefacts.
+- [x] Companion issue §7.2 — Rwanda package datasets
+      (issue [#76](https://github.com/worldbank/devPTIpack/issues/76)):
+      added `data/rwa_shp.rda` (3 layers, 36 polygons) and
+      `data/rwa_mtdt_full.rda` (3 indicators across 2 pillars), both
+      compiled by `data-raw/generate-rwa-package-data.R` from the
+      template's bundled GeoJSONs + synthetic xlsx; `R/data.R` documents
+      both with `@format`, `@source`, `@examples`. Migrated 11 exported
+      functions' `@examples` blocks to use Rwanda data
+      (`launch_pti{,_onepage}`, `run_pti_pipeline`, `gg_admin_list`,
+      `get_rand_weights`, `get_all_weights_combs`, `get_pti_weights_export`,
+      `get_shape`, `validate_geometries`, `app_validate_shp`,
+      `app_validate_metadata`). Updated `.claude/rules/roxygen-documentation.md`
+      + `.claude/CLAUDE.md` to prefer `rwa_*` for new examples. Ukraine
+      datasets unchanged — test suite continues to use them.
+- [x] Companion issue §7.1 — `@family`-tag migration + reference-page
+      restructure (issue [#75](https://github.com/worldbank/devPTIpack/issues/75)):
+      added `@family` tags to all 37 exported functions + 4 datasets
+      (41 inserts across 25 files), organised into 10 concept groups
+      (`pti-launch` / `pti-pipeline` / `data-input` / `weights` /
+      `data-export` / `validation` / `visualisation` / `shiny-modules` /
+      `package-utilities` / `sample-data`). Added a `reference:` block
+      to `_pkgdown.yml` driven by `has_concept()` selectors — the
+      reference index page now auto-groups by family with descriptive
+      titles. Applied `@inheritParams` to collapse the `error_on_fail`
+      / `shp_path` / `mtdt_path` doc duplication across `validate_*`
+      siblings (3 sites). `R CMD check` stays at 0 / 0 / 3.
+- [x] R CMD check NOTES cleanup (flagged in PR #99 audit, deferred as
+      follow-up): License stub fixed (LICENSE -> LICENSE.md with full
+      MIT text; new LICENSE DCF stub with YEAR + COPYRIGHT HOLDER);
+      removed `inst/template_pti/app-data/.gitkeep` (Step 1/3/5
+      `dir.create()` calls handle the directory creation on first
+      run); cleaned 7 unused Imports — removed 4 truly-unused
+      (`bsplus`, `config`, `tippy`, `pkgload`) and moved 3 to Suggests
+      (`testthat`, `here`, `quarto`). **`R CMD check` is now 0 errors
+      / 0 warnings / 0 notes.** Suite stays at PASS 803 / FAIL 0 /
+      SKIP 1 / ERROR 12 (environmental).
 
 ---
 
@@ -742,6 +866,8 @@ Lifted from arch-00 §"End-State Goals":
 | [#69](https://github.com/worldbank/devPTIpack/pull/69) | 2026-05-07 | **Phase 2.5 §12 (bug-fix #3)** | §12 bug #3 fixed -- `R/plot_pti_helpers.R::filter_admin_levels` now treats admin keys and display values symmetrically inside the `keep()` predicate. Pre-fix: the gating branch (L116-117) entered when `to_fltr` matched either keys or values, but the inner `keep(function(x) {x$admin_level %in% to_fltr})` predicate compared `x$admin_level` (the display value, e.g. `"Oblast"`) against `to_fltr` only -- so `to_fltr = "admin1"` (a bare key) entered the branch but selected 0 entries. Fix: extend the predicate to `x$admin_level %in% to_fltr | names(x$admin_level) %in% to_fltr`. Mirrors how `mod_get_admin_levels_srv` already filters its own internal state at L237-238 (`names(.) %in% default_adm_level | (.) %in% default_adm_level`). Test pin in `tests/testthat/test-plot-helpers.R` flipped from `expect_equal(length(filter_admin_levels(preplot, "admin1")), 0L)` (1 expectation, asserting the bug) to a sharper symmetric-contract assertion `expect_equal(by_name, by_value)` (1 expectation) -- key-only and value-only filters must produce the *same* result, not just the same length. `test_that()` description renamed from `"name-only filter returns 0 entries (PINNED)"` -> `"name-only filter matches the same entries as value-only"`; comment block rewritten to describe the contract instead of the past bug. Reviewer caution applied: original proposal used a length-check + `for` loop; tightened on r-package-reviewer's nice-to-have to a direct equality check that more sharply expresses the symmetric contract. Stripped the 6-line `@note Pinned bug (PR #25)` block from the function's roxygen. Caller-graph: 2 production call sites (`R/mod_dta_explorer2.R:99`, `R/mod_plot_pti2.R:62`), both pass `sel_adm_levels()` (a named character vector from `mod_get_admin_levels_srv`); the values branch already matched in production so this fix is a no-op on the deployed app and only changes behaviour for direct callers (tests + future callers). No NAMESPACE delta. Folded in nothing -- prior PR #68 self-swapped its TBD before merge. Suite stays at 702 PASS (FAIL=0, SKIP=1) -- 1 `expect_equal` swapped 1-for-1, no count delta. |
 
 | [#70](https://github.com/worldbank/devPTIpack/pull/70) | 2026-05-07 | **Phase 2.5 §12 (bug-fix #12 -- closes the sprint)** | §12 bug #12 fixed -- `R/supporting-goe-prep.R::gg_admin_list` default `mt = zam_bounds_simple` flipped to `mt = NULL` with an explicit `stop("'mt' is required: ...", call. = FALSE)` guard at the top of the function (option A from the scope-proposal gate; B = make `mt` required-no-default; C = default to `ukr_shp` -- both rejected, A gives the clearest failure mode without coupling to a bundled dataset). Pre-fix: calling `gg_admin_list(dta, metadata)` without explicit `mt` errored at runtime with `object 'zam_bounds_simple' not found` because `zam_bounds_simple` doesn't exist anywhere in `R/`, `data/`, or `inst/`. The broken default was silenced via `R/devPTIpack-package.R::globalVariables()` so R CMD check stayed clean -- this PR also drops `"zam_bounds_simple"` from `globalVariables()`. Updated `@param mt` doc to mention required-ness. New Tier-1 test file `tests/testthat/test-gg-admin-list.R` (2 test_that blocks, 8 expectations): missing `mt` -> `expect_error(regexp = "mt.*required")`; with `mt = ukr_shp` -> non-empty list of ggplot objects. Caller-graph: 2 production callers (`inst/metadata.Rmd:129`, `inst/sample_pti/app-data/pti-metadata-pdf.Rmd:108`) both pass `mt = bounds` explicitly -- pure latent bug. Two commented-out demo lines in those Rmds (omitting `mt`) almost certainly date from someone hitting this exact error and commenting them out. **This PR closes the Phase 2.5 §12 bug-fix sprint -- 14 of 14 bugs fixed across 14 PRs (#56, #57, #59, #60 [#7 + #14], #61, #62, #64, #65, #66, #67, #68, #69, plus this one).** Folded in nothing -- prior PR #69 self-swapped its TBD before merge. Suite goes from 702 PASS -> 710 PASS (FAIL=0, SKIP=1) -- net +8 expectations from the new test file. |
+
+| [#79-draft](https://github.com/worldbank/devPTIpack/issues/79) | 2026-05-08 | **arch-09 PR #A2 — template scaffold + Rwanda data (draft)** | Issue #79 -- branch `feat/template-scaffold` off `eb-docs-pkgdown`. Built out `inst/template_pti/` per arch-09 §5: downloaded Rwanda GeoJSONs from geoBoundaries (Adm0=1 / Adm1=5 / Adm2=30 polygons, CC-BY 4.0); added `inst/template_pti/data-raw/generate-synthetic-metadata.R` (seeded `set.seed(42)`, deterministic; verified by re-run + `identical()` round-trip); generated `sample-metadata-adm1.xlsx` and `sample-metadata-adm1-adm2.xlsx` (3 indicators: poverty_rate, literacy_rate, road_density). Added template `.qmd` files: `01-shapes.qmd` (working: load GeoJSONs, attach `admin<N>Pcod`/`admin<N>Name`/`area`, centroid spatial-join to derive admin1 parent on admin2, `validate_geometries` -> `app-data/shapes.rds`); `02a-user-zonal-stats.qmd` (optional stub); `03-metadata.qmd` (working: `fct_template_reader` + `validate_metadata` against `app-data/shapes.rds`, copies workbook to `app-data/metadata-user.xlsx`); `04-hex-data.qmd` (HEX-API stub); `05-compile.qmd` (stub pending #83); `06-deploy.R` (manual `rsconnect::deployApp()`). Added `00-master.R` orchestrator (renders 01 + 03 by default; 02a / 04 / 05 / 06 commented). Updated `inst/template_pti/app.R` to load from `app-data/shapes.rds` + `app-data/metadata.xlsx` with the bundled `ukr_*` data shown as commented Option B fallback. Added `README.md` (file order, links to all 7 website tutorials, `app-data/` git-tracking warning, deferred-TODO list). Updated `inst/template_pti/.gitignore` to track `app-data/` + `data-raw/` by default. Added force-include exception in top-level `.gitignore` so `inst/template_pti/data-raw/` ships (overrides the package-wide `data-raw/` ignore). Smoke-tested: `create_new_pti(tempfile())` copies all 19 expected files; `00-master.R` Steps 01+03 render end-to-end via knitr::purl+source fallback (quarto subprocess fails on `library(devPTIpack)` outside an installed package -- documented limitation, not a defect of the template), producing `app-data/shapes.rds` (3.5 MB) + `app-data/metadata-user.xlsx`; `validate_geometries()` and `validate_metadata()` both return `status = "pass"` with 0 failures / 0 warnings on Rwanda inputs. Divergence noted in changelog: validator app calls (`app_validate_shp` in 01, `app_validate_metadata` in 03) commented pending #80 / #81; `compile_pti_data()` in 05-compile.qmd commented pending #83; 00-master.R does not render 04 (HEX API) or 05 by default. NOT pushed; commit on `feat/template-scaffold` only -- per the issue brief, no PR opened. |
 
 Suite total after this branch: **0 failures / 1 skip / 710 PASS** (`testthat::test_local()`; bug-fix PR adds a new Tier-1 test file with 2 test_that blocks / 8 expectations covering the `mt`-required error and the bundled-data success path).
 

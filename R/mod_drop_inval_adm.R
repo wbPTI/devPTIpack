@@ -22,6 +22,7 @@
 #' @importFrom shiny moduleServer eventReactive observeEvent showNotification isTruthy
 #' @importFrom purrr map_lgl imap keep
 #' @importFrom stringr str_c
+#' @family validation
 #' @export
 #'
 #' @examples
@@ -114,6 +115,7 @@ mod_drop_inval_adm <- function(id, dta, wt_dta){
 #' @importFrom tidyr unnest
 #' @importFrom tibble as_tibble
 #' @importFrom dplyr select distinct anti_join
+#' @family data-export
 #' @export
 #'
 #' @examples
@@ -176,6 +178,7 @@ get_vars_un_avbil <- function(ind_list, admin_levels = NULL) {
 #'
 #' @importFrom purrr map
 #' @importFrom dplyr pull inner_join filter
+#' @family weights
 #' @export
 #'
 #' @examples
@@ -230,6 +233,7 @@ get_min_admin_wght <- function(un_available_vars, wght_list) {
 #' @return The input list with offending elements removed.
 #'
 #' @importFrom purrr imap keep
+#' @family validation
 #' @export
 #'
 #' @examples

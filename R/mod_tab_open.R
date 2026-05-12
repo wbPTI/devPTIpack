@@ -24,6 +24,7 @@
 #'   tab open) or a `POSIXct` timestamp updated on each first open.
 #'
 #' @importFrom shiny moduleServer reactiveVal observeEvent isTruthy
+#' @family shiny-modules
 #' @export
 #'
 #' @examples

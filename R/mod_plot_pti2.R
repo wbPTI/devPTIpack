@@ -35,6 +35,7 @@
 #'   share the rendered data (e.g. the data-export module).
 #'
 #' @importFrom shiny reactive req
+#' @family shiny-modules
 #' @export
 mod_plot_pti2_srv <- function(id, shp_dta, map_dta, wt_dta, active_tab, target_tabs,
                               default_adm_level = NULL,
