@@ -1,10 +1,19 @@
 #' Build an H3 hexagonal grid covering a country boundary
 #'
 #' Constructs a uniform H3 hexagonal grid as a standard `sf` tibble
-#' conforming to the `admin9_Hexagon` layer contract (`admin0Pcod`,
-#' `admin9Pcod`, `admin9Name`, `area`, `geometry`). The output passes
-#' [validate_geometries()] without exceptions and can be assigned
-#' directly to a slot in the deployer's `my_shp` list.
+#' conforming to the basic `admin9_Hexagon` column contract
+#' (`admin0Pcod`, `admin9Pcod`, `admin9Name`, `area`, `geometry`).
+#'
+#' This is the **first** of the two-step Step-1 hex workflow: this
+#' function produces the partial layer; `make_admin_lookup()` (arch-10
+#' §3, issue
+#' \href{https://github.com/worldbank/devPTIpack/issues/109}{#109})
+#' then populates the parent Pcod columns (`admin1Pcod`, `admin2Pcod`,
+#' ...) via centroid-in-polygon joins so the layer satisfies the full
+#' cascade rule. Calling [validate_geometries()] on a `my_shp` list
+#' that contains `make_hex_grid()`'s raw output but no parent Pcods
+#' on the hex layer will fail the cascade check -- this is expected.
+#' Use `make_admin_lookup()` to complete the cascade before validation.
 #'
 #' The algorithm has three steps, only two of which involve spatial
 #' operations:
@@ -49,10 +58,10 @@
 #'   -- hexagons have no human name), `area` (numeric, km²),
 #'   `geometry` (`sfc_POLYGON`).
 #'
-#' @seealso [validate_geometries()] for the structural validator the
-#'   output satisfies; [make_admin_lookup()] for the cascade builder
-#'   that wires hex cells into the parent admin layers (arch-10 §3,
-#'   issue \href{https://github.com/worldbank/devPTIpack/issues/109}{#109}).
+#' @seealso [make_admin_lookup()] (forthcoming, arch-10 §3) for the
+#'   cascade builder that wires hex cells into the parent admin layers;
+#'   [validate_geometries()] for the structural validator the
+#'   `make_admin_lookup()`-enriched layer satisfies.
 #'
 #' @importFrom sf st_union st_geometry st_crs st_transform st_within
 #'   st_area sf_use_s2 st_as_sf
@@ -65,18 +74,21 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' data(rwa_shp)
 #'
-#' # Build an H3-6 hex grid over Rwanda from the country boundary.
-#' hex <- make_hex_grid(rwa_shp$admin0_Country, resolution = 6)
-#' nrow(hex)               # ~750 cells for Rwanda at H6
+#' # Build a coarse H3-5 hex grid over Rwanda (~100 cells; fast for
+#' # examples). The default is resolution = 6 (~500 cells, ~40 km^2);
+#' # use 7 for ~5 km^2 cells on small countries or high-detail apps.
+#' hex <- make_hex_grid(rwa_shp$admin0_Country, resolution = 5)
+#' nrow(hex)
 #' head(hex)
 #'
 #' # The function tolerates multi-row input: provinces are unioned to
 #' # the country envelope before tiling.
-#' hex_from_provinces <- make_hex_grid(rwa_shp$admin1_Province, resolution = 6)
-#' }
+#' hex_from_provinces <- make_hex_grid(
+#'   rwa_shp$admin1_Province,
+#'   resolution = 5
+#' )
 make_hex_grid <- function(country_polygon, resolution = 6) {
 
   # ----- 1. Input validation ------------------------------------------------
