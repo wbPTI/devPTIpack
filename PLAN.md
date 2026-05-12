@@ -829,10 +829,26 @@ package-data rebuild. Spec:
       canonical 4-layer `make_hex_grid()` -> `make_admin_lookup()`
       workflow, the near-constant `area` caveat, and the
       `INCLUDE_HEX_IN_APP` escape hatch for large countries.
-- [ ] arch-10 §5 -- rebuild `rwa_shp` with hex layer; propagate
+- [x] arch-10 §5 -- rebuild `rwa_shp` with hex layer; propagate
       `shapes.rds` through Steps 2-5 (issue
-      [#114](https://github.com/worldbank/devPTIpack/issues/114);
-      blocked by #109 + #111).
+      [#114](https://github.com/worldbank/devPTIpack/issues/114)).
+      `data-raw/generate-rwa-package-data.R` now uses
+      `make_hex_grid()` + `make_admin_lookup()` and computes area
+      in km^2 via `units::set_units(...,"km^2")`. Regenerated
+      `data/rwa_shp.rda` -> 4 layers (admin0/1/2/9_Hexagon), 543
+      polygons total (1 country + 5 provinces + 30 districts + 507
+      H3-6 hex cells). R/data.R roxygen updated to document the
+      4-level structure + km^2 area unit. Step 2 vignette: loads
+      from `shapes.rds`, uses `admin2Pcod` as join key, gains a
+      hex-extraction example with population vs area weighting
+      note. Step 3 vignette: new callout that an `admin9_Hexagon`
+      metadata sheet is required when Step 1 built a hex layer;
+      cross-ref to Step 4 / arch-11 for the registry-driven hex
+      pipeline that produces it. Step 5 vignette: callout on
+      `admin9_Hexagon.geojson` shipping in `shapefiles.zip` by
+      default + file-size controlled by resolution choice only
+      (`st_simplify()` is meaningless for regular hex cells);
+      polygon counts in the CLI example updated to 543.
 
 ---
 

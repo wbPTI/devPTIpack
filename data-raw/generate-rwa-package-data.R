@@ -4,9 +4,10 @@
 # workbook) shipped under inst/template_pti/sample-data/ into
 # package-level datasets:
 #
-#   data/rwa_shp.rda          -- named list of 3 sf tibbles
+#   data/rwa_shp.rda          -- named list of 4 sf tibbles
 #                                (admin0_Country, admin1_Province,
-#                                admin2_District). Mirrors ukr_shp.
+#                                admin2_District, admin9_Hexagon).
+#                                Mirrors ukr_shp's 4-level shape.
 #   data/rwa_mtdt_full.rda    -- parsed metadata list as produced by
 #                                fct_template_reader(). Mirrors
 #                                ukr_mtdt_full.
@@ -28,57 +29,66 @@ devtools::load_all(".", quiet = TRUE)
 sample_dir <- "inst/template_pti/sample-data"
 stopifnot(dir.exists(sample_dir))
 
+# Hex grid resolution -- mirrors HEX_RESOLUTION default in
+# inst/template_pti/00-master.R. H3-6 ~36 km^2 per cell; ~500 cells
+# over Rwanda after the centroid-in-polygon retention.
+HEX_RESOLUTION <- 6L
+
 # ---------------------------------------------------------------------------
-# 1. rwa_shp -- mirrors ukr_shp structure
+# 1. rwa_shp -- 4 layers: admin0 / admin1 / admin2 / admin9_Hexagon
 #
-# Lifted from inst/template_pti/01-shapes.qmd: read the geoBoundaries
-# GeoJSONs, attach admin<N>Pcod / admin<N>Name / area, derive admin1
-# parent of each admin2 polygon via a centroid-in-polygon spatial join,
-# assemble the named list.
+# Pipeline (matches Step 1 vignette §E + §F):
+#   - Load + rename each admin layer (admin<N>Pcod / admin<N>Name /
+#     area in km^2).
+#   - Build admin9_Hexagon via make_hex_grid() at HEX_RESOLUTION.
+#   - Assemble named list; call make_admin_lookup() to populate every
+#     parent admin<k>Pcod via centroid-in-polygon joins (replaces the
+#     previous manual centroid-join code in this script).
 
 adm0_raw <- read_sf(file.path(sample_dir, "rwa_adm0.geojson"))
 adm1_raw <- read_sf(file.path(sample_dir, "rwa_adm1.geojson"))
 adm2_raw <- read_sf(file.path(sample_dir, "rwa_adm2.geojson"))
 
 adm0 <- adm0_raw |>
+  st_transform(4326) |>
   mutate(
     admin0Pcod = "RWA",
     admin0Name = shapeName,
-    area       = as.numeric(st_area(geometry))
+    area       = as.numeric(units::set_units(st_area(geometry), "km^2"))
   ) |>
   select(admin0Pcod, admin0Name, area, geometry)
 
 adm1 <- adm1_raw |>
+  st_transform(4326) |>
   mutate(
-    admin0Pcod = "RWA",
     admin1Pcod = shapeID,
     admin1Name = shapeName,
-    area       = as.numeric(st_area(geometry))
+    area       = as.numeric(units::set_units(st_area(geometry), "km^2"))
   ) |>
-  select(admin0Pcod, admin1Pcod, admin1Name, area, geometry)
-
-adm2_centroids <- suppressWarnings(st_centroid(adm2_raw))
-parent_lookup  <- suppressWarnings(
-  st_join(adm2_centroids, adm1_raw, join = st_within, suffix = c("", "_p"))
-) |>
-  st_drop_geometry() |>
-  transmute(child_id = shapeID, admin1Pcod = shapeID_p)
+  select(admin1Pcod, admin1Name, area, geometry)
 
 adm2 <- adm2_raw |>
-  left_join(parent_lookup, by = c("shapeID" = "child_id")) |>
+  st_transform(4326) |>
   mutate(
-    admin0Pcod = "RWA",
     admin2Pcod = shapeID,
     admin2Name = shapeName,
-    area       = as.numeric(st_area(geometry))
+    area       = as.numeric(units::set_units(st_area(geometry), "km^2"))
   ) |>
-  select(admin0Pcod, admin1Pcod, admin2Pcod, admin2Name, area, geometry)
+  select(admin2Pcod, admin2Name, area, geometry)
 
+# Hex layer covering the country envelope.
+adm9 <- make_hex_grid(adm0, resolution = HEX_RESOLUTION)
+
+# Assemble + cascade. make_admin_lookup populates admin0Pcod /
+# admin1Pcod on every sub-admin layer (and admin0Pcod / admin1Pcod /
+# admin2Pcod on the hex layer) via centroid-in-polygon joins.
 rwa_shp <- list(
   admin0_Country  = adm0,
   admin1_Province = adm1,
-  admin2_District = adm2
+  admin2_District = adm2,
+  admin9_Hexagon  = adm9
 )
+rwa_shp <- make_admin_lookup(rwa_shp)
 
 # Sanity: validate_geometries should pass on the assembled list.
 chk <- validate_geometries(rwa_shp, error_on_fail = FALSE)
