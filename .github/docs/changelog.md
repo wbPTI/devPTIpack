@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-05-12 (arch-10 §3 -- `make_admin_lookup()`; closes #109)
+
+| Scope  | Change |
+| ------ | ------ |
+| Code   | New exported function `make_admin_lookup(shp_list)` in `R/fct_make_admin_lookup.R` per arch-10 §3. Given a named list of `sf` admin layers (any subset of levels 0-9, any order, including `admin9_Hexagon`), populates every parent `admin<k>Pcod` column on every layer so the resulting list satisfies the cascade rule that the calculation pipeline and `validate_geometries()` depend on. Algorithm: (1) parse `<N>` digit from each `admin<N>_<HumanName>` slot name, sort numerically coarsest -> finest (non-contiguous OK); (2) pre-flight per layer -- error on missing / NA / duplicate `admin<N>Pcod` or `admin<N>Name`, warn + compute `area` in km^2 if absent; (3) iterate parent -> child pairs doing centroid-in-polygon `sf::st_join(..., join = sf::st_within)`; (4) tie-break boundary-ambiguous children at random + warn with count; (5) hard-error on orphans (no parent match); (6) cascade-propagate every ancestor Pcod onto each child. Both spatial steps (`st_centroid`, `st_join`) wrapped in the existing `with_s2_fallback()` helper from `make_hex_grid()`; outer `on.exit()` restores caller's `sf_use_s2()` state. `@family data-input`. The hex layer is treated identically to any other admin layer -- no cascade exceptions (arch-10 §3.4). |
+| Tests  | New `tests/testthat/test-make-admin-lookup.R` -- 19 test blocks / 33 PASS / 1 SKIP at testthat 3.1.2 (skip is the `local_mocked_bindings` s2-fallback test that lands in testthat 3.2.0; CI runs it). Coverage: happy-path enrichment (column contract + ground-truth cascade match against `rwa_shp`); coarsest layer unchanged; out-of-order input sorted; single-layer pass-through; `admin9_Hexagon` full ancestor cascade; non-contiguous levels (admin0/1/9); pre-flight errors (non-sf, missing Pcod/Name, NA, duplicates); warn + km^2 area compute when missing; orphan error on a fake admin2 polygon over open ocean; top-level errors (missing / NULL / non-list / empty / unnamed / non-`admin<N>_` slot); s2-fallback mock retry; s2 state restoration. |
+| Docs   | PLAN.md §7 arch-10 sub-section: #109 box ticked with algorithm summary. Also corrected the prior #108 entry that claimed `make_hex_grid()` output passes `validate_geometries()` -- the raw output is a **partial** layer (no parent Pcods); `make_admin_lookup()` is what completes the cascade before validation. |
+
+`R CMD check` (no --as-cran): **0 errors / 0 warnings / 0 notes**. `R/fct_make_admin_lookup.R` example runs in ~0.3s on the bundled rwa_shp (3 admin levels with cascade columns stripped). `testthat::test_file`: 33 PASS / 1 SKIP for the new file. Other pre-existing 12 environmental `local_mocked_bindings` failures on this box unchanged; CI passes.
+
+---
+
 ## 2026-05-12 (arch-10 §2 -- `make_hex_grid()`; closes #108)
 
 | Scope  | Change |
