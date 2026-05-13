@@ -19,8 +19,8 @@ specific batch (1–6). The batch number must match arch-01 § "Removal Batches"
 1. **Tests are green.** `Rscript -e 'devtools::test()'` must pass against the
    current branch *before* the batch executes. If not, halt and report.
 2. **Branch.** Operating from a sub-branch named `cleanup/batch-N` cut from
-   the integration branch (`koichi-arch-redesign` or current per
-   `.claude/CLAUDE.md`). If the branch isn't clean, halt.
+   `main` (the current integration branch per `.claude/CLAUDE.md`).
+   If the branch isn't clean, halt.
 3. **Permanent-function audit.** Spot-check that every item in the batch
    table appears in arch-01's batch list (not in "Permanent Functions").
 

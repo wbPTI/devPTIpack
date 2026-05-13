@@ -136,11 +136,16 @@ also draft its roxygen at the same time. Phase 3 then sweeps only what's missed.
 
 ### 3.1 Branch strategy (resolved)
 
-- Integration branch: **`koichi-arch-redesign`** off `main`.
-- Sub-branches per phase / batch (e.g. `tests/calc-pipeline-baseline`,
-  `cleanup/batch-1`) PR'd into `koichi-arch-redesign`.
-- Once Phase 1–4 are complete, `koichi-arch-redesign` PRs into `main`.
+- Integration branch: **`main`** (default branch).
+- Sub-branches per phase / batch (e.g. `feat/hex-year-resolver`,
+  `cleanup/batch-1`) PR'd directly into `main`.
 - Each PR keeps `R CMD check` green and updates the changelog and `PLAN.md`.
+- **Historical note (2026-05-12):** arch-redesign work originally
+  accumulated on `koichi-arch-redesign` (and earlier on
+  `eb-docs-pkgdown`). Both were merged into `main` once the redesign
+  was incremental enough to no longer warrant a long-lived
+  integration branch. PRs target `main` from then on; `Closes #N`
+  lines auto-close their issues.
 
 ### 3.2 Tooling — committed under `.claude/` ✓
 
