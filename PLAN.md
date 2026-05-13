@@ -904,9 +904,21 @@ generation. Spec:
       for `years = NULL`; non-interactive errors with actionable
       message). Network-free unit tests (28 PASS / 0 FAIL) via the
       `available_years_lookup` test seam.
-- [ ] arch-11 §"Fetching" -- `fetch_hex_data()` with H5/H6 resolution
+- [x] arch-11 §"Fetching" -- `fetch_hex_data()` with H5/H6 resolution
       bridge (issue [#112](https://github.com/worldbank/devPTIpack/issues/112);
-      blocked by #105 + #109 + #110).
+      blocked by #105 + #109 + #110). New `R/fct_hex_fetch.R`: exported
+      `fetch_hex_data(hex_ids, vars, dataset_loader, available_years_lookup)`.
+      Calls `resolve_years_for_vars()` first; detects H3 resolution via
+      `h3jsr::get_res()`; H6 → direct arrow fetch; H5 → bridge (7 H6
+      children per H5 via `h3jsr::get_children()`, aggregate back using
+      each var's `weight`/`fun`); H4 or lower → error; H7 or higher →
+      error. Both `dataset_loader` and `available_years_lookup` are test
+      seams for network-free Tier-1 tests. Temporal vars pivot long→wide
+      with `<canonical>_<year>` column names. Population column is always
+      first after `hex_id`. Also: `pti_hex_var()` gains `path` and
+      `hex_col` fields (defaults `NA`); `use_hex_vars()` embeds them from
+      the registry source so `fetch_hex_data()` stays YAML-free. 23 PASS /
+      0 FAIL in `tests/testthat/test-hex-fetch.R`.
 - [ ] arch-11 §"Aggregation" -- `aggregate_hex_to_shapes()`
       (issue [#113](https://github.com/worldbank/devPTIpack/issues/113);
       blocked by #112).
