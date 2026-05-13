@@ -5,6 +5,15 @@
 
 ---
 
+## 2026-05-13 (fix -- is_interactive() wrapper to unblock CI on R 4.6)
+
+| Scope | Change |
+| ----- | ------ |
+| Code  | Added `is_interactive()` thin wrapper in `R/fct_hex_year_resolver.R`; `prompt_or_error_for_years()` now calls it instead of `base::interactive()` directly. `base::interactive` is a `.Primitive` and `local_mocked_bindings(.package = "base")` does not intercept calls from within the devPTIpack namespace on R 4.6, causing the two interactive-path tests to hit the non-interactive `stop()` branch and then fail because the captured error message did not match the expected regexp. The wrapper is a plain R function in the devPTIpack namespace, so `local_mocked_bindings(.package = "devPTIpack")` reliably intercepts it. |
+| Tests | Updated both interactive-path tests in `test-hex-year-resolver.R` to mock `devPTIpack:::is_interactive` instead of `base:::interactive`; removed the now-redundant `withr::local_options(rlang_interactive = TRUE)` line from the "returns selected year" test. 28 PASS / 0 FAIL / 2 SKIP locally (still skipped under testthat 3.1.2 as before). |
+
+---
+
 ## 2026-05-12 (arch-11 §"Year resolution" -- year resolver helpers; closes #110)
 
 | Scope | Change |
