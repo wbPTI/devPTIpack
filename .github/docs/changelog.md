@@ -5,6 +5,20 @@
 
 ---
 
+## 2026-05-13 (arch-11 §"Fetching" -- fetch_hex_data() + H5/H6 bridge; closes #112)
+
+| Scope | Change |
+| ----- | ------ |
+| Code  | New `R/fct_hex_fetch.R` with exported `fetch_hex_data(hex_ids, vars, dataset_loader = NULL, available_years_lookup = NULL)`. Calls `resolve_years_for_vars()` to stamp resolved years first. Detects H3 resolution with `h3jsr::get_res()`; source resolution is always H6 for the current registry. H6 `hex_ids` → direct `arrow::open_dataset()` fetch with predicate pushdown on the hex column. H5 `hex_ids` → transparent H5→H6→H5 bridge: `h3jsr::get_children()` expands each H5 to its 7 H6 children, data fetched at H6 then aggregated back using each variable's `weight`/`fun` (population always sums; `weight="pop"` uses `weighted.mean`; `weight="area"` is equivalent to `weight="none"` for uniform H6 cells). H4 or lower → error (unsupported). H7 or higher → error (finer than source). Temporal variables fetched long and pivoted wide with `tidyr::pivot_wider`; output columns named `<canonical_name>_<year>`. Population column relocated to first position after `hex_id`. Two test seams: `dataset_loader` (replaces `arrow::open_dataset` for network-free tests) and `available_years_lookup` (passed through to `resolve_years_for_vars`). Large grid (>10k cells) emits a `cli::cli_warn()`. |
+| Code  | `pti_hex_var()` S3 constructor gains two optional fields: `path = NA_character_` and `hex_col = NA_character_`. Added to the internal structure list. Defaults to `NA` for hand-constructed descriptors (test fixtures); populated by `use_hex_vars()` from the source entry. No breaking change — existing `pti_hex_var()` call sites pass these as `NA`. |
+| Code  | `use_hex_vars()` in `R/fct_hex_registry.R`: embeds `path` and `hex_col` from the source descriptor onto each `pti_hex_var` it returns (for the requested vars, for the explicitly-promoted population, and for the auto-injected population). Enables `fetch_hex_data()` to group variables by source parquet without reading the registry YAML. |
+| Tests | New `tests/testthat/test-hex-fetch.R` (12 test blocks / 23 PASS / 0 FAIL). Covers: basic H6 direct fetch; population-first column order; correct numeric values; temporal pivot to `<canonical>_<year>`; H5→H6 bridge with sum aggregation; bridge with two H5 cells aggregated independently; H7 resolution error; H4 resolution error; large hex set (>10k) warning; empty `hex_ids` error; empty `vars` error; non-pti_hex_var in vars error. All tests are network-free via the `dataset_loader` and `available_years_lookup` test seams. Real h3jsr is used for resolution detection and child expansion. |
+| Docs  | PLAN.md §8 — ticked the arch-11 §"Fetching" / #112 box with a 9-line summary of the implementation. |
+
+`R CMD check` (no tests, no vignettes, no manual): **0 errors / 1 warning (pre-existing R-version dependence) / 2 notes (pre-existing)**. `devtools::load_all()` clean. All hex-pipeline test files pass: test-hex-source.R (33 PASS), test-hex-registry.R (40 PASS — existing), test-hex-year-resolver.R (28 PASS / 2 SKIP), test-hex-fetch.R (23 PASS).
+
+---
+
 ## 2026-05-13 (fix -- is_interactive() wrapper to unblock CI on R 4.6)
 
 | Scope | Change |

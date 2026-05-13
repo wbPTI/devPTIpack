@@ -273,6 +273,8 @@ use_hex_vars <- function(..., years = NULL) {
       # the internal-injected slot (override the internal=TRUE tag).
       explicit_pop <- pop_var_obj
       explicit_pop$internal <- FALSE
+      explicit_pop$path    <- pop_src$path
+      explicit_pop$hex_col <- pop_src$hex_col
       resolved[[name]] <- explicit_pop
       pop_injected <- list()
       next
@@ -290,7 +292,9 @@ use_hex_vars <- function(..., years = NULL) {
     for (entry in occ) {
       src <- sources[[entry$src_id]]
       v <- src$vars[[name]]
-      v$years <- if (is.null(years)) v$years else years
+      v$years  <- if (is.null(years)) v$years else years
+      v$path   <- src$path
+      v$hex_col <- src$hex_col
 
       out_name <- if (length(occ) > 1L) {
         paste0(name, "__", make_safe_label(entry$src_label))
@@ -300,6 +304,12 @@ use_hex_vars <- function(..., years = NULL) {
       v$canonical_name <- out_name
       resolved[[out_name]] <- v
     }
+  }
+
+  # Embed path/hex_col on the auto-injected population descriptor too.
+  if (length(pop_injected) > 0L) {
+    pop_injected[[1L]]$path    <- pop_src$path
+    pop_injected[[1L]]$hex_col <- pop_src$hex_col
   }
 
   # Append the auto-injected population if the deployer didn't ask
