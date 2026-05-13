@@ -1,0 +1,108 @@
+# devPTIpack hex variable registry.
+#
+# Source of truth for online parquet endpoints accessible via
+# fetch_hex_data() and the wider arch-11 hex pipeline. Edit this file
+# to add a new variable; no R code changes needed for registry-only
+# entries.
+#
+# Schema (per arch-11 §Registry):
+#
+#   registry_version: semver-ish string. Captured in the `general`
+#     sheet of metadata-hex.xlsx for traceability.
+#
+#   sources: map keyed by source-id (used to disambiguate variables
+#     that share a canonical name across sources via a `__<label>`
+#     suffix). Each source:
+#       label:    human-readable name shown in list_hex_vars().
+#       path:     HTTPS URL of the parquet file (or a directory in the
+#                 partitioned-parquet case, eventually).
+#       hex_col:  column name in the parquet that carries the H3 cell
+#                 index.
+#       pop_var:  canonical-name of the variable in this source that
+#                 *is* population. EXACTLY ONE source across the file
+#                 may declare a non-null pop_var. Read by
+#                 use_hex_vars() to auto-inject population.
+#       variables: map keyed by canonical-name. Each variable:
+#         source_col:           column name in the parquet.
+#         var_name:             display name (glue template if
+#                               time_col is set, e.g. "NTL ({year})").
+#         var_description:      long-form description for the atlas.
+#         var_units:            e.g. "count", "%", "nW/cm^2/sr".
+#         pillar_group:         integer pillar code, or null when the
+#                               variable is generic (the deployer
+#                               assigns at build_hex_metadata() time).
+#         pillar_name:          pillar label paired with pillar_group.
+#         legend_revert_colours: true when high values are bad (e.g.
+#                               poverty, flood exposure).
+#         time_col:             column carrying the year/period, or
+#                               null for non-temporal snapshots.
+#         available_years:      hint shown in list_hex_vars(); not
+#                               authoritative -- get_available_years()
+#                               queries the live parquet for ground
+#                               truth.
+#         weight:               aggregation weight hint -- one of
+#                               "pop" / "area" / "none". The deployer
+#                               picks the actual strategy at
+#                               aggregate_hex_to_shapes() time; this
+#                               value is documentation only.
+#         fun:                  aggregation function hint -- one of
+#                               "mean" / "median" / "sum" / "min" /
+#                               "max". Documentation only.
+#         fltr_exclude_pti:     true to keep the variable out of the
+#                               composite PTI score by default
+#                               (display-only).
+
+registry_version: "0.1.0"
+
+sources:
+
+  wb_flood_exposure:
+    label: "WB Space2Stats Flood Exposure"
+    # World Bank Data Catalog, Space2Stats Database:
+    #   https://datacatalog.worldbank.org/int/search/dataset/0066820/Space2Stats-Database
+    # Schema verified 2026-05-12 via
+    #   arrow::open_dataset(<downloaded copy>) |> arrow::schema()
+    #   -> hex_id: string; pop: float; pop_flood: double; pop_flood_pct: double
+    # ~3.67M rows, ~92 MB, H3-6 global coverage, single non-temporal snapshot.
+    path: "https://datacatalogfiles.worldbank.org/ddh-published/0066820/DR0095272/flood_exposure_15cm_1in100.parquet"
+    hex_col: "hex_id"
+    pop_var: "population"
+
+    variables:
+
+      population:
+        source_col: "pop"
+        var_name: "Population"
+        var_description: |
+          Total population per H3-6 cell, derived from WorldPop and
+          packaged into the World Bank Space2Stats Database. Used as
+          the canonical population weight for aggregation across the
+          hex pipeline.
+        var_units: "count"
+        pillar_group: ~
+        pillar_name: ~
+        legend_revert_colours: false
+        time_col: ~
+        available_years: ~
+        weight: "none"
+        fun: "sum"
+        fltr_exclude_pti: true
+
+      flood_exposure_15cm_1in100:
+        source_col: "pop_flood"
+        var_name: "Flood Exposure (15 cm, 1-in-100)"
+        var_description: |
+          Number of people exposed to flood depth at least 15 cm in a
+          1-in-100 year return-period event. Combines WorldPop
+          population with the Fathom 2.0 flood-hazard rasters at H3-6.
+          Higher values indicate greater exposure -- the legend should
+          run high = worse.
+        var_units: "count"
+        pillar_group: ~
+        pillar_name: ~
+        legend_revert_colours: true
+        time_col: ~
+        available_years: ~
+        weight: "none"
+        fun: "sum"
+        fltr_exclude_pti: false

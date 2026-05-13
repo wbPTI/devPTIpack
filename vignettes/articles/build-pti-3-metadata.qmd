@@ -31,6 +31,23 @@ The Shiny app needs three things to render a PTI: boundaries (Step 1), values (a
 
 The admin-sheet name is a foreign key — `admin1_Province` here must equal `admin1_Province` in your `shapes.rds`. Mismatches drop indicators silently. See [§2.1](dataprep.html) for the full inventory.
 
+::: callout-note
+## Hex layer requires a matching metadata sheet
+
+If Step 1 built an `admin9_Hexagon` layer (Step 1 §F), the metadata
+workbook **must** contain a sheet named `admin9_Hexagon` for any
+indicator with `spatial_level = "admin9_Hexagon"`. Step 4 (HEX data,
+covered by [`build-pti-4-hex`](build-pti-4-hex.html)) is the canonical
+way to produce this sheet via the registry-driven pipeline; the
+output `app-data/metadata-hex.xlsx` is one of the inputs Step 5
+merges into the final `metadata.xlsx`.
+
+If your project doesn't ship hex-level indicators, you can omit the
+`admin9_Hexagon` sheet entirely from your user metadata workbook -- the
+hex layer in `shapes.rds` is then used for spatial-join machinery only,
+not as a `spatial_level` target.
+:::
+
 ## Condensed column reference — `metadata` sheet
 
 Every row in `metadata` has these 14 columns. Required unless noted:
@@ -104,7 +121,7 @@ names(inp_dta)
 
 Notice that both `admin1_Province` and `admin2_District` carry the indicator columns — the pipeline will use Adm2 (because `spatial_level = "admin2_District"`) but the Adm1 sheet remains useful for the Data Explorer tab.
 
-The cascade rule applies here too: every row in `admin2_District` must have an `admin1Pcod` value that exists in `admin1_Province`'s `admin1Pcod` column. If you generated the Adm2 layer with a centroid-in-polygon join (see [Step 1 §E](build-pti-1-shapefiles.html#sec-advanced-multi-level)), the workbook should already inherit those parent P-codes — but `validate_metadata()` re-verifies.
+The cascade rule applies here too: every row in `admin2_District` must have an `admin1Pcod` value that exists in `admin1_Province`'s `admin1Pcod` column. If you populated the cascade in Step 1 via [`make_admin_lookup()`](../reference/make_admin_lookup.html) (see [Step 1 §E](build-pti-1-shapefiles.html#sec-advanced-multi-level)), the workbook should already inherit those parent P-codes — but `validate_metadata()` re-verifies.
 
 ## Validate
 

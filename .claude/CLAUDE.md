@@ -31,10 +31,10 @@ A golem-based Shiny R package for computing, visualizing, and exploring Project 
 
 ## Branching
 
-- Default branch: `main`.
-- Current integration branch: `koichi-arch-redesign` (off `main`).
-- Sub-branches per phase/batch (e.g. `tests/calc-pipeline`, `cleanup/batch-1`, `docs/phase-2`) PR'd into the integration branch.
+- Default + integration branch: `main`.
+- Sub-branches per phase/batch (e.g. `feat/hex-year-resolver`, `cleanup/batch-1`, `docs/phase-2`) PR'd directly into `main`.
 - Each PR must keep `R CMD check` green and update the changelog.
+- Historical note: arch-redesign work lived on `koichi-arch-redesign` (and earlier on `eb-docs-pkgdown`) until both were merged into `main`. Issue [#9](https://github.com/worldbank/devPTIpack/issues/9) still tracks the overall redesign; sub-issues are referenced via `Closes #N` on individual PRs to `main`, which GitHub auto-closes on merge.
 
 ## Skills & sub-agents
 
@@ -46,16 +46,33 @@ Project-scoped tooling under `.claude/`:
 | `cleanup-batch`          | skill     | Execute one arch-01 cleanup batch end-to-end (delete, document, test, check)          |
 | `roxygen-document`       | skill     | Add/upgrade roxygen2 per `.claude/rules/roxygen-documentation.md`                     |
 | `issue-progress-comment` | skill     | Draft a status comment for a GitHub issue from the recent diff/work                   |
-| `close-issue-on-merge`   | skill     | After a PR lands, close the issue(s) it claims to close (GitHub auto-close does NOT fire because PRs target `eb-docs-pkgdown`, not the default branch) |
+| `close-issue-on-merge`   | skill     | **Fallback only.** Close issues a merged PR claims to close when GitHub's auto-close didn't fire — e.g. the PR body omitted `Closes #N`, or a parent tracker issue wasn't directly referenced. PRs targeting `main` with `Closes #N` close on their own. |
+| `pr-manual-verification` | skill     | Classify a PR's manual-verification needs as **None / Optional / REQUIRED** with item-level rationale; produces the `## Verification` markdown block + the chat-text one-liner |
 | `r-package-reviewer`     | sub-agent | Review diffs for R-package conventions (NAMESPACE, exports, examples, no `browser()`) |
 
 Invoke skills via the Skill tool by name. Spawn the sub-agent via the Agent tool with `subagent_type: r-package-reviewer`.
 
-**Issue-close workflow (compulsory after every PR merge):** invoke
-`close-issue-on-merge` immediately after the user reports a PR has
-merged. GitHub's auto-close fires only on PRs that land on the repo's
-default branch (`main`); our redesign PRs target `eb-docs-pkgdown`, so
-`Closes #N` lines never trigger and issues silently rot otherwise.
+**Issue-close workflow:** PRs target `main` (the default branch), so
+GitHub auto-closes any issue referenced by `Closes #N` / `Fixes #N` /
+`Resolves #N` in the PR body the moment the merge lands. No manual
+step required in the common case. Invoke the `close-issue-on-merge`
+skill only as a fallback — when the keyword was forgotten, when a
+parent tracker issue (e.g. #9) needs closing alongside the directly
+referenced sub-issue, or when GitHub somehow missed the link.
+
+**PR verification convention (compulsory before "ready to merge"):**
+every PR opened on this repo must include a `## Verification` section
+in its description with two sub-blocks -- "Done (locally / by CI)" and
+"Manual verification (you)". The manual block is classified as one of
+`None`, `Optional`, or `REQUIRED`. Invoke the `pr-manual-verification`
+skill to produce this section before opening the PR and again before
+telling the user a PR is ready to merge. The same classification ends
+the chat-text summary as a single-line `**Manual verification:** <X>`
+field so the user can decide at a glance. Reserve `REQUIRED` for items
+CI provably cannot catch (deployed Shiny UX, broken image links in
+vignettes, Quarto auto-anchor footgun on cross-page links, package
+data rebuilds) -- defaulting to `REQUIRED` to be safe trains the user
+to ignore the label.
 
 ## PLAN.md Sync (COMPULSORY)
 

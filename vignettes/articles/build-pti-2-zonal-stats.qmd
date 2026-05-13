@@ -33,7 +33,7 @@ Both produce one numeric column per indicator, indexed by polygon position; you'
 
 ## Output format
 
-The output of this step is a tidy table — one row per polygon, one column per indicator — keyed by `admin<N>Pcod`:
+The output of this step is a tidy table — one row per polygon, one column per indicator — keyed by `admin<N>Pcod`. **Load the admin layer from `app-data/shapes.rds`** (the Step 1 output), not from the raw GeoJSON — the `.rds` carries the validated `admin<N>Pcod` + the full parent cascade, so your zonal output will join cleanly back to every other PTI input.
 
 ```r
 #| eval: false
@@ -42,8 +42,9 @@ library(exactextractr)
 library(dplyr)
 library(writexl)
 
-# Load the admin layer the indicator should attach to.
-adm2 <- read_sf("sample-data/rwa_adm2.geojson")
+# Load the cleaned admin layer from Step 1's output.
+my_shp <- readRDS("app-data/shapes.rds")
+adm2   <- my_shp$admin2_District
 
 # Load the raster you want to summarise.
 r <- terra::rast("path/to/your-raster.tif")
@@ -55,7 +56,7 @@ adm2$mean_value <- exact_extract(r, adm2, fun = "mean")
 my_zonal <- adm2 |>
   st_drop_geometry() |>
   transmute(
-    admin2Pcod   = shapeID,           # adapt to your P-code source
+    admin2Pcod   = admin2Pcod,
     my_indicator = mean_value
   )
 
@@ -64,6 +65,25 @@ write_xlsx(my_zonal, "sample-data/my-zonal-stats-adm2.xlsx")
 ```
 
 The package convention is one Excel sheet per admin level; if you produce multiple admin levels in this step, write each into its own sheet before Step 3 ingests them.
+
+## Hex-level extraction (optional)
+
+If your Step 1 produced an `admin9_Hexagon` layer (Step 1 §F), zonal extraction works the same way — the hex cells are just another admin layer with `admin9Pcod` as the key:
+
+```r
+#| eval: false
+adm9 <- my_shp$admin9_Hexagon
+adm9$mean_value <- exact_extract(r, adm9, fun = "mean")
+
+my_zonal_hex <- adm9 |>
+  st_drop_geometry() |>
+  transmute(
+    admin9Pcod   = admin9Pcod,
+    my_indicator = mean_value
+  )
+```
+
+A note on choice of summary function for hex cells: H3-6 cells have near-uniform area (~36 km²), so the *area-weighted* mean differs little from a plain `"mean"`. **Population-weighted** aggregation differs more substantially and is usually what you want for human-development indicators (poverty, literacy). Pick the `fun` argument deliberately — `exact_extract()` accepts a `weights` raster for population weighting.
 
 ## How the output feeds into Step 3
 
