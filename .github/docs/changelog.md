@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-05-13 (arch-11 §"Aggregation" -- aggregate_hex_to_shapes(); closes #113)
+
+| Scope | Change |
+| ----- | ------ |
+| Code  | New `R/fct_hex_aggregate.R` with exported `aggregate_hex_to_shapes(hex_data, hex_layer, shp_dta, strategy)`. `sf::st_drop_geometry(hex_layer)` builds a flat lookup table; parent Name columns are enriched by joining each non-hex layer from `shp_dta`. For each admin level in `shp_dta`, hexes are grouped by that level's Pcod + Name + all coarser Pcods and summarised using per-column bquote expressions built from the deployer's `strategy` list. Population is always placed last in the expression list so `dplyr::summarise()` sees the original per-hex vector when evaluating population-weighted expressions (an earlier-placed `population = sum(...)` would replace the column with a scalar before weighted indicator expressions run). `weight = "pop"` → `stats::weighted.mean` with population weights; `weight = "area"` → `stats::weighted.mean` with hex area weights from `hex_layer$area`; `weight = "none"` → the function named by `fun` (mean/sum/min/max/median). All-NA group → `NA_real_` + `cli::cli_warn()` naming the polygon and variable. Temporal column stems (strip `_<year>` suffix) resolve strategy before falling back to `.default`. `population` in strategy emits a warning and is ignored (always sums). Missing `population` column when `weight = "pop"` is requested, or missing `area` column when `weight = "area"` is requested, both produce actionable `cli_abort()`. `.x`/`.y` suffixed columns (symptom of a bad `full_join`) emit a `cli_warn()`. Returns a named list of tibbles keyed by `shp_dta` slot names. |
+| Tests | New `tests/testthat/test-hex-aggregate.R` (16 test blocks / 35 PASS / 0 FAIL). Covers: correct named-list return structure; tbl_df class per slot; admin1 column structure; unweighted sum aggregation for admin0/admin1/admin9; population-weighted mean; area-weighted mean; all-NA → NA + cli_warn; partial-NA treated as 0; temporal stem lookup in strategy; population-in-strategy warning; weight=pop without population column error; weight=area without area column error; missing hex_id error; strategy without .default error; .x/.y collision warning. All tests use plain tibbles (sf::st_drop_geometry is a no-op on non-sf inputs). |
+| Docs  | PLAN.md §8 — ticked the arch-11 §"Aggregation" / #113 box with a 12-line implementation summary. |
+
+`R CMD check` (no examples, no vignettes): **0 errors / 1 pre-existing warning / 2 pre-existing notes**. All hex-pipeline tests pass: test-hex-aggregate.R (35 PASS), test-hex-fetch.R (23 PASS), test-hex-year-resolver.R (28 PASS / 2 SKIP), test-hex-registry.R (40 PASS), test-hex-source.R (33 PASS).
+
+---
+
 ## 2026-05-13 (arch-11 §"Fetching" -- fetch_hex_data() + H5/H6 bridge; closes #112)
 
 | Scope | Change |

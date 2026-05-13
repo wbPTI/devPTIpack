@@ -919,9 +919,21 @@ generation. Spec:
       `hex_col` fields (defaults `NA`); `use_hex_vars()` embeds them from
       the registry source so `fetch_hex_data()` stays YAML-free. 23 PASS /
       0 FAIL in `tests/testthat/test-hex-fetch.R`.
-- [ ] arch-11 §"Aggregation" -- `aggregate_hex_to_shapes()`
+- [x] arch-11 §"Aggregation" -- `aggregate_hex_to_shapes()`
       (issue [#113](https://github.com/worldbank/devPTIpack/issues/113);
-      blocked by #112).
+      blocked by #112). New `R/fct_hex_aggregate.R`: exported
+      `aggregate_hex_to_shapes(hex_data, hex_layer, shp_dta, strategy)`.
+      `st_drop_geometry(hex_layer)` builds a flat grouping-key lookup;
+      parent Name columns are enriched from `shp_dta` layers. Aggregation
+      runs once per admin level in `shp_dta` — hex → each level directly,
+      never chained. Strategy (`weight × fun`) drives per-column bquote
+      expressions; population is always summed last (must be last in
+      `dplyr::summarise()` to keep the original vector available for
+      pop-weighted expressions). `weight = "pop"` → `weighted.mean`;
+      `weight = "area"` → `weighted.mean` with `hex_layer$area`; all-NA
+      group → `NA_real_` + `cli_warn`. Temporal column stems (strip
+      `_<year>`) look up strategy before falling back to `.default`. 35
+      PASS / 0 FAIL in `tests/testthat/test-hex-aggregate.R`.
 - [ ] arch-11 §"Metadata Excel output" -- `build_hex_metadata()`
       with `include_hex` gating (issue
       [#115](https://github.com/worldbank/devPTIpack/issues/115);
