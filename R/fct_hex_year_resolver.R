@@ -227,9 +227,11 @@ resolve_years_for_vars <- function(vars, available_years_lookup = NULL) {
 #' @importFrom cli cli_inform
 #' @importFrom utils menu
 #' @noRd
+is_interactive <- function() interactive()
+
 prompt_or_error_for_years <- function(var_name, available_years) {
   available_years <- sort(as.integer(available_years))
-  if (!interactive()) {
+  if (!is_interactive()) {
     stop(
       "No 'years' supplied for temporal variable '", var_name,
       "'. Pass years = c(...) (available: ",

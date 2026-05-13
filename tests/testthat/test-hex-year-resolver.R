@@ -250,11 +250,9 @@ test_that("prompt_or_error_for_years: interactive path returns the selected year
     menu = function(choices, title = NULL) 2L,
     .package = "utils"
   )
-  withr::local_options(rlang_interactive = TRUE)
-  # interactive() reads from base, not rlang -- mock it too.
   testthat::local_mocked_bindings(
-    interactive = function() TRUE,
-    .package = "base"
+    is_interactive = function() TRUE,
+    .package = "devPTIpack"
   )
   pick <- devPTIpack:::prompt_or_error_for_years(
     var_name = "nightlights",
@@ -270,8 +268,8 @@ test_that("prompt_or_error_for_years: interactive cancellation (menu returns 0) 
     .package = "utils"
   )
   testthat::local_mocked_bindings(
-    interactive = function() TRUE,
-    .package = "base"
+    is_interactive = function() TRUE,
+    .package = "devPTIpack"
   )
   expect_error(
     devPTIpack:::prompt_or_error_for_years(
