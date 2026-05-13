@@ -5,6 +5,19 @@
 
 ---
 
+## 2026-05-13 (arch-11 §"Metadata Excel output" -- build_hex_metadata(); closes #115)
+
+| Scope | Change |
+| ----- | ------ |
+| Code  | New `R/fct_hex_build_metadata.R` with exported `build_hex_metadata(aggregated, shp_dta, indicator_config, country_name, output_path, include_hex, include_population)`. Identifies hex slot as highest-level admin slot in `aggregated`; builds registry lookup via `hex_meta_registry_lookup()`; merges registry + `indicator_config` per column (user overrides with warning; non-registry/non-config column → `cli_abort`); temporal `{year}` glue-expanded in `var_name`; `include_hex` missing+>5k cells → interactive prompt or non-interactive warn+FALSE; writes via `writexl::write_xlsx()`; validates via `validate_read_metadata()`. |
+| Code  | Three internal helpers in same file: `hex_meta_registry_lookup()`, `hex_meta_user_row()`, `hex_meta_merge()`. |
+| Tests | New `tests/testthat/test-hex-build-metadata.R`: 19 test blocks / 42 PASS / 0 FAIL. Covers sheet presence, general/metadata/admin sheet contents, registry auto-population, `include_population`, `indicator_config` override warning, unknown indicator error, and 4 input validation errors. Xlsx written to `tempfile(fileext = ".xlsx")`, read back with `readxl`. |
+| Docs  | PLAN.md §8 ticked `[x]` for arch-11 §"Metadata Excel output" / #115; added progress-log entries for PRs #125–#129 (previously unlogged) and TBD row for this PR. |
+
+`R CMD check` (`error_on = "error"`): 0 new errors / 12 pre-existing `local_mocked_bindings` failures in testthat 3.1.2 / 1 pre-existing warning / 2 pre-existing notes.
+
+---
+
 ## 2026-05-13 (arch-11 §"Aggregation" -- aggregate_hex_to_shapes(); closes #113)
 
 | Scope | Change |
