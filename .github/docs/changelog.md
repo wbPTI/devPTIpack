@@ -5,6 +5,28 @@
 
 ---
 
+## 2026-05-13 (fix -- is_interactive() wrapper to unblock CI on R 4.6)
+
+| Scope | Change |
+| ----- | ------ |
+| Code  | Added `is_interactive()` thin wrapper in `R/fct_hex_year_resolver.R`; `prompt_or_error_for_years()` now calls it instead of `base::interactive()` directly. `base::interactive` is a `.Primitive` and `local_mocked_bindings(.package = "base")` does not intercept calls from within the devPTIpack namespace on R 4.6, causing the two interactive-path tests to hit the non-interactive `stop()` branch and then fail because the captured error message did not match the expected regexp. The wrapper is a plain R function in the devPTIpack namespace, so `local_mocked_bindings(.package = "devPTIpack")` reliably intercepts it. |
+| Tests | Updated both interactive-path tests in `test-hex-year-resolver.R` to mock `devPTIpack:::is_interactive` instead of `base:::interactive`; removed the now-redundant `withr::local_options(rlang_interactive = TRUE)` line from the "returns selected year" test. 28 PASS / 0 FAIL / 2 SKIP locally (still skipped under testthat 3.1.2 as before). |
+
+---
+
+## 2026-05-12 (arch-11 §"Year resolution" -- year resolver helpers; closes #110)
+
+| Scope | Change |
+| ----- | ------ |
+| Code  | New file `R/fct_hex_year_resolver.R` with three internal helpers (all `@noRd`). (1) `resolve_years(requested_years, available_years, var_name)` -- pure, network-free, applies arch-11 §"Year resolution" rules: exact match -> return verbatim; otherwise nearest year wins; equidistant tie broken by `max()` (later year); requested years more than 7 years from any available year hard-error with the variable name + full available-years list. Returns `list(resolved, substitutions)` where `substitutions` is a two-column data.frame `(requested, resolved)` with one row per non-exact match. (2) `resolve_years_for_vars(vars, available_years_lookup = NULL)` -- walks a `pti_hex_var` list returned by `use_hex_vars()`, calls `get_available_years()` per temporal variable (or reads `available_years_lookup` keyed by *unsuffixed* canonical name, the test seam that keeps Tier-1 tests network-free), stamps resolved years onto `var$years`, and emits **one consolidated** `cli::cli_warn()` listing every substitution under each variable's canonical name. Non-temporal vars (`time_col` is `NA`) pass through untouched. (3) `prompt_or_error_for_years(var_name, available_years)` -- fires when a temporal var arrives with `years = integer(0)`. Interactive sessions get `cli::cli_inform()` + `utils::menu()` single-select; non-interactive sessions hard-error with the available-years list and `years = c(...)` actionable message. v1 is intentionally single-select (no multi-year `readline()` parsing) -- nothing downstream in arch-11 currently needs more than one resolved year per call and adding it later is cheap. |
+| Tests | New `tests/testthat/test-hex-year-resolver.R` (16 test blocks / 28 PASS / 0 FAIL / 2 SKIP on local testthat 3.1.2). Covers: `resolve_years()` exact match, nearest-year substitution + substitution row recorded, later-year-wins on equidistant tie, >7-year error message format, 7-year boundary inclusive, multi-year input collapsing to deduplicated output, empty `requested_years` returns empty, empty `available_years` errors. `resolve_years_for_vars()` non-temporal pass-through, resolved-year stamping (including dedup on equidistant tie -> later differs), consolidated warning lists all substitutions, no-warning path on exact match, `__<label>` suffix stripping for the lookup key, missing-lookup-entry error, non-interactive NULL-years error. `prompt_or_error_for_years()` non-interactive error message format. Two interactive-path tests (`testthat::local_mocked_bindings()` on both `utils::menu` and `base::interactive`) are skipped under testthat < 3.2.0 -- CI has newer testthat. |
+| Docs  | NAMESPACE auto-regenerated: added `importFrom(cli, cli_inform)`, `importFrom(cli, cli_warn)`, `importFrom(utils, menu)`. No new exports -- all three helpers stay internal so `use_hex_vars()`'s public surface stays stable; the resolver is called from `fetch_hex_data()` (arch-11 §"Fetching" / #112) which will land next. |
+| Docs  | PLAN.md §8 -- ticked the arch-11 §"Year resolution" / #110 box and replaced the placeholder with a five-line summary of the three helpers. |
+
+`R CMD check` (no --as-cran, `--no-tests`): **0 errors / 1 warning (pre-existing R-version dependence) / 2 notes (pre-existing)**. Examples + documentation checks all pass. `testthat::test_file('tests/testthat/test-hex-year-resolver.R')` on the new file: 28 PASS / 0 FAIL / 2 SKIP.
+
+---
+
 ## 2026-05-12 (chore -- merge arch-redesign integration branch into main; switch convention)
 
 | Scope   | Change |
