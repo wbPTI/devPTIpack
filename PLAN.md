@@ -997,7 +997,7 @@ Lifted from arch-00 §"End-State Goals":
 - [ ] All ~95 permanent functions have complete roxygen2 docs.
 - [ ] Test coverage > 80%; Tier 1 + Tier 2 automated in CI.
 - [ ] Package website deployed on GitHub Pages with grouped vignettes.
-- [ ] Hex ingestion pipeline (#13) lands on its own milestone.
+- [x] Hex ingestion pipeline (#13) lands on its own milestone.
 - [ ] `R CMD check` passes with 0 warnings, 0 errors, 0 notes.
 
 ---
