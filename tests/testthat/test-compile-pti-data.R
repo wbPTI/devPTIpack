@@ -249,3 +249,96 @@ test_that("compile_pti_data: produces a non-empty pti-metadata.pdf when LaTeX is
             "tryCatches PDF failures and continues.")
   }
 })
+
+# ---------------------------------------------------------------------------
+# Tests for compile_merge_metadata() — issue #117 acceptance criteria
+# (uses the internal function directly; all scenarios below exercise
+#  the merge contract without full file I/O).
+
+.make_parsed <- function(var_code, var_name, country = "Test",
+                         adm_col = NULL, weights_tbl = NULL) {
+  col <- if (is.null(adm_col)) var_code else adm_col
+  list(
+    general  = tibble::tibble(country = country),
+    metadata = tibble::tibble(var_code = var_code, var_name = var_name),
+    admin1_Province = tibble::tibble(
+      admin1Pcod = c("P1", "P2"),
+      admin1Name = c("N1", "N2"),
+      year       = NA_character_,
+      !!col      := c(1.0, 2.0)
+    ),
+    weights_table = weights_tbl
+  )
+}
+
+# 9) Duplicate var_code across inputs -> both rows kept with __<source> suffix
+
+test_that("compile_merge_metadata: duplicate var_code gets __source suffix", {
+  pa <- .make_parsed("pov", "Poverty A")
+  pb <- .make_parsed("pov", "Poverty B")
+
+  expect_warning(
+    result <- compile_merge_metadata(list(pa, pb), c("user", "hex")),
+    regexp = "Duplicate"
+  )
+
+  expect_true("pov__user" %in% result$metadata$var_code)
+  expect_true("pov__hex"  %in% result$metadata$var_code)
+  expect_equal(NROW(result$metadata), 2L)
+})
+
+# 10) Admin column renamed to match var_code rename
+
+test_that("compile_merge_metadata: admin column renamed in sync with var_code", {
+  pa <- .make_parsed("pov", "Poverty A")
+  pb <- .make_parsed("pov", "Poverty B")
+
+  suppressWarnings(
+    result <- compile_merge_metadata(list(pa, pb), c("user", "hex"))
+  )
+
+  adm <- result$admin1_Province
+  expect_true("pov__user" %in% names(adm))
+  expect_true("pov__hex"  %in% names(adm))
+  expect_false("pov"      %in% names(adm))
+})
+
+# 11) general sheet: first file wins
+
+test_that("compile_merge_metadata: general sheet is taken from first input", {
+  pa <- .make_parsed("ind_a", "Indicator A", country = "Alpha")
+  pb <- .make_parsed("ind_b", "Indicator B", country = "Beta")
+
+  result <- compile_merge_metadata(list(pa, pb), c("user", "hex"))
+  expect_equal(result$general$country[[1L]], "Alpha")
+})
+
+# 12) weights_table: first non-empty wins; warning if multiple
+
+test_that("compile_merge_metadata: weights_table first-non-empty wins, warns on multiple", {
+  wt <- tibble::tibble(admin_level = "admin1", weight = 1L)
+  pa <- .make_parsed("ind_a", "A", weights_tbl = wt)
+  pb <- .make_parsed("ind_b", "B", weights_tbl = wt)
+
+  expect_warning(
+    result <- compile_merge_metadata(list(pa, pb), c("user", "hex")),
+    regexp = "weights_table"
+  )
+  expect_equal(result$weights_table, wt)
+})
+
+# 13) .x/.y suffix detection warns when a non-key non-renamed column overlaps
+
+test_that("compile_merge_metadata: .x/.y columns trigger a warning", {
+  pa <- .make_parsed("ind_a", "A", adm_col = "ind_a")
+  pb <- .make_parsed("ind_b", "B", adm_col = "ind_b")
+  # Both admin sheets have a shared non-key, non-indicator column; it
+  # will survive as extra.x / extra.y after full_join.
+  pa$admin1_Province$extra <- 9L
+  pb$admin1_Province$extra <- 7L
+
+  expect_warning(
+    compile_merge_metadata(list(pa, pb), c("user", "hex")),
+    regexp = "\\.x|\\.y|mismatch"
+  )
+})

@@ -951,12 +951,17 @@ generation. Spec:
       `{year}` glue-expands in `var_name`; validation via
       `validate_read_metadata()` at the end. 42 PASS / 0 FAIL in
       `tests/testthat/test-hex-build-metadata.R`.
-- [ ] arch-11 §"compile_pti_data() multi-file merge" -- extend
-      `compile_pti_data()` (issue
-      [#116](https://github.com/worldbank/devPTIpack/issues/116);
-      blocked by #115). (Note: the source-label suffix logic in
-      `compile_merge_metadata()` landed earlier via Eduard's PR
-      #63 commit `9e45918`.)
+- [x] arch-11 §"compile_pti_data() multi-file merge" -- extend
+      `compile_pti_data()` (GitHub issue
+      [#117](https://github.com/worldbank/devPTIpack/issues/117);
+      PLAN had issue numbers swapped with #116). The core merge
+      contract (source-label suffix, admin full_join, weights
+      first-non-empty) landed via Eduard's PR #63 commit `9e45918`.
+      This PR adds `.x`/`.y` suffix detection warning
+      (`cli::cli_warn()`) and 5 new test blocks (38 PASS / 0 FAIL)
+      covering collision rename, admin column sync, general
+      first-file-wins, weights_table multi-file warning, and
+      `.x`/`.y` detection.
 - [ ] arch-11 §"Step 4 vignette" -- `build-pti-4-hex.qmd`
       walkthrough (issue
       [#117](https://github.com/worldbank/devPTIpack/issues/117);
@@ -1068,6 +1073,7 @@ Lifted from arch-00 §"End-State Goals":
 | [#129](https://github.com/worldbank/devPTIpack/pull/129) | 2026-05-13 | **arch-11 §"Aggregation" (#113)** | `aggregate_hex_to_shapes()`. New `R/fct_hex_aggregate.R`: exported `aggregate_hex_to_shapes(hex_data, hex_layer, shp_dta, strategy)` + internal `hex_agg_build_exprs()`. Population placed last in `dplyr::summarise()` to keep the original vector available for pop-weighted expressions. 35 PASS / 0 FAIL in `tests/testthat/test-hex-aggregate.R`. |
 
 | [#130](https://github.com/worldbank/devPTIpack/pull/130) | 2026-05-13 | **arch-11 §"Metadata Excel output" (#115)** | `build_hex_metadata()`. New `R/fct_hex_build_metadata.R`: exported `build_hex_metadata(aggregated, shp_dta, indicator_config, country_name, output_path, include_hex, include_population)` + internal helpers `hex_meta_registry_lookup()`, `hex_meta_user_row()`, `hex_meta_merge()`. Writes `metadata-hex.xlsx` in the Step-3 template format; registry auto-populated from `inst/hex_vars_registry.yaml`; `indicator_config` overrides with warning; temporal `{year}` glue-expansion; `validate_read_metadata()` end-to-end validation. 42 PASS / 0 FAIL in `tests/testthat/test-hex-build-metadata.R`. |
+| [#131](https://github.com/worldbank/devPTIpack/pull/131) | 2026-05-14 | **arch-11 §"compile_pti_data() multi-file merge" (GitHub #117)** | Added `.x`/`.y` suffix detection via `cli::cli_warn()` in `compile_merge_metadata()` and 5 new test blocks in `test-compile-pti-data.R` covering: duplicate var_code → `__<source>` suffix, admin column rename sync, general first-file-wins, weights_table multi-file warning, `.x`/`.y` detection. 38 PASS / 0 FAIL. Closes GitHub issue #117. |
 
 | [#79-draft](https://github.com/worldbank/devPTIpack/issues/79) | 2026-05-08 | **arch-09 PR #A2 — template scaffold + Rwanda data (draft)** | Issue #79 -- branch `feat/template-scaffold` off `eb-docs-pkgdown`. Built out `inst/template_pti/` per arch-09 §5: downloaded Rwanda GeoJSONs from geoBoundaries (Adm0=1 / Adm1=5 / Adm2=30 polygons, CC-BY 4.0); added `inst/template_pti/data-raw/generate-synthetic-metadata.R` (seeded `set.seed(42)`, deterministic; verified by re-run + `identical()` round-trip); generated `sample-metadata-adm1.xlsx` and `sample-metadata-adm1-adm2.xlsx` (3 indicators: poverty_rate, literacy_rate, road_density). Added template `.qmd` files: `01-shapes.qmd` (working: load GeoJSONs, attach `admin<N>Pcod`/`admin<N>Name`/`area`, centroid spatial-join to derive admin1 parent on admin2, `validate_geometries` -> `app-data/shapes.rds`); `02a-user-zonal-stats.qmd` (optional stub); `03-metadata.qmd` (working: `fct_template_reader` + `validate_metadata` against `app-data/shapes.rds`, copies workbook to `app-data/metadata-user.xlsx`); `04-hex-data.qmd` (HEX-API stub); `05-compile.qmd` (stub pending #83); `06-deploy.R` (manual `rsconnect::deployApp()`). Added `00-master.R` orchestrator (renders 01 + 03 by default; 02a / 04 / 05 / 06 commented). Updated `inst/template_pti/app.R` to load from `app-data/shapes.rds` + `app-data/metadata.xlsx` with the bundled `ukr_*` data shown as commented Option B fallback. Added `README.md` (file order, links to all 7 website tutorials, `app-data/` git-tracking warning, deferred-TODO list). Updated `inst/template_pti/.gitignore` to track `app-data/` + `data-raw/` by default. Added force-include exception in top-level `.gitignore` so `inst/template_pti/data-raw/` ships (overrides the package-wide `data-raw/` ignore). Smoke-tested: `create_new_pti(tempfile())` copies all 19 expected files; `00-master.R` Steps 01+03 render end-to-end via knitr::purl+source fallback (quarto subprocess fails on `library(devPTIpack)` outside an installed package -- documented limitation, not a defect of the template), producing `app-data/shapes.rds` (3.5 MB) + `app-data/metadata-user.xlsx`; `validate_geometries()` and `validate_metadata()` both return `status = "pass"` with 0 failures / 0 warnings on Rwanda inputs. Divergence noted in changelog: validator app calls (`app_validate_shp` in 01, `app_validate_metadata` in 03) commented pending #80 / #81; `compile_pti_data()` in 05-compile.qmd commented pending #83; 00-master.R does not render 04 (HEX API) or 05 by default. NOT pushed; commit on `feat/template-scaffold` only -- per the issue brief, no PR opened. |
 

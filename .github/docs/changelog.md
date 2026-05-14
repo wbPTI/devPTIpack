@@ -5,6 +5,19 @@
 
 ---
 
+## 2026-05-14 (arch-11 §"compile_pti_data() multi-file merge" -- closes GitHub #117)
+
+| Scope | Change |
+| ----- | ------ |
+| Code  | Added `.x`/`.y` suffix detection in `compile_merge_metadata()` (`R/compile_pti_data.R`): after each admin-slot `full_join`, warns via `cli::cli_warn()` if unexpected `.x`/`.y` columns appear, with an actionable message naming the columns and advising the user to check for key mismatches across input files. |
+| Code  | Switched the three `cli::cli_alert_warning()` calls in `compile_merge_metadata()` (duplicate var_code, `.x`/`.y` detection, weights_table multiple) to `cli::cli_warn()` so they emit R warning signals testable by `expect_warning()`; updated `@importFrom cli` to include `cli_warn`. |
+| Tests | Added 5 new test blocks to `tests/testthat/test-compile-pti-data.R` (38 PASS / 0 FAIL total): duplicate var_code → `__<source>` suffix, admin column rename in sync with var_code, general sheet first-file-wins, weights_table first-non-empty-wins + multiple warning, `.x`/`.y` detection warning. Introduced `.make_parsed()` helper for minimal parsed-list fixtures. |
+| Docs  | PLAN.md §8 ticked `[x]` for arch-11 §"compile_pti_data() multi-file merge"; corrected issue number (PLAN had #116/#117 swapped; GitHub #117 is the merge extension); added PR #131 progress-log row. |
+
+`R CMD check` (`error_on = "error"`): 0 new errors / 12 pre-existing `local_mocked_bindings` failures / 1 pre-existing warning / 2 pre-existing notes.
+
+---
+
 ## 2026-05-13 (arch-11 §"Metadata Excel output" -- build_hex_metadata(); closes #115)
 
 | Scope | Change |
