@@ -962,10 +962,17 @@ generation. Spec:
       covering collision rename, admin column sync, general
       first-file-wins, weights_table multi-file warning, and
       `.x`/`.y` detection.
-- [ ] arch-11 §"Step 4 vignette" -- `build-pti-4-hex.qmd`
-      walkthrough (issue
-      [#117](https://github.com/worldbank/devPTIpack/issues/117);
-      blocked by #112 + #113 + #115).
+- [x] arch-11 §"Step 4 vignette" -- `build-pti-4-hex.qmd`
+      walkthrough (GitHub issue
+      [#116](https://github.com/worldbank/devPTIpack/issues/116)).
+      Rewrote stub into a complete end-to-end walkthrough: phases
+      A (Discover) through E (Build metadata Excel), HEX_RESOLUTION +
+      INCLUDE_HEX_IN_APP switches, local parquet contract table,
+      resolution bridge table (H5/H6/H7), population exclusion +
+      include_population override, fltr_exclude_pti review callout.
+      Removed "functions don't exist" stale warning. Fixed stale
+      get_available_years() call in template 04-hex-data.qmd. Renders
+      without errors (knitr, 17 chunks, all eval: false).
 
 ---
 

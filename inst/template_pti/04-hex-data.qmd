@@ -6,13 +6,6 @@ format: html
 <!-- For detailed instructions, see:
      https://worldbank.github.io/devPTIpack/articles/build-pti-4-hex.html -->
 
-::: {.callout-warning}
-**Feature not ready.** This step depends on the hex data access pipeline
-(arch-11), which is under active development. The functions referenced
-below do not yet exist. This file ships as a working skeleton — uncomment
-and adapt when the pipeline lands.
-:::
-
 ## Configuration
 
 The `HEX_RESOLUTION` and `INCLUDE_HEX_IN_APP` switches are set in
@@ -47,7 +40,7 @@ hex_ids   <- hex_layer$admin9Pcod
 list_hex_vars()
 
 # Check live available years for a specific variable
-get_available_years(vars = NULL, "nightlights")
+get_available_years("nightlights")
 ```
 
 ## B. Configure variable selection

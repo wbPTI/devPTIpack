@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-05-14 (arch-11 §"Step 4 vignette" -- closes GitHub #116)
+
+| Scope | Change |
+| ----- | ------ |
+| Docs  | Rewrote `vignettes/articles/build-pti-4-hex.qmd` from stub into a complete end-to-end walkthrough: phases A–E, HEX_RESOLUTION + INCLUDE_HEX_IN_APP switch explanations, local parquet contract table, H5/H6/H7 resolution bridge table, population exclusion + `include_population` override, `fltr_exclude_pti` review callout. Removed stale "functions don't exist" warning. Fixes `get_available_years()` signature to match actual implementation (`get_available_years(var)`, not `get_available_years(vars = NULL, "name")`). |
+| Docs  | Removed stale "Feature not ready" callout from `inst/template_pti/04-hex-data.qmd` and fixed the same `get_available_years()` signature in that file. |
+| Docs  | PLAN.md §8 ticked `[x]` for arch-11 §"Step 4 vignette" (#116). |
+
+Renders without errors: knitr 17 chunks, all `eval: false`.
+
+---
+
 ## 2026-05-14 (arch-11 §"compile_pti_data() multi-file merge" -- closes GitHub #117)
 
 | Scope | Change |
