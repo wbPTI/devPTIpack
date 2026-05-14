@@ -77,7 +77,7 @@
 #'   [fct_template_reader()], [launch_pti()].
 #'
 #' @importFrom cli cli_h1 cli_h2 cli_alert_info cli_alert_success
-#'   cli_alert_warning cli_alert_danger cli_bullets
+#'   cli_alert_warning cli_alert_danger cli_bullets cli_warn
 #' @importFrom dplyr full_join
 #' @importFrom purrr map map_dfr keep
 #' @importFrom rlang is_missing
@@ -337,9 +337,9 @@ compile_merge_metadata <- function(parsed_list, source_labels) {
   }
 
   if (length(dup_codes) > 0L) {
-    cli::cli_alert_warning(
+    cli::cli_warn(
       c(
-        "Duplicate var_code{?s} across metadata inputs -- both kept with source suffix:",
+        "Duplicate var_codes across metadata inputs -- both kept with source suffix:",
         "*" = "{.val {dup_codes}}"
       )
     )
@@ -401,13 +401,24 @@ compile_merge_metadata <- function(parsed_list, source_labels) {
         "' (expected admin<N>Pcod / admin<N>Name / area / year)."
       )
     }
-    admin_combined[[slot]] <- Reduce(
+    merged_slot <- Reduce(
       function(a, b) {
         shared <- intersect(intersect(names(a), names(b)), key_cols)
         dplyr::full_join(a, b, by = shared)
       },
       parts
     )
+    xy_cols <- grep("\\.x$|\\.y$", names(merged_slot), value = TRUE)
+    if (length(xy_cols) > 0L) {
+      cli::cli_warn(
+        c(
+          "Slot {.val {slot}}: merge produced unexpected .x/.y columns -- possible key or column mismatch:",
+          "*" = "{.val {xy_cols}}",
+          "i" = "Ensure all shared non-indicator columns have identical names across input files."
+        )
+      )
+    }
+    admin_combined[[slot]] <- merged_slot
   }
 
   # weights_table -- first non-empty wins.
@@ -420,7 +431,7 @@ compile_merge_metadata <- function(parsed_list, source_labels) {
     }
   }
   if (weights_count > 1L) {
-    cli::cli_alert_warning(
+    cli::cli_warn(
       "Multiple inputs carry a non-empty weights_table; using the first."
     )
   }
