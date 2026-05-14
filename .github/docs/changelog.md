@@ -5,6 +5,17 @@
 
 ---
 
+## 2026-05-14 (arch-12 roadmap — Space2Stats catalog expansion)
+
+| Scope | Change |
+| ----- | ------ |
+| Docs | Created `.github/docs/arch-12-hex-catalog-expansion.md`: full design spec for expanding the hex registry from 1 indicator to the ~108-column WB Space2Stats catalog across 6 collections (population, urbanization, nightlights, built-area, climate static + time series), including YAML schema additions for the REST backend, code-change inventory for issues B–E / F / G, and a DoD checklist. |
+| Docs | Updated `PLAN.md`: added arch-12 to the source-of-truth table, GitHub issues map, and a new §8b Phase 6 execution block with 7 sub-issue checkboxes. Added progress-log row for arch-12 planning. |
+
+GitHub issues opened: [#133](https://github.com/worldbank/devPTIpack/issues/133) umbrella, [#134](https://github.com/worldbank/devPTIpack/issues/134)–[#140](https://github.com/worldbank/devPTIpack/issues/140) sub-issues A–G.
+
+---
+
 ## 2026-05-14 (arch-11 §"Step 4 vignette" -- closes GitHub #116)
 
 | Scope | Change |
