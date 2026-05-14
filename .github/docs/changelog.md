@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-05-14 (arch-12 §A — Space2Stats field discovery, PR #142)
+
+| Scope | Change |
+| ----- | ------ |
+| Docs | Rewrote `.github/docs/arch-12-hex-catalog-expansion.md` §2–§6 with confirmed findings from `GET space2stats.ds.io/fields`: complete 120-field inventory, architecture revision (REST is primary for all new additions — no separate parquet files found for the 4 non-flood collections), `source_col_template` YAML design for wide-format temporal columns, revised dependency order (B–E depend on F). |
+| Docs | Updated `PLAN.md` §8b: ticked `[x]` for arch-12 §A; added findings summary; revised B–E to show dependency on #139 (Issue F, REST backend). |
+
 ## 2026-05-14 (arch-12 roadmap — Space2Stats catalog expansion)
 
 | Scope | Change |

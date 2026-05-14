@@ -987,39 +987,49 @@ Expand `inst/hex_vars_registry.yaml` from 1 real indicator to the full
 collections at H3 Level 6). Spec:
 [`arch-12-hex-catalog-expansion.md`](.github/docs/arch-12-hex-catalog-expansion.md).
 
-- [ ] arch-12 §A — Discover & document Space2Stats parquet asset URLs
+- [x] arch-12 §A — Discover & document Space2Stats parquet asset URLs
       (issue [#134](https://github.com/worldbank/devPTIpack/issues/134);
-      research-only PR, no code change). Crawl STAC + WB data catalog for
-      the 5 static collections; record HTTPS paths, hex_col names, column
-      lists, and whether partitioned-parquet support is needed.
-- [ ] arch-12 §B — Add `space2stats_population_2020` source (YAML-only PR;
-      issue [#135](https://github.com/worldbank/devPTIpack/issues/135);
-      depends on #134). ~18 WorldPop population + age/sex columns.
-      `pillar_name: "Demographics"`.
-- [ ] arch-12 §C — Add `urbanization_ghssmod` source (YAML-only PR;
-      issue [#136](https://github.com/worldbank/devPTIpack/issues/136);
-      depends on #134). GHS-SMOD degree-of-urbanisation share columns.
-      `pillar_name: "Urbanization"`.
-- [ ] arch-12 §D — Add `nighttime_lights` source (YAML-only PR;
-      issue [#137](https://github.com/worldbank/devPTIpack/issues/137);
-      depends on #134). VIIRS annual NTL 2012–2024 via `time_col`.
-      `pillar_name: "Economic activity"`.
-- [ ] arch-12 §E — Add `builtarea_ghsl` source (YAML-only PR;
-      issue [#138](https://github.com/worldbank/devPTIpack/issues/138);
-      depends on #134). GHSL built-up area decadal 1975–2030.
-      `pillar_name: "Infrastructure"`.
-- [ ] arch-12 §F — Add REST backend (`backend: "rest"`) + climate static
-      columns (code PR; issue
+      research PR #142). **Key finding:** no separate parquet files exist
+      for the 4 non-flood collections. All 120 fields accessible via the
+      Space2Stats REST API (`summary_by_hexids`). Revised architecture:
+      REST is primary (not fallback) for all new additions. `hex_id` is
+      the uniform hex column across all sources. Complete field list
+      confirmed and recorded in arch-12 doc. New `source_col_template`
+      YAML field designed for wide-format temporal columns (e.g.
+      `sum_viirs_ntl_{year}`). Updated dependency: B–E now depend on F
+      (not just A), because the REST dispatch path must land first.
+- [ ] arch-12 §F — Add REST backend (`backend: "rest"`) + `source_col_template`
+      + climate static columns (code PR; issue
       [#139](https://github.com/worldbank/devPTIpack/issues/139); depends
-      on #134). New `backend` / `api_root` / `collection` YAML fields;
+      on #134). New `backend` / `api_root` YAML fields; new
+      `source_col_template` (glue pattern for wide-format temporal columns);
       dispatch in `hex_fetch_source()`; new `hex_fetch_source_rest()`;
       REST `get_available_years()` path. Adds drought/cyclone/landslide/fires
-      static columns under `pillar_name: "Climate hazards"`.
+      static columns under one `wb_space2stats_api` source.
+      `pillar_name: "Climate hazards"`.
+- [ ] arch-12 §B — Add population + age/sex pyramid vars to `wb_space2stats_api`
+      (YAML-only PR; issue
+      [#135](https://github.com/worldbank/devPTIpack/issues/135);
+      depends on #139). `sum_pop_2020`, `sum_f_2025`, `sum_m_2025`, and
+      representative age brackets. `pillar_name: "Demographics"`.
+- [ ] arch-12 §C — Add GHS-SMOD urbanisation vars (YAML-only PR;
+      issue [#136](https://github.com/worldbank/devPTIpack/issues/136);
+      depends on #139). `ghs_*_count` / `ghs_*_pop` columns.
+      `pillar_name: "Urbanization"`.
+- [ ] arch-12 §D — Add nighttime lights vars (YAML-only PR;
+      issue [#137](https://github.com/worldbank/devPTIpack/issues/137);
+      depends on #139). `sum_viirs_ntl_{year}` template, years 2012–2024.
+      `pillar_name: "Economic activity"`.
+- [ ] arch-12 §E — Add built-up area vars (YAML-only PR;
+      issue [#138](https://github.com/worldbank/devPTIpack/issues/138);
+      depends on #139). `sum_built_area_m_{year}` template, decadal
+      1975–2030. `pillar_name: "Infrastructure"`.
 - [ ] arch-12 §G — Add climate time-series (SPI) via REST (YAML-only PR;
       issue [#140](https://github.com/worldbank/devPTIpack/issues/140);
-      depends on #139). SPI-3 monthly series via `/timeseries_by_hexids`.
+      depends on #139). SPI timeseries field TBD from `/timeseries_by_hexids`.
 
-**Execution order:** A first (unblocks B–E in parallel). F after A. G after F.
+**Execution order:** A complete. F next (only code PR; unblocks B–E and G
+in parallel after it lands).
 
 **DoD:** `list_hex_vars()` returns ≥ 100 variables; Rwanda pipeline run
 fetching one variable from each new collection completes without warnings;
