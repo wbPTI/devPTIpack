@@ -55,6 +55,7 @@ supersedes arch-05 and provides the concrete implementation track for
 | Hex (H3) ingestion design (superseded by arch-11) | [`.github/docs/arch-05-hex-ingestion.md`](.github/docs/arch-05-hex-ingestion.md) |
 | Step 1 shapefiles enhancement (`make_hex_grid`, `make_admin_lookup`) | [`.github/docs/arch-10-step1-shapefiles-enhancement.md`](.github/docs/arch-10-step1-shapefiles-enhancement.md) |
 | Hex data access pipeline (registry, fetch, aggregate, metadata) | [`.github/docs/arch-11-hex-data-access.md`](.github/docs/arch-11-hex-data-access.md) |
+| Hex registry catalog expansion (Space2Stats) | [`.github/docs/arch-12-hex-catalog-expansion.md`](.github/docs/arch-12-hex-catalog-expansion.md) |
 | Per-change log (compulsory) | [`.github/docs/changelog.md`](.github/docs/changelog.md) |
 | Project conventions for AI agents | [`.claude/CLAUDE.md`](.claude/CLAUDE.md) |
 
@@ -67,6 +68,7 @@ GitHub issues map:
 - [#13](https://github.com/worldbank/devPTIpack/issues/13) — hex ingestion pipeline (independent; superseded by #107)
 - [#104](https://github.com/worldbank/devPTIpack/issues/104) — arch-10: Step 1 shapefiles enhancement (`make_hex_grid`, `make_admin_lookup`)
 - [#107](https://github.com/worldbank/devPTIpack/issues/107) — arch-11: hex data access pipeline (supersedes arch-05/#13)
+- [#133](https://github.com/worldbank/devPTIpack/issues/133) — arch-12: hex registry catalog expansion (Space2Stats, 6 collections)
 - [#5](https://github.com/worldbank/devPTIpack/issues/5), [#7](https://github.com/worldbank/devPTIpack/issues/7), [#6](https://github.com/worldbank/devPTIpack/issues/6), [#1](https://github.com/worldbank/devPTIpack/issues/1) — relate to upstream/global DB and validation; partially superseded by #9 sub-issues, see arch-00 § "Relationship to Pre-Existing Issues"
 
 ---
@@ -136,11 +138,16 @@ also draft its roxygen at the same time. Phase 3 then sweeps only what's missed.
 
 ### 3.1 Branch strategy (resolved)
 
-- Integration branch: **`koichi-arch-redesign`** off `main`.
-- Sub-branches per phase / batch (e.g. `tests/calc-pipeline-baseline`,
-  `cleanup/batch-1`) PR'd into `koichi-arch-redesign`.
-- Once Phase 1–4 are complete, `koichi-arch-redesign` PRs into `main`.
+- Integration branch: **`main`** (default branch).
+- Sub-branches per phase / batch (e.g. `feat/hex-year-resolver`,
+  `cleanup/batch-1`) PR'd directly into `main`.
 - Each PR keeps `R CMD check` green and updates the changelog and `PLAN.md`.
+- **Historical note (2026-05-12):** arch-redesign work originally
+  accumulated on `koichi-arch-redesign` (and earlier on
+  `eb-docs-pkgdown`). Both were merged into `main` once the redesign
+  was incremental enough to no longer warrant a long-lived
+  integration branch. PRs target `main` from then on; `Closes #N`
+  lines auto-close their issues.
 
 ### 3.2 Tooling — committed under `.claude/` ✓
 
@@ -886,29 +893,147 @@ generation. Spec:
       `pti_hex_source()` with field validation. Year-resolution
       logic (nearest-year substitution, 7-year tolerance) deferred
       to issue [#110](https://github.com/worldbank/devPTIpack/issues/110).
-- [ ] arch-11 §"Year resolution" -- year resolver
-      (issue [#110](https://github.com/worldbank/devPTIpack/issues/110);
-      blocked by #105).
-- [ ] arch-11 §"Fetching" -- `fetch_hex_data()` with H5/H6 resolution
+- [x] arch-11 §"Year resolution" -- year resolver
+      (issue [#110](https://github.com/worldbank/devPTIpack/issues/110)).
+      Three internal helpers in `R/fct_hex_year_resolver.R`:
+      `resolve_years()` (pure, per-variable: exact / nearest /
+      later-on-tie / 7-year tolerance error), `resolve_years_for_vars()`
+      (walks a `pti_hex_var` list, calls `get_available_years()` unless
+      a test stub is passed, stamps resolved years onto each var,
+      emits one consolidated `cli::cli_warn()` listing every
+      substitution by canonical name), `prompt_or_error_for_years()`
+      (interactive `cli::cli_inform()` + `utils::menu()` single-select
+      for `years = NULL`; non-interactive errors with actionable
+      message). Network-free unit tests (28 PASS / 0 FAIL) via the
+      `available_years_lookup` test seam.
+- [x] arch-11 §"Fetching" -- `fetch_hex_data()` with H5/H6 resolution
       bridge (issue [#112](https://github.com/worldbank/devPTIpack/issues/112);
-      blocked by #105 + #109 + #110).
-- [ ] arch-11 §"Aggregation" -- `aggregate_hex_to_shapes()`
+      blocked by #105 + #109 + #110). New `R/fct_hex_fetch.R`: exported
+      `fetch_hex_data(hex_ids, vars, dataset_loader, available_years_lookup)`.
+      Calls `resolve_years_for_vars()` first; detects H3 resolution via
+      `h3jsr::get_res()`; H6 → direct arrow fetch; H5 → bridge (7 H6
+      children per H5 via `h3jsr::get_children()`, aggregate back using
+      each var's `weight`/`fun`); H4 or lower → error; H7 or higher →
+      error. Both `dataset_loader` and `available_years_lookup` are test
+      seams for network-free Tier-1 tests. Temporal vars pivot long→wide
+      with `<canonical>_<year>` column names. Population column is always
+      first after `hex_id`. Also: `pti_hex_var()` gains `path` and
+      `hex_col` fields (defaults `NA`); `use_hex_vars()` embeds them from
+      the registry source so `fetch_hex_data()` stays YAML-free. 23 PASS /
+      0 FAIL in `tests/testthat/test-hex-fetch.R`.
+- [x] arch-11 §"Aggregation" -- `aggregate_hex_to_shapes()`
       (issue [#113](https://github.com/worldbank/devPTIpack/issues/113);
-      blocked by #112).
-- [ ] arch-11 §"Metadata Excel output" -- `build_hex_metadata()`
+      blocked by #112). New `R/fct_hex_aggregate.R`: exported
+      `aggregate_hex_to_shapes(hex_data, hex_layer, shp_dta, strategy)`.
+      `st_drop_geometry(hex_layer)` builds a flat grouping-key lookup;
+      parent Name columns are enriched from `shp_dta` layers. Aggregation
+      runs once per admin level in `shp_dta` — hex → each level directly,
+      never chained. Strategy (`weight × fun`) drives per-column bquote
+      expressions; population is always summed last (must be last in
+      `dplyr::summarise()` to keep the original vector available for
+      pop-weighted expressions). `weight = "pop"` → `weighted.mean`;
+      `weight = "area"` → `weighted.mean` with `hex_layer$area`; all-NA
+      group → `NA_real_` + `cli_warn`. Temporal column stems (strip
+      `_<year>`) look up strategy before falling back to `.default`. 35
+      PASS / 0 FAIL in `tests/testthat/test-hex-aggregate.R`.
+- [x] arch-11 §"Metadata Excel output" -- `build_hex_metadata()`
       with `include_hex` gating (issue
       [#115](https://github.com/worldbank/devPTIpack/issues/115);
-      blocked by #113).
-- [ ] arch-11 §"compile_pti_data() multi-file merge" -- extend
-      `compile_pti_data()` (issue
-      [#116](https://github.com/worldbank/devPTIpack/issues/116);
-      blocked by #115). (Note: the source-label suffix logic in
-      `compile_merge_metadata()` landed earlier via Eduard's PR
-      #63 commit `9e45918`.)
-- [ ] arch-11 §"Step 4 vignette" -- `build-pti-4-hex.qmd`
-      walkthrough (issue
+      blocked by #113). New `R/fct_hex_build_metadata.R`: exported
+      `build_hex_metadata(aggregated, shp_dta, indicator_config,
+      country_name, output_path, include_hex, include_population)`
+      writes a `metadata-hex.xlsx` workbook in the Step-3 template
+      format; registry metadata auto-populated from
+      `inst/hex_vars_registry.yaml` via `hex_meta_registry_lookup()`;
+      `indicator_config` tibble overrides with `cli_warn`;
+      non-registry vars without `indicator_config` → `cli_abort`;
+      `include_hex` missing + >5,000 cells → interactive prompt or
+      non-interactive warn+`FALSE`; `include_population = FALSE`
+      (default) excludes population row from metadata sheet; temporal
+      `{year}` glue-expands in `var_name`; validation via
+      `validate_read_metadata()` at the end. 42 PASS / 0 FAIL in
+      `tests/testthat/test-hex-build-metadata.R`.
+- [x] arch-11 §"compile_pti_data() multi-file merge" -- extend
+      `compile_pti_data()` (GitHub issue
       [#117](https://github.com/worldbank/devPTIpack/issues/117);
-      blocked by #112 + #113 + #115).
+      PLAN had issue numbers swapped with #116). The core merge
+      contract (source-label suffix, admin full_join, weights
+      first-non-empty) landed via Eduard's PR #63 commit `9e45918`.
+      This PR adds `.x`/`.y` suffix detection warning
+      (`cli::cli_warn()`) and 5 new test blocks (38 PASS / 0 FAIL)
+      covering collision rename, admin column sync, general
+      first-file-wins, weights_table multi-file warning, and
+      `.x`/`.y` detection.
+- [x] arch-11 §"Step 4 vignette" -- `build-pti-4-hex.qmd`
+      walkthrough (GitHub issue
+      [#116](https://github.com/worldbank/devPTIpack/issues/116)).
+      Rewrote stub into a complete end-to-end walkthrough: phases
+      A (Discover) through E (Build metadata Excel), HEX_RESOLUTION +
+      INCLUDE_HEX_IN_APP switches, local parquet contract table,
+      resolution bridge table (H5/H6/H7), population exclusion +
+      include_population override, fltr_exclude_pti review callout.
+      Removed "functions don't exist" stale warning. Fixed stale
+      get_available_years() call in template 04-hex-data.qmd. Renders
+      without errors (knitr, 17 chunks, all eval: false).
+
+---
+
+---
+
+## 8b. Phase 6 — Hex registry catalog expansion / arch-12 (#133, independent)
+
+Expand `inst/hex_vars_registry.yaml` from 1 real indicator to the full
+[WB Space2Stats](https://space2stats.ds.io) catalog (~108 columns across 6
+collections at H3 Level 6). Spec:
+[`arch-12-hex-catalog-expansion.md`](.github/docs/arch-12-hex-catalog-expansion.md).
+
+- [x] arch-12 §A — Discover & document Space2Stats parquet asset URLs
+      (issue [#134](https://github.com/worldbank/devPTIpack/issues/134);
+      research PR #142). **Key finding:** no separate parquet files exist
+      for the 4 non-flood collections. All 120 fields accessible via the
+      Space2Stats REST API (`summary_by_hexids`). Revised architecture:
+      REST is primary (not fallback) for all new additions. `hex_id` is
+      the uniform hex column across all sources. Complete field list
+      confirmed and recorded in arch-12 doc. New `source_col_template`
+      YAML field designed for wide-format temporal columns (e.g.
+      `sum_viirs_ntl_{year}`). Updated dependency: B–E now depend on F
+      (not just A), because the REST dispatch path must land first.
+- [ ] arch-12 §F — Add REST backend (`backend: "rest"`) + `source_col_template`
+      + climate static columns (code PR; issue
+      [#139](https://github.com/worldbank/devPTIpack/issues/139); depends
+      on #134). New `backend` / `api_root` YAML fields; new
+      `source_col_template` (glue pattern for wide-format temporal columns);
+      dispatch in `hex_fetch_source()`; new `hex_fetch_source_rest()`;
+      REST `get_available_years()` path. Adds drought/cyclone/landslide/fires
+      static columns under one `wb_space2stats_api` source.
+      `pillar_name: "Climate hazards"`.
+- [ ] arch-12 §B — Add population + age/sex pyramid vars to `wb_space2stats_api`
+      (YAML-only PR; issue
+      [#135](https://github.com/worldbank/devPTIpack/issues/135);
+      depends on #139). `sum_pop_2020`, `sum_f_2025`, `sum_m_2025`, and
+      representative age brackets. `pillar_name: "Demographics"`.
+- [ ] arch-12 §C — Add GHS-SMOD urbanisation vars (YAML-only PR;
+      issue [#136](https://github.com/worldbank/devPTIpack/issues/136);
+      depends on #139). `ghs_*_count` / `ghs_*_pop` columns.
+      `pillar_name: "Urbanization"`.
+- [ ] arch-12 §D — Add nighttime lights vars (YAML-only PR;
+      issue [#137](https://github.com/worldbank/devPTIpack/issues/137);
+      depends on #139). `sum_viirs_ntl_{year}` template, years 2012–2024.
+      `pillar_name: "Economic activity"`.
+- [ ] arch-12 §E — Add built-up area vars (YAML-only PR;
+      issue [#138](https://github.com/worldbank/devPTIpack/issues/138);
+      depends on #139). `sum_built_area_m_{year}` template, decadal
+      1975–2030. `pillar_name: "Infrastructure"`.
+- [ ] arch-12 §G — Add climate time-series (SPI) via REST (YAML-only PR;
+      issue [#140](https://github.com/worldbank/devPTIpack/issues/140);
+      depends on #139). SPI timeseries field TBD from `/timeseries_by_hexids`.
+
+**Execution order:** A complete. F next (only code PR; unblocks B–E and G
+in parallel after it lands).
+
+**DoD:** `list_hex_vars()` returns ≥ 100 variables; Rwanda pipeline run
+fetching one variable from each new collection completes without warnings;
+`R CMD check` 0/0/0.
 
 ---
 
@@ -933,7 +1058,7 @@ Lifted from arch-00 §"End-State Goals":
 - [ ] All ~95 permanent functions have complete roxygen2 docs.
 - [ ] Test coverage > 80%; Tier 1 + Tier 2 automated in CI.
 - [ ] Package website deployed on GitHub Pages with grouped vignettes.
-- [ ] Hex ingestion pipeline (#13) lands on its own milestone.
+- [x] Hex ingestion pipeline (#13) lands on its own milestone.
 - [ ] `R CMD check` passes with 0 warnings, 0 errors, 0 notes.
 
 ---
@@ -1004,6 +1129,20 @@ Lifted from arch-00 §"End-State Goals":
 | [#69](https://github.com/worldbank/devPTIpack/pull/69) | 2026-05-07 | **Phase 2.5 §12 (bug-fix #3)** | §12 bug #3 fixed -- `R/plot_pti_helpers.R::filter_admin_levels` now treats admin keys and display values symmetrically inside the `keep()` predicate. Pre-fix: the gating branch (L116-117) entered when `to_fltr` matched either keys or values, but the inner `keep(function(x) {x$admin_level %in% to_fltr})` predicate compared `x$admin_level` (the display value, e.g. `"Oblast"`) against `to_fltr` only -- so `to_fltr = "admin1"` (a bare key) entered the branch but selected 0 entries. Fix: extend the predicate to `x$admin_level %in% to_fltr | names(x$admin_level) %in% to_fltr`. Mirrors how `mod_get_admin_levels_srv` already filters its own internal state at L237-238 (`names(.) %in% default_adm_level | (.) %in% default_adm_level`). Test pin in `tests/testthat/test-plot-helpers.R` flipped from `expect_equal(length(filter_admin_levels(preplot, "admin1")), 0L)` (1 expectation, asserting the bug) to a sharper symmetric-contract assertion `expect_equal(by_name, by_value)` (1 expectation) -- key-only and value-only filters must produce the *same* result, not just the same length. `test_that()` description renamed from `"name-only filter returns 0 entries (PINNED)"` -> `"name-only filter matches the same entries as value-only"`; comment block rewritten to describe the contract instead of the past bug. Reviewer caution applied: original proposal used a length-check + `for` loop; tightened on r-package-reviewer's nice-to-have to a direct equality check that more sharply expresses the symmetric contract. Stripped the 6-line `@note Pinned bug (PR #25)` block from the function's roxygen. Caller-graph: 2 production call sites (`R/mod_dta_explorer2.R:99`, `R/mod_plot_pti2.R:62`), both pass `sel_adm_levels()` (a named character vector from `mod_get_admin_levels_srv`); the values branch already matched in production so this fix is a no-op on the deployed app and only changes behaviour for direct callers (tests + future callers). No NAMESPACE delta. Folded in nothing -- prior PR #68 self-swapped its TBD before merge. Suite stays at 702 PASS (FAIL=0, SKIP=1) -- 1 `expect_equal` swapped 1-for-1, no count delta. |
 
 | [#70](https://github.com/worldbank/devPTIpack/pull/70) | 2026-05-07 | **Phase 2.5 §12 (bug-fix #12 -- closes the sprint)** | §12 bug #12 fixed -- `R/supporting-goe-prep.R::gg_admin_list` default `mt = zam_bounds_simple` flipped to `mt = NULL` with an explicit `stop("'mt' is required: ...", call. = FALSE)` guard at the top of the function (option A from the scope-proposal gate; B = make `mt` required-no-default; C = default to `ukr_shp` -- both rejected, A gives the clearest failure mode without coupling to a bundled dataset). Pre-fix: calling `gg_admin_list(dta, metadata)` without explicit `mt` errored at runtime with `object 'zam_bounds_simple' not found` because `zam_bounds_simple` doesn't exist anywhere in `R/`, `data/`, or `inst/`. The broken default was silenced via `R/devPTIpack-package.R::globalVariables()` so R CMD check stayed clean -- this PR also drops `"zam_bounds_simple"` from `globalVariables()`. Updated `@param mt` doc to mention required-ness. New Tier-1 test file `tests/testthat/test-gg-admin-list.R` (2 test_that blocks, 8 expectations): missing `mt` -> `expect_error(regexp = "mt.*required")`; with `mt = ukr_shp` -> non-empty list of ggplot objects. Caller-graph: 2 production callers (`inst/metadata.Rmd:129`, `inst/sample_pti/app-data/pti-metadata-pdf.Rmd:108`) both pass `mt = bounds` explicitly -- pure latent bug. Two commented-out demo lines in those Rmds (omitting `mt`) almost certainly date from someone hitting this exact error and commenting them out. **This PR closes the Phase 2.5 §12 bug-fix sprint -- 14 of 14 bugs fixed across 14 PRs (#56, #57, #59, #60 [#7 + #14], #61, #62, #64, #65, #66, #67, #68, #69, plus this one).** Folded in nothing -- prior PR #69 self-swapped its TBD before merge. Suite goes from 702 PASS -> 710 PASS (FAIL=0, SKIP=1) -- net +8 expectations from the new test file. |
+
+| [#125](https://github.com/worldbank/devPTIpack/pull/125) | 2026-05-13 | **arch-11 §"Registry" (#105)** | Hex variable registry + reader functions. New `R/fct_hex_registry.R`: `read_hex_registry()`, `list_hex_vars()`, `use_hex_vars()`, `get_available_years()`. Registry YAML at `inst/hex_vars_registry.yaml` (registry_version 0.1.0; sources: wb_flood_exposure with population + flood_exposure_15cm_1in100). Suite 1109 PASS / 0 FAIL in `tests/testthat/test-hex-registry.R`. |
+
+| [#126](https://github.com/worldbank/devPTIpack/pull/126) | 2026-05-13 | **chore: switch integration target to main** | Retired `koichi-arch-redesign` + `eb-docs-pkgdown` integration branches; updated CLAUDE.md and PLAN.md to reflect that PRs now target `main` directly. |
+
+| [#127](https://github.com/worldbank/devPTIpack/pull/127) | 2026-05-13 | **arch-11 §"Year resolution" (#110)** | Hex year resolver. New `R/fct_hex_year_resolver.R`: `resolve_years()`, `resolve_years_for_vars()`, `prompt_or_error_for_years()`, `is_interactive()`. Suite PASS in `tests/testthat/test-hex-year-resolver.R`. Fixed `is_interactive()` wrapper so CI tests pass via `local_mocked_bindings`. |
+
+| [#128](https://github.com/worldbank/devPTIpack/pull/128) | 2026-05-13 | **arch-11 §"Fetching" (#112)** | `fetch_hex_data()` with H5/H6 bridge. New `R/fct_hex_fetch.R`: exported `fetch_hex_data(hex_ids, vars, dataset_loader, available_years_lookup)` + internal `hex_build_url()`, `hex_fetch_parquet()`, `hex_merge_sources()`. `pti_hex_var` S3 class gains `path` + `hex_col` slots. 23 PASS / 0 FAIL in `tests/testthat/test-hex-fetch.R`. |
+
+| [#129](https://github.com/worldbank/devPTIpack/pull/129) | 2026-05-13 | **arch-11 §"Aggregation" (#113)** | `aggregate_hex_to_shapes()`. New `R/fct_hex_aggregate.R`: exported `aggregate_hex_to_shapes(hex_data, hex_layer, shp_dta, strategy)` + internal `hex_agg_build_exprs()`. Population placed last in `dplyr::summarise()` to keep the original vector available for pop-weighted expressions. 35 PASS / 0 FAIL in `tests/testthat/test-hex-aggregate.R`. |
+
+| [#130](https://github.com/worldbank/devPTIpack/pull/130) | 2026-05-13 | **arch-11 §"Metadata Excel output" (#115)** | `build_hex_metadata()`. New `R/fct_hex_build_metadata.R`: exported `build_hex_metadata(aggregated, shp_dta, indicator_config, country_name, output_path, include_hex, include_population)` + internal helpers `hex_meta_registry_lookup()`, `hex_meta_user_row()`, `hex_meta_merge()`. Writes `metadata-hex.xlsx` in the Step-3 template format; registry auto-populated from `inst/hex_vars_registry.yaml`; `indicator_config` overrides with warning; temporal `{year}` glue-expansion; `validate_read_metadata()` end-to-end validation. 42 PASS / 0 FAIL in `tests/testthat/test-hex-build-metadata.R`. |
+| [arch-12 planning](https://github.com/worldbank/devPTIpack/issues/133) | 2026-05-14 | **arch-12 roadmap (Space2Stats catalog expansion)** | Wrote `.github/docs/arch-12-hex-catalog-expansion.md`. Opened umbrella tracker [#133](https://github.com/worldbank/devPTIpack/issues/133) and 7 sub-issues ([#134](https://github.com/worldbank/devPTIpack/issues/134) URL discovery, [#135](https://github.com/worldbank/devPTIpack/issues/135) population, [#136](https://github.com/worldbank/devPTIpack/issues/136) urbanization, [#137](https://github.com/worldbank/devPTIpack/issues/137) nighttime lights, [#138](https://github.com/worldbank/devPTIpack/issues/138) built-area, [#139](https://github.com/worldbank/devPTIpack/issues/139) REST backend + climate static, [#140](https://github.com/worldbank/devPTIpack/issues/140) climate time series). Arch-12 Phase 6 block added to PLAN.md. |
+| [#131](https://github.com/worldbank/devPTIpack/pull/131) | 2026-05-14 | **arch-11 §"compile_pti_data() multi-file merge" (GitHub #117)** | Added `.x`/`.y` suffix detection via `cli::cli_warn()` in `compile_merge_metadata()` and 5 new test blocks in `test-compile-pti-data.R` covering: duplicate var_code → `__<source>` suffix, admin column rename sync, general first-file-wins, weights_table multi-file warning, `.x`/`.y` detection. 38 PASS / 0 FAIL. Closes GitHub issue #117. |
 
 | [#79-draft](https://github.com/worldbank/devPTIpack/issues/79) | 2026-05-08 | **arch-09 PR #A2 — template scaffold + Rwanda data (draft)** | Issue #79 -- branch `feat/template-scaffold` off `eb-docs-pkgdown`. Built out `inst/template_pti/` per arch-09 §5: downloaded Rwanda GeoJSONs from geoBoundaries (Adm0=1 / Adm1=5 / Adm2=30 polygons, CC-BY 4.0); added `inst/template_pti/data-raw/generate-synthetic-metadata.R` (seeded `set.seed(42)`, deterministic; verified by re-run + `identical()` round-trip); generated `sample-metadata-adm1.xlsx` and `sample-metadata-adm1-adm2.xlsx` (3 indicators: poverty_rate, literacy_rate, road_density). Added template `.qmd` files: `01-shapes.qmd` (working: load GeoJSONs, attach `admin<N>Pcod`/`admin<N>Name`/`area`, centroid spatial-join to derive admin1 parent on admin2, `validate_geometries` -> `app-data/shapes.rds`); `02a-user-zonal-stats.qmd` (optional stub); `03-metadata.qmd` (working: `fct_template_reader` + `validate_metadata` against `app-data/shapes.rds`, copies workbook to `app-data/metadata-user.xlsx`); `04-hex-data.qmd` (HEX-API stub); `05-compile.qmd` (stub pending #83); `06-deploy.R` (manual `rsconnect::deployApp()`). Added `00-master.R` orchestrator (renders 01 + 03 by default; 02a / 04 / 05 / 06 commented). Updated `inst/template_pti/app.R` to load from `app-data/shapes.rds` + `app-data/metadata.xlsx` with the bundled `ukr_*` data shown as commented Option B fallback. Added `README.md` (file order, links to all 7 website tutorials, `app-data/` git-tracking warning, deferred-TODO list). Updated `inst/template_pti/.gitignore` to track `app-data/` + `data-raw/` by default. Added force-include exception in top-level `.gitignore` so `inst/template_pti/data-raw/` ships (overrides the package-wide `data-raw/` ignore). Smoke-tested: `create_new_pti(tempfile())` copies all 19 expected files; `00-master.R` Steps 01+03 render end-to-end via knitr::purl+source fallback (quarto subprocess fails on `library(devPTIpack)` outside an installed package -- documented limitation, not a defect of the template), producing `app-data/shapes.rds` (3.5 MB) + `app-data/metadata-user.xlsx`; `validate_geometries()` and `validate_metadata()` both return `status = "pass"` with 0 failures / 0 warnings on Rwanda inputs. Divergence noted in changelog: validator app calls (`app_validate_shp` in 01, `app_validate_metadata` in 03) commented pending #80 / #81; `compile_pti_data()` in 05-compile.qmd commented pending #83; 00-master.R does not render 04 (HEX API) or 05 by default. NOT pushed; commit on `feat/template-scaffold` only -- per the issue brief, no PR opened. |
 

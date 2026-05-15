@@ -5,6 +5,126 @@
 
 ---
 
+## 2026-05-14 (arch-12 §A — Space2Stats field discovery, PR #142)
+
+| Scope | Change |
+| ----- | ------ |
+| Docs | Rewrote `.github/docs/arch-12-hex-catalog-expansion.md` §2–§6 with confirmed findings from `GET space2stats.ds.io/fields`: complete 120-field inventory, architecture revision (REST is primary for all new additions — no separate parquet files found for the 4 non-flood collections), `source_col_template` YAML design for wide-format temporal columns, revised dependency order (B–E depend on F). |
+| Docs | Updated `PLAN.md` §8b: ticked `[x]` for arch-12 §A; added findings summary; revised B–E to show dependency on #139 (Issue F, REST backend). |
+
+## 2026-05-14 (arch-12 roadmap — Space2Stats catalog expansion)
+
+| Scope | Change |
+| ----- | ------ |
+| Docs | Created `.github/docs/arch-12-hex-catalog-expansion.md`: full design spec for expanding the hex registry from 1 indicator to the ~108-column WB Space2Stats catalog across 6 collections (population, urbanization, nightlights, built-area, climate static + time series), including YAML schema additions for the REST backend, code-change inventory for issues B–E / F / G, and a DoD checklist. |
+| Docs | Updated `PLAN.md`: added arch-12 to the source-of-truth table, GitHub issues map, and a new §8b Phase 6 execution block with 7 sub-issue checkboxes. Added progress-log row for arch-12 planning. |
+
+GitHub issues opened: [#133](https://github.com/worldbank/devPTIpack/issues/133) umbrella, [#134](https://github.com/worldbank/devPTIpack/issues/134)–[#140](https://github.com/worldbank/devPTIpack/issues/140) sub-issues A–G.
+
+---
+
+## 2026-05-14 (arch-11 §"Step 4 vignette" -- closes GitHub #116)
+
+| Scope | Change |
+| ----- | ------ |
+| Docs  | Rewrote `vignettes/articles/build-pti-4-hex.qmd` from stub into a complete end-to-end walkthrough: phases A–E, HEX_RESOLUTION + INCLUDE_HEX_IN_APP switch explanations, local parquet contract table, H5/H6/H7 resolution bridge table, population exclusion + `include_population` override, `fltr_exclude_pti` review callout. Removed stale "functions don't exist" warning. Fixes `get_available_years()` signature to match actual implementation (`get_available_years(var)`, not `get_available_years(vars = NULL, "name")`). |
+| Docs  | Removed stale "Feature not ready" callout from `inst/template_pti/04-hex-data.qmd` and fixed the same `get_available_years()` signature in that file. |
+| Docs  | PLAN.md §8 ticked `[x]` for arch-11 §"Step 4 vignette" (#116). |
+
+Renders without errors: knitr 17 chunks, all `eval: false`.
+
+---
+
+## 2026-05-14 (arch-11 §"compile_pti_data() multi-file merge" -- closes GitHub #117)
+
+| Scope | Change |
+| ----- | ------ |
+| Code  | Added `.x`/`.y` suffix detection in `compile_merge_metadata()` (`R/compile_pti_data.R`): after each admin-slot `full_join`, warns via `cli::cli_warn()` if unexpected `.x`/`.y` columns appear, with an actionable message naming the columns and advising the user to check for key mismatches across input files. |
+| Code  | Switched the three `cli::cli_alert_warning()` calls in `compile_merge_metadata()` (duplicate var_code, `.x`/`.y` detection, weights_table multiple) to `cli::cli_warn()` so they emit R warning signals testable by `expect_warning()`; updated `@importFrom cli` to include `cli_warn`. |
+| Tests | Added 5 new test blocks to `tests/testthat/test-compile-pti-data.R` (38 PASS / 0 FAIL total): duplicate var_code → `__<source>` suffix, admin column rename in sync with var_code, general sheet first-file-wins, weights_table first-non-empty-wins + multiple warning, `.x`/`.y` detection warning. Introduced `.make_parsed()` helper for minimal parsed-list fixtures. |
+| Docs  | PLAN.md §8 ticked `[x]` for arch-11 §"compile_pti_data() multi-file merge"; corrected issue number (PLAN had #116/#117 swapped; GitHub #117 is the merge extension); added PR #131 progress-log row. |
+
+`R CMD check` (`error_on = "error"`): 0 new errors / 12 pre-existing `local_mocked_bindings` failures / 1 pre-existing warning / 2 pre-existing notes.
+
+---
+
+## 2026-05-13 (arch-11 §"Metadata Excel output" -- build_hex_metadata(); closes #115)
+
+| Scope | Change |
+| ----- | ------ |
+| Code  | New `R/fct_hex_build_metadata.R` with exported `build_hex_metadata(aggregated, shp_dta, indicator_config, country_name, output_path, include_hex, include_population)`. Identifies hex slot as highest-level admin slot in `aggregated`; builds registry lookup via `hex_meta_registry_lookup()`; merges registry + `indicator_config` per column (user overrides with warning; non-registry/non-config column → `cli_abort`); temporal `{year}` glue-expanded in `var_name`; `include_hex` missing+>5k cells → interactive prompt or non-interactive warn+FALSE; writes via `writexl::write_xlsx()`; validates via `validate_read_metadata()`. |
+| Code  | Three internal helpers in same file: `hex_meta_registry_lookup()`, `hex_meta_user_row()`, `hex_meta_merge()`. |
+| Tests | New `tests/testthat/test-hex-build-metadata.R`: 19 test blocks / 42 PASS / 0 FAIL. Covers sheet presence, general/metadata/admin sheet contents, registry auto-population, `include_population`, `indicator_config` override warning, unknown indicator error, and 4 input validation errors. Xlsx written to `tempfile(fileext = ".xlsx")`, read back with `readxl`. |
+| Docs  | PLAN.md §8 ticked `[x]` for arch-11 §"Metadata Excel output" / #115; added progress-log entries for PRs #125–#129 (previously unlogged) and TBD row for this PR. |
+
+`R CMD check` (`error_on = "error"`): 0 new errors / 12 pre-existing `local_mocked_bindings` failures in testthat 3.1.2 / 1 pre-existing warning / 2 pre-existing notes.
+
+---
+
+## 2026-05-13 (arch-11 §"Aggregation" -- aggregate_hex_to_shapes(); closes #113)
+
+| Scope | Change |
+| ----- | ------ |
+| Code  | New `R/fct_hex_aggregate.R` with exported `aggregate_hex_to_shapes(hex_data, hex_layer, shp_dta, strategy)`. `sf::st_drop_geometry(hex_layer)` builds a flat lookup table; parent Name columns are enriched by joining each non-hex layer from `shp_dta`. For each admin level in `shp_dta`, hexes are grouped by that level's Pcod + Name + all coarser Pcods and summarised using per-column bquote expressions built from the deployer's `strategy` list. Population is always placed last in the expression list so `dplyr::summarise()` sees the original per-hex vector when evaluating population-weighted expressions (an earlier-placed `population = sum(...)` would replace the column with a scalar before weighted indicator expressions run). `weight = "pop"` → `stats::weighted.mean` with population weights; `weight = "area"` → `stats::weighted.mean` with hex area weights from `hex_layer$area`; `weight = "none"` → the function named by `fun` (mean/sum/min/max/median). All-NA group → `NA_real_` + `cli::cli_warn()` naming the polygon and variable. Temporal column stems (strip `_<year>` suffix) resolve strategy before falling back to `.default`. `population` in strategy emits a warning and is ignored (always sums). Missing `population` column when `weight = "pop"` is requested, or missing `area` column when `weight = "area"` is requested, both produce actionable `cli_abort()`. `.x`/`.y` suffixed columns (symptom of a bad `full_join`) emit a `cli_warn()`. Returns a named list of tibbles keyed by `shp_dta` slot names. |
+| Tests | New `tests/testthat/test-hex-aggregate.R` (16 test blocks / 35 PASS / 0 FAIL). Covers: correct named-list return structure; tbl_df class per slot; admin1 column structure; unweighted sum aggregation for admin0/admin1/admin9; population-weighted mean; area-weighted mean; all-NA → NA + cli_warn; partial-NA treated as 0; temporal stem lookup in strategy; population-in-strategy warning; weight=pop without population column error; weight=area without area column error; missing hex_id error; strategy without .default error; .x/.y collision warning. All tests use plain tibbles (sf::st_drop_geometry is a no-op on non-sf inputs). |
+| Docs  | PLAN.md §8 — ticked the arch-11 §"Aggregation" / #113 box with a 12-line implementation summary. |
+
+`R CMD check` (no examples, no vignettes): **0 errors / 1 pre-existing warning / 2 pre-existing notes**. All hex-pipeline tests pass: test-hex-aggregate.R (35 PASS), test-hex-fetch.R (23 PASS), test-hex-year-resolver.R (28 PASS / 2 SKIP), test-hex-registry.R (40 PASS), test-hex-source.R (33 PASS).
+
+---
+
+## 2026-05-13 (arch-11 §"Fetching" -- fetch_hex_data() + H5/H6 bridge; closes #112)
+
+| Scope | Change |
+| ----- | ------ |
+| Code  | New `R/fct_hex_fetch.R` with exported `fetch_hex_data(hex_ids, vars, dataset_loader = NULL, available_years_lookup = NULL)`. Calls `resolve_years_for_vars()` to stamp resolved years first. Detects H3 resolution with `h3jsr::get_res()`; source resolution is always H6 for the current registry. H6 `hex_ids` → direct `arrow::open_dataset()` fetch with predicate pushdown on the hex column. H5 `hex_ids` → transparent H5→H6→H5 bridge: `h3jsr::get_children()` expands each H5 to its 7 H6 children, data fetched at H6 then aggregated back using each variable's `weight`/`fun` (population always sums; `weight="pop"` uses `weighted.mean`; `weight="area"` is equivalent to `weight="none"` for uniform H6 cells). H4 or lower → error (unsupported). H7 or higher → error (finer than source). Temporal variables fetched long and pivoted wide with `tidyr::pivot_wider`; output columns named `<canonical_name>_<year>`. Population column relocated to first position after `hex_id`. Two test seams: `dataset_loader` (replaces `arrow::open_dataset` for network-free tests) and `available_years_lookup` (passed through to `resolve_years_for_vars`). Large grid (>10k cells) emits a `cli::cli_warn()`. |
+| Code  | `pti_hex_var()` S3 constructor gains two optional fields: `path = NA_character_` and `hex_col = NA_character_`. Added to the internal structure list. Defaults to `NA` for hand-constructed descriptors (test fixtures); populated by `use_hex_vars()` from the source entry. No breaking change — existing `pti_hex_var()` call sites pass these as `NA`. |
+| Code  | `use_hex_vars()` in `R/fct_hex_registry.R`: embeds `path` and `hex_col` from the source descriptor onto each `pti_hex_var` it returns (for the requested vars, for the explicitly-promoted population, and for the auto-injected population). Enables `fetch_hex_data()` to group variables by source parquet without reading the registry YAML. |
+| Tests | New `tests/testthat/test-hex-fetch.R` (12 test blocks / 23 PASS / 0 FAIL). Covers: basic H6 direct fetch; population-first column order; correct numeric values; temporal pivot to `<canonical>_<year>`; H5→H6 bridge with sum aggregation; bridge with two H5 cells aggregated independently; H7 resolution error; H4 resolution error; large hex set (>10k) warning; empty `hex_ids` error; empty `vars` error; non-pti_hex_var in vars error. All tests are network-free via the `dataset_loader` and `available_years_lookup` test seams. Real h3jsr is used for resolution detection and child expansion. |
+| Docs  | PLAN.md §8 — ticked the arch-11 §"Fetching" / #112 box with a 9-line summary of the implementation. |
+
+`R CMD check` (no tests, no vignettes, no manual): **0 errors / 1 warning (pre-existing R-version dependence) / 2 notes (pre-existing)**. `devtools::load_all()` clean. All hex-pipeline test files pass: test-hex-source.R (33 PASS), test-hex-registry.R (40 PASS — existing), test-hex-year-resolver.R (28 PASS / 2 SKIP), test-hex-fetch.R (23 PASS).
+
+---
+
+## 2026-05-13 (fix -- is_interactive() wrapper to unblock CI on R 4.6)
+
+| Scope | Change |
+| ----- | ------ |
+| Code  | Added `is_interactive()` thin wrapper in `R/fct_hex_year_resolver.R`; `prompt_or_error_for_years()` now calls it instead of `base::interactive()` directly. `base::interactive` is a `.Primitive` and `local_mocked_bindings(.package = "base")` does not intercept calls from within the devPTIpack namespace on R 4.6, causing the two interactive-path tests to hit the non-interactive `stop()` branch and then fail because the captured error message did not match the expected regexp. The wrapper is a plain R function in the devPTIpack namespace, so `local_mocked_bindings(.package = "devPTIpack")` reliably intercepts it. |
+| Tests | Updated both interactive-path tests in `test-hex-year-resolver.R` to mock `devPTIpack:::is_interactive` instead of `base:::interactive`; removed the now-redundant `withr::local_options(rlang_interactive = TRUE)` line from the "returns selected year" test. 28 PASS / 0 FAIL / 2 SKIP locally (still skipped under testthat 3.1.2 as before). |
+
+---
+
+## 2026-05-12 (arch-11 §"Year resolution" -- year resolver helpers; closes #110)
+
+| Scope | Change |
+| ----- | ------ |
+| Code  | New file `R/fct_hex_year_resolver.R` with three internal helpers (all `@noRd`). (1) `resolve_years(requested_years, available_years, var_name)` -- pure, network-free, applies arch-11 §"Year resolution" rules: exact match -> return verbatim; otherwise nearest year wins; equidistant tie broken by `max()` (later year); requested years more than 7 years from any available year hard-error with the variable name + full available-years list. Returns `list(resolved, substitutions)` where `substitutions` is a two-column data.frame `(requested, resolved)` with one row per non-exact match. (2) `resolve_years_for_vars(vars, available_years_lookup = NULL)` -- walks a `pti_hex_var` list returned by `use_hex_vars()`, calls `get_available_years()` per temporal variable (or reads `available_years_lookup` keyed by *unsuffixed* canonical name, the test seam that keeps Tier-1 tests network-free), stamps resolved years onto `var$years`, and emits **one consolidated** `cli::cli_warn()` listing every substitution under each variable's canonical name. Non-temporal vars (`time_col` is `NA`) pass through untouched. (3) `prompt_or_error_for_years(var_name, available_years)` -- fires when a temporal var arrives with `years = integer(0)`. Interactive sessions get `cli::cli_inform()` + `utils::menu()` single-select; non-interactive sessions hard-error with the available-years list and `years = c(...)` actionable message. v1 is intentionally single-select (no multi-year `readline()` parsing) -- nothing downstream in arch-11 currently needs more than one resolved year per call and adding it later is cheap. |
+| Tests | New `tests/testthat/test-hex-year-resolver.R` (16 test blocks / 28 PASS / 0 FAIL / 2 SKIP on local testthat 3.1.2). Covers: `resolve_years()` exact match, nearest-year substitution + substitution row recorded, later-year-wins on equidistant tie, >7-year error message format, 7-year boundary inclusive, multi-year input collapsing to deduplicated output, empty `requested_years` returns empty, empty `available_years` errors. `resolve_years_for_vars()` non-temporal pass-through, resolved-year stamping (including dedup on equidistant tie -> later differs), consolidated warning lists all substitutions, no-warning path on exact match, `__<label>` suffix stripping for the lookup key, missing-lookup-entry error, non-interactive NULL-years error. `prompt_or_error_for_years()` non-interactive error message format. Two interactive-path tests (`testthat::local_mocked_bindings()` on both `utils::menu` and `base::interactive`) are skipped under testthat < 3.2.0 -- CI has newer testthat. |
+| Docs  | NAMESPACE auto-regenerated: added `importFrom(cli, cli_inform)`, `importFrom(cli, cli_warn)`, `importFrom(utils, menu)`. No new exports -- all three helpers stay internal so `use_hex_vars()`'s public surface stays stable; the resolver is called from `fetch_hex_data()` (arch-11 §"Fetching" / #112) which will land next. |
+| Docs  | PLAN.md §8 -- ticked the arch-11 §"Year resolution" / #110 box and replaced the placeholder with a five-line summary of the three helpers. |
+
+`R CMD check` (no --as-cran, `--no-tests`): **0 errors / 1 warning (pre-existing R-version dependence) / 2 notes (pre-existing)**. Examples + documentation checks all pass. `testthat::test_file('tests/testthat/test-hex-year-resolver.R')` on the new file: 28 PASS / 0 FAIL / 2 SKIP.
+
+---
+
+## 2026-05-12 (chore -- merge arch-redesign integration branch into main; switch convention)
+
+| Scope   | Change |
+| ------- | ------ |
+| Code    | Merged `worldbank/koichi-arch-redesign` (17 commits ahead, 1 behind `worldbank/main`) into `main`. The 17 commits comprise: arch-09 vignette polish (PRs #89-#93, #84, #94, #95); arch-10 Step 1 enhancement end-to-end (PRs #119/#120/#121/#122/#123/#124, sub-issues #106/#108/#109/#111/#114 + parent #104); arch-11 §Registry (PR #125 / #105). The 1 commit behind was the eb-docs-pkgdown -> main merge (a880910) which had not been backported. Clean 3-way merge, no conflicts. New integration target going forward is `main` (the repo's default branch). |
+| Config  | `.github/workflows/pkgdown.yaml`: changed `on.push.branches` from `[eb-docs-pkgdown]` to `[main]`. The pkgdown deploy trigger had been gated on the now-retired `eb-docs-pkgdown` branch even after that branch was merged into `main` (#118), so live-docs deploys had silently stalled. Switching to `main` re-activates the deploy and aligns with the new branching convention. |
+| Config  | `.github/workflows/tests.yaml` + `.github/workflows/R-CMD-check.yaml`: trimmed `on.push.branches` and `on.pull_request.branches` from `[main, koichi-arch-redesign]` to `[main]`. `koichi-arch-redesign` is now a historical branch and need not gate CI. `test-coverage.yaml` was already on `[main, master]` and required no change. |
+| Rules   | `.claude/CLAUDE.md` §"Branching": rewrote to declare `main` as the default + integration branch. Removed the cross-base auto-close caveat (PRs to `main` auto-close their `Closes #N` references; manual close is now fallback-only). Updated the skills table row for `close-issue-on-merge` to flag it as a fallback. Added a historical-context paragraph naming the two retired integration branches. |
+| Tooling | `.claude/skills/close-issue-on-merge/SKILL.md`: rewrote the description + body to position the skill as a fallback for the residual cases (forgotten keyword, parent tracker issues, GitHub-missed auto-close, user-requested closes) rather than a mandatory after-every-merge step. Trimmed the auto-close comment template -- no need to apologise for cross-base merges any more. |
+| Tooling | `.claude/skills/cleanup-batch/SKILL.md` + `.claude/agents/r-package-reviewer.md`: updated the branch-strategy references that named `koichi-arch-redesign` as the cut point or diff anchor; both now point at `main`. |
+| Docs    | `PLAN.md` §3.1 "Branch strategy (resolved)": rewrote to declare `main` as the integration target; added a historical-note bullet naming both retired integration branches (`koichi-arch-redesign`, earlier `eb-docs-pkgdown`) so the rationale isn't lost. Existing narrative on lines 33-37 + 199-202 left intact -- they document what happened during the redesign and shouldn't be back-edited. |
+
+`R CMD check` (no `--as-cran`, `--no-tests --no-vignettes --no-manual`): **0 errors / 1 warning (pre-existing R-version dependence) / 2 notes (pre-existing)**. No code changes -- this is a workflow / convention PR.
+
+---
+
 ## 2026-05-12 (arch-11 §Registry -- hex variable registry + reader fns; closes #105)
 
 | Scope | Change |

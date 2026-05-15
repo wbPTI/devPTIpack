@@ -65,7 +65,9 @@ pti_hex_var <- function(
   years = integer(0),
   weight = c("none", "pop", "area"),
   fun = c("mean", "median", "sum", "min", "max"),
-  internal = FALSE
+  internal = FALSE,
+  path = NA_character_,
+  hex_col = NA_character_
 ) {
   if (!is.character(source_col) || length(source_col) != 1L ||
         is.na(source_col) || !nzchar(source_col)) {
@@ -115,7 +117,9 @@ pti_hex_var <- function(
       years = as.integer(years),
       weight = weight,
       fun = fun,
-      internal = internal
+      internal = internal,
+      path = if (is.null(path)) NA_character_ else as.character(path),
+      hex_col = if (is.null(hex_col)) NA_character_ else as.character(hex_col)
     ),
     class = "pti_hex_var"
   )

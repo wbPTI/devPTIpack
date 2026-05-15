@@ -12,7 +12,7 @@ report. The caller decides what to fix.
 
 ## Inputs you can expect
 
-- A branch name or commit range (e.g. `koichi-arch-redesign..HEAD`,
+- A branch name or commit range (e.g. `main..HEAD`,
   `cleanup/batch-1`).
 - Optionally a focus area (tests / cleanup / docs / vignettes).
 
