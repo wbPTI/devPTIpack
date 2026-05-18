@@ -1,0 +1,528 @@
+# Data preparation reference
+
+``` r
+
+library(devPTIpack)
+```
+
+This is the **reference deep-dive** on the two data inputs that feed
+every PTI app:
+
+1.  A named list of administrative-boundary `sf` tibbles (saved as
+    `admin_bounds.rds`).
+2.  A multi-sheet Excel metadata template describing your indicators
+    (`mtdt.xlsx`).
+
+If you just want a recipe, start with [Build a
+PTI](https://worldbank.github.io/devPTIpack/articles/build-pti.md). This
+page is for when that walkthrough refers you here for a data-shape
+question, or when a validator tells you something specific is wrong with
+your inputs.
+
+The package’s own
+[`validate_geometries()`](https://worldbank.github.io/devPTIpack/reference/validate_geometries.md)
+and
+[`validate_metadata()`](https://worldbank.github.io/devPTIpack/reference/validate_metadata.md)
+functions encode every rule on this page. If you’re unsure whether your
+data conforms, run them — they’re authoritative.
+
+------------------------------------------------------------------------
+
+## 1. Boundary shapes — `admin_bounds.rds`
+
+### 1.1 Top-level structure
+
+`shp_dta` is a **named list of `sf` tibbles**, one element per
+administrative level. It is normally saved as a single `.rds` file
+(commonly `admin_bounds.rds`) and read with
+[`readRDS()`](https://rdrr.io/r/base/readRDS.html) at app launch.
+
+``` r
+
+data(ukr_shp)
+
+class(ukr_shp)
+#> [1] "list"
+length(ukr_shp)
+#> [1] 4
+names(ukr_shp)
+#> [1] "admin0_Country" "admin1_Oblast"  "admin2_Rayon"   "admin4_Hexagon"
+```
+
+The list element names follow the package convention
+`admin<N>_<HumanName>`, where `<N>` is a digit 0–9 and `<HumanName>` is
+a single word naming the level (for example, `Oblast`, `District`,
+`Hexagon`). The bundled Ukraine sample uses levels 0, 1, 2, and 4 —
+admin3 is intentionally skipped to demonstrate that level numbers do not
+need to be contiguous, but each level you do include must be uniquely
+numbered.
+
+### 1.2 Naming convention
+
+| Element name | Meaning |
+|----|----|
+| `admin0_Country` | Mandatory. The country polygon. PTI apps require it even if you do not display admin0 in the UI. |
+| `admin1_Region` | First-level subdivision (province, oblast, region, …) |
+| `admin2_District` | Second-level subdivision |
+| `admin<N>_<Name>` | Pattern for any level. `<N>` is the integer level depth; `<Name>` is one human-readable word. No spaces, no colons. |
+
+If your country uses different administrative terminology
+(e.g. `admin1_Wilaya`, `admin2_Commune`), use it — only the `admin<N>_`
+prefix matters to the package; the name suffix is for display.
+
+### 1.3 Required columns per layer
+
+Every `sf` tibble in the list must, at minimum, carry these columns:
+
+| Column | Type | Purpose |
+|----|----|----|
+| `admin<N>Pcod` | `character` | Unique polygon identifier (P-code). One per row at this level. |
+| `admin<N>Name` | `character` | Human-readable polygon name (one per row). |
+| `area` | `numeric` | Polygon area, in km². Compute after re-projecting to an appropriate UTM. |
+| `geometry` | `sfc_(MULTI)POLYGON` | Spatial geometry. Must be `POLYGON` or `MULTIPOLYGON` only. |
+
+Both `admin<N>Pcod` and `admin<N>Name` use the level number of the
+*current* layer. For example, in `admin2_District`, those columns are
+`admin2Pcod` and `admin2Name`.
+
+``` r
+
+str(ukr_shp$admin1_Oblast, max.level = 1)
+#> sf [27 × 5] (S3: sf/tbl_df/tbl/data.frame)
+#>  - attr(*, "sf_column")= chr "geometry"
+#>  - attr(*, "agr")= Factor w/ 3 levels "constant","aggregate",..: NA NA NA NA
+#>   ..- attr(*, "names")= chr [1:4] "admin0Pcod" "admin1Pcod" "admin1Name" "area"
+```
+
+### 1.4 Parent-child mapping (cascade rule)
+
+Sub-admin layers must also carry the **parent-level P-code columns**, so
+the package can join up the hierarchy without re-computing keys.
+
+The rule: a layer at depth `N` must contain the `admin<k>Pcod` column
+for every level `k < N` that exists elsewhere in the list. Names are not
+required at parent levels (only Pcods).
+
+``` r
+
+intersect(c("admin0Pcod", "admin1Pcod", "admin1Name"),
+          names(ukr_shp$admin1_Oblast))
+#> [1] "admin0Pcod" "admin1Pcod" "admin1Name"
+
+intersect(c("admin0Pcod", "admin1Pcod", "admin2Pcod", "admin2Name"),
+          names(ukr_shp$admin2_Rayon))
+#> [1] "admin0Pcod" "admin1Pcod" "admin2Pcod" "admin2Name"
+```
+
+Schematically:
+
+    admin0_Country     [admin0Pcod, admin0Name]
+           ▲
+           │  every admin1 row carries admin0Pcod
+           │
+    admin1_Region      [admin0Pcod, admin1Pcod, admin1Name]
+           ▲
+           │  every admin2 row carries admin0Pcod + admin1Pcod
+           │
+    admin2_District    [admin0Pcod, admin1Pcod, admin2Pcod, admin2Name]
+
+If a P-code value appears in `admin2_District$admin1Pcod` but does not
+appear in `admin1_Region$admin1Pcod`, that’s an orphan child —
+[`validate_geometries()`](https://worldbank.github.io/devPTIpack/reference/validate_geometries.md)
+will flag it.
+
+### 1.5 Geometry constraints
+
+- **Geometry types**: `POLYGON` and `MULTIPOLYGON` only. `POINT`,
+  `LINESTRING`, `GEOMETRYCOLLECTION` are rejected.
+- **Validity**: each geometry should pass
+  [`sf::st_is_valid()`](https://r-spatial.github.io/sf/reference/valid.html).
+  Run
+  [`sf::st_make_valid()`](https://r-spatial.github.io/sf/reference/valid.html)
+  on raw shapes before saving.
+- **CRS**: all layers must be in **EPSG:4326 (WGS84)**. The package
+  requires a consistent CRS across every layer in the list, and
+  EPSG:4326 is the project standard. If your source data is in a
+  different CRS, re-project to EPSG:4326 before assembling the list.
+- **Area**: compute `area` in km² in EPSG:4326 using
+  [`sf::st_area()`](https://r-spatial.github.io/sf/reference/geos_measures.html)
+  with s2 enabled (the default).
+  [`sf::st_area()`](https://r-spatial.github.io/sf/reference/geos_measures.html)
+  returns a `units` object; convert and drop the attribute with
+  `as.numeric(units::set_units(sf::st_area(geometry), "km^2"))`. For
+  country-level PTI apps the resulting 1–5% area approximation is fit
+  for purpose.
+
+### 1.6 Save format
+
+Save the assembled list as compressed RDS:
+
+``` r
+
+saveRDS(my_shp, "app-data/admin_bounds.rds", compress = "gz")
+```
+
+A compressed Ukraine-sized RDS is typically a few MB.
+
+### 1.7 What `validate_geometries()` catches
+
+`validate_geometries(my_shp)` runs the following checks per layer:
+
+- Layer name parses to `admin<digit>_<name>`.
+- Element is an `sf` object.
+- Has a column called `geometry` of class `sfc`.
+- All geometries are `POLYGON` or `MULTIPOLYGON`.
+- `admin<N>Pcod` and `admin<N>Name` columns exist.
+- `admin<N>Pcod` is unique (no duplicate IDs).
+- `admin<N>Name` is unique (no duplicate names).
+- No `NA`s in `admin<N>Pcod` or `admin<N>Name`.
+- All parent-level P-code columns exist.
+- All parent P-code values appear in their parent layer (cascade rule,
+  §1.4).
+
+It also verifies, across the full list, that `get_mt(my_shp)` produces a
+row for every polygon at the most-disaggregated level — i.e. that the
+levels form a strict hierarchy with no gaps.
+
+### 1.8 What `validate_geometries()` does *not* check
+
+- CRS consistency between layers.
+- Whether `area` is in km² versus m² (it cannot tell).
+- Whether geometries are topologically valid (use
+  [`sf::st_is_valid()`](https://r-spatial.github.io/sf/reference/valid.html)
+  separately).
+- Whether the polygons cover the country (gaps are not detected).
+
+------------------------------------------------------------------------
+
+## 2. Metadata Excel template — `mtdt.xlsx`
+
+The metadata template is a single `.xlsx` file with one sheet per admin
+level, plus three book-keeping sheets.
+[`fct_template_reader()`](https://worldbank.github.io/devPTIpack/reference/fct_template_reader.md)
+parses it into the list shape that
+[`launch_pti()`](https://worldbank.github.io/devPTIpack/reference/launch_pti.md)
+consumes.
+
+### 2.1 Sheet inventory
+
+| Sheet name | Required? | Purpose |
+|----|----|----|
+| `general` | yes | One-row tibble with country-level metadata (`country` column). |
+| `metadata` | yes | One row per indicator. Fourteen columns describing each indicator (see §2.3). |
+| `admin<N>_<Name>` | one or more | Wide-format indicator values. One column per indicator at that admin level. Sheet names must match the names in your `admin_bounds.rds` exactly. |
+| `weights_table` | optional | Pre-defined weight schemes. Each scheme is a `ws<digit>..` column group. See §2.5. |
+| `point_data` | optional | Reserved for future point-overlay support. Currently ignored by the pipeline; safe to omit. |
+
+The bundled `ukr_mtdt_full` is the canonical example:
+
+``` r
+
+data(ukr_mtdt_full)
+names(ukr_mtdt_full)
+#> [1] "general"        "admin1_Oblast"  "admin2_Rayon"   "admin4_Hexagon"
+#> [5] "metadata"
+```
+
+The populated sheets here are `general`, `admin1_Oblast`,
+`admin2_Rayon`, `admin4_Hexagon`, and `metadata` — note that the
+admin-level sheet names match the slot names in `ukr_shp` exactly. This
+is mandatory.
+
+### 2.2 The `general` sheet
+
+A one-row tibble. The pipeline currently uses one column:
+
+| Column    | Type      | Purpose                                         |
+|-----------|-----------|-------------------------------------------------|
+| `country` | character | Display name of the country (e.g. `"Ukraine"`). |
+
+Other columns are tolerated but ignored.
+
+``` r
+
+ukr_mtdt_full$general
+#> # A tibble: 1 × 1
+#>   country
+#>   <chr>  
+#> 1 Ukraine
+```
+
+### 2.3 The `metadata` sheet
+
+This is the **indicator catalogue**. One row per indicator. Fourteen
+columns. Every column listed below is required (write a default if you
+have nothing meaningful for it).
+
+| Column | Type | Required | Purpose |
+|----|----|----|----|
+| `var_code` | character | yes | The indicator’s column name as it appears in the admin sheets. Must match exactly. **No `:`.** |
+| `var_name` | character | yes | Display name shown in the dashboard UI. **No `:`.** |
+| `var_description` | character | recommended | Long-form description: how the indicator was constructed, sources used, units, caveats. |
+| `var_order` | integer | yes | Sort order within a pillar. Indicators are listed `pillar_group` then `var_order` ascending. |
+| `var_units` | character | optional | Unit of measurement (e.g. `"km"`, `"%"`, `"USD"`, `"persons/km²"`). Display-only. |
+| `spatial_level` | character | yes | The most disaggregated admin level where this indicator has data. Value must equal an `admin<N>_<Name>` sheet name in this same file. |
+| `pillar_group` | numeric | yes | Numeric code grouping indicators into pillars. All indicators with the same `pillar_group` form one pillar. |
+| `pillar_name` | character | yes | Human-readable pillar name (e.g. `"Human capital"`). All rows sharing a `pillar_group` must share `pillar_name`. **No `:`.** |
+| `pillar_description` | character | optional | Long-form pillar description. Display-only. |
+| `fltr_exclude_pti` | logical | yes | `TRUE` excludes this indicator from the PTI calculation. `FALSE` (default) includes it. |
+| `fltr_exclude_explorer` | logical | yes | `TRUE` excludes this indicator from the Data Explorer tab. `FALSE` (default) includes it. |
+| `fltr_overlay_pti` | logical | yes | Reserved overlay flag. Set `FALSE` unless you know you need it. |
+| `fltr_overlay_explorer` | logical | yes | Reserved overlay flag. Set `FALSE`. |
+| `legend_revert_colours` | logical | yes | `TRUE` reverses the colour scale for this indicator’s legend (use when high values are *bad*). |
+
+**Rules of thumb:**
+
+- All `fltr_*` columns and `legend_revert_colours` must be **booleans**,
+  not strings. If Excel renders them as `"TRUE"` / `"FALSE"` strings,
+  [`validate_read_metadata()`](https://worldbank.github.io/devPTIpack/reference/validate_read_metadata.md)
+  will complain.
+- `var_code` values must be valid R column names (no spaces, no leading
+  digits, no special characters except `_`).
+- The `:` character breaks app compilation in `pillar_name` and
+  `var_name` because it’s used internally as a separator.
+
+The bundled metadata sheet illustrates the layout:
+
+``` r
+
+ukr_mtdt_full$metadata[, c(
+  "var_code", "var_name", "spatial_level",
+  "pillar_group", "pillar_name", "fltr_exclude_pti"
+)]
+#> # A tibble: 9 × 6
+#>   var_code      var_name spatial_level pillar_group pillar_name fltr_exclude_pti
+#>   <chr>         <chr>    <chr>         <chr>        <chr>       <lgl>           
+#> 1 var_nval3_sk… var_nva… admin1_Oblast 1            Pilar 1     FALSE           
+#> 2 var_nval6_na… var_nva… admin2_Rayon  1            Pilar 1     FALSE           
+#> 3 var_nval15_s… var_nva… admin2_Rayon  1            Pilar 1     FALSE           
+#> 4 var_nvalinf_… var_nva… admin2_Rayon  1            Pilar 1     FALSE           
+#> 5 var_nval60_n… var_nva… admin4_Hexag… 1            Pilar 1     FALSE           
+#> 6 var_nval4_sm… var_nva… admin4_Hexag… 1            Pilar 1     FALSE           
+#> 7 var_nvalinf_… var_nva… admin4_Hexag… 1            Pilar 1     FALSE           
+#> 8 var_nvalinf_… var_nva… admin4_Hexag… 1            Pilar 1     FALSE           
+#> 9 var_nvalinf_… var_nva… admin4_Hexag… 1            Pilar 1     FALSE
+```
+
+### 2.4 Per-admin sheets
+
+One sheet per admin level you have indicator data for. Sheet name must
+be **identical** to the corresponding slot name in `admin_bounds.rds`
+(e.g. `admin2_Rayon`). Wide format: rows are polygons, columns are
+indicators.
+
+Required columns:
+
+| Column | Type | Purpose |
+|----|----|----|
+| `admin<N>Pcod` | character | Foreign key. Must match `admin<N>Pcod` in the corresponding `sf` layer 1-to-1. |
+| `admin<N>Name` | character | Mirror of the geometry’s name column. |
+| Parent `admin<k>Pcod` | character | All `k < N` ancestor P-codes (cascade rule, §1.4). |
+| `year` | integer | Vintage of the values in this row. May vary across rows; pipeline aggregates by P-code rather than year. |
+| `area` | numeric | Area in km², usually copied from the geometry layer. |
+
+Then **one column per indicator measured at this level**. Column name
+must equal the indicator’s `var_code` in the `metadata` sheet. Type
+should be `numeric` (`integer` is OK).
+
+[`fct_template_reader()`](https://worldbank.github.io/devPTIpack/reference/fct_template_reader.md)
+drops indicator columns that are not declared in the `metadata` sheet,
+and drops admin sheets that have no remaining indicator columns. So the
+system tolerates “extra” columns in your raw data — they are silently
+filtered out.
+
+``` r
+
+str(ukr_mtdt_full$admin1_Oblast)
+#> tibble [27 × 8] (S3: tbl_df/tbl/data.frame)
+#>  $ admin0Pcod                  : chr [1:27] "UK" "UK" "UK" "UK" ...
+#>  $ admin1Pcod                  : chr [1:27] "UK01" "UK02" "UK03" "UK04" ...
+#>  $ admin1Name                  : chr [1:27] "Cherkasy" "Chernihiv" "Chernivtsi" "Crimea" ...
+#>  $ year                        : num [1:27] NA NA NA NA NA NA NA NA NA NA ...
+#>  $ var_nval6_na_adm12          : num [1:27] 2 2 5 1 1 4 6 3 2 NA ...
+#>  $ var_nval3_skewd_adm1        : num [1:27] -1000 10000 10000 10000 10000 10000 10000 10000 10000 10000 ...
+#>  $ var_nval15_small_skewd_adm12: num [1:27] 9.2e-07 9.2e-07 9.2e-07 9.2e-07 9.2e-07 ...
+#>  $ var_nvalinf_unif_adm124     : num [1:27] -1.56 -8.91 3.18 2.65 1.56 ...
+```
+
+### 2.5 The optional `weights_table` sheet
+
+Lets you ship pre-defined weight schemes alongside the dashboard. Users
+can pick from these in the UI instead of building weights manually.
+
+Layout: one row per indicator (`var_code`), then column groups named
+`ws<digit>..<column>` — one group per weight scheme. Each scheme has at
+least:
+
+| Column | Type | Purpose |
+|----|----|----|
+| `ws<digit>..name` | character | Display name of the weight scheme (e.g. `"Equal weights"`, `"Poverty-heavy"`). |
+| `ws<digit>..value` | numeric | The weight assigned to this `var_code` under this scheme. Sum within a scheme is normalised internally. |
+
+Multiple schemes use successive `ws1..`, `ws2..`, `ws3..` prefixes.
+`fct_convert_weight_to_clean()` (internal) reshapes this into the
+per-scheme list the calculator consumes.
+
+Omit the sheet entirely if you want users to build all weights from the
+UI.
+
+### 2.6 What `validate_metadata()` catches
+
+`validate_metadata(shp_path, mtdt_path)` runs the file through
+[`validate_read_shp()`](https://worldbank.github.io/devPTIpack/reference/validate_read_shp.md),
+then
+[`validate_read_metadata()`](https://worldbank.github.io/devPTIpack/reference/validate_read_metadata.md),
+then executes the full calculation pipeline under all-equal weights and
+confirms the number of scored pillars equals the number of indicators.
+Specifically:
+
+- The shapes file is readable as a non-empty named list
+  ([`validate_read_shp()`](https://worldbank.github.io/devPTIpack/reference/validate_read_shp.md)).
+- The metadata file is readable as a non-empty `metadata` sheet
+  ([`validate_read_metadata()`](https://worldbank.github.io/devPTIpack/reference/validate_read_metadata.md)).
+- All `fltr_*` columns are read as logical, not string.
+- The pipeline runs without error and produces the expected count of
+  scored pillars.
+
+### 2.7 What `validate_metadata()` does *not* check (yet)
+
+These are tracked under issue
+[\#7](https://github.com/worldbank/devPTIpack/issues/7) and will be
+added incrementally:
+
+- ID-mismatch reports between `admin<N>Pcod` in your sheets and the `sf`
+  layer.
+- Per-indicator data-type and NA-percentage summaries.
+- CSV-format inputs (currently `.xlsx` only).
+- Auto-generated metadata from a bare CSV.
+
+------------------------------------------------------------------------
+
+## 3. Common pitfalls
+
+A non-exhaustive list of things that have bitten developers before. Most
+are caught by the validators; a few are not.
+
+1.  **`fltr_*` stored as strings.** Excel’s autoformat sometimes saves
+    `TRUE`/`FALSE` as text. Set the cell type to *Boolean* (or use
+    [`writexl::write_xlsx()`](https://docs.ropensci.org/writexl//reference/write_xlsx.html)
+    from R with logical columns) so
+    [`fct_template_reader()`](https://worldbank.github.io/devPTIpack/reference/fct_template_reader.md)
+    reads them correctly.
+2.  **Indicator column not in `metadata` sheet.** If the indicator
+    column exists in `admin1_Oblast` but is not declared in the
+    `metadata` sheet, it is silently dropped at template load. App users
+    will not see it.
+3.  **`var_code` mismatch.** A typo between the indicator column name in
+    the admin sheet and `var_code` in the metadata sheet means the
+    indicator is dropped without an error.
+4.  **`spatial_level` not matching a sheet.** If the metadata says
+    `spatial_level = "admin3_District"` but no such sheet exists, the
+    indicator is dropped.
+5.  **`admin0_Country` missing.** The pipeline requires the country
+    polygon even if the UI only displays admin1+.
+6.  **Lower-case admin keys.** `admin1_oblast` ≠ `admin1_Oblast`. Names
+    are case-sensitive across `admin_bounds.rds` slots,
+    `metadata$spatial_level` values, and admin sheet names.
+7.  **`:` in pillar or variable names.** The package uses `:` internally
+    as a separator; `:` in display strings will fragment them.
+8.  **Pillar metadata inconsistent.** Two rows with the same
+    `pillar_group` must share the same `pillar_name` and
+    `pillar_description`, or rendering becomes ambiguous.
+9.  **Area in m² not km².**
+    [`validate_geometries()`](https://worldbank.github.io/devPTIpack/reference/validate_geometries.md)
+    cannot detect this; the legend just shows surprisingly large
+    numbers. Always convert with `units::set_units(., "km^2")` before
+    saving.
+10. **CRS mismatch between layers.** The package does not enforce a
+    single CRS. Inconsistent CRSs can produce wrong centroids and wrong
+    `area`. Re-project once at the top of your data-prep pipeline and
+    reuse.
+11. **Orphan child P-codes.** `admin2_District$admin1Pcod` values must
+    all appear in `admin1_Region$admin1Pcod`.
+    [`validate_geometries()`](https://worldbank.github.io/devPTIpack/reference/validate_geometries.md)
+    warns on orphans.
+12. **Non-numeric indicator columns.** Indicator columns must be
+    numeric. Strings, factors, dates are rejected by the pipeline.
+
+------------------------------------------------------------------------
+
+## 4. Worked end-to-end example
+
+This example assembles a metadata Excel file from the bundled data, then
+validates it. Runnable in any session that has `devPTIpack` installed.
+
+``` r
+
+library(devPTIpack)
+library(writexl)
+
+data(ukr_shp)
+data(ukr_mtdt_full)
+
+# 1. Save the bundled boundary list as the kind of .rds a user would ship.
+shp_path <- tempfile(fileext = ".rds")
+saveRDS(ukr_shp, shp_path)
+
+# 2. Build a metadata template by lifting the bundled metadata + admin sheets
+#    into a list of data frames in the shape writexl expects.
+sheets <- list(
+  general       = ukr_mtdt_full$general,
+  metadata      = ukr_mtdt_full$metadata,
+  admin1_Oblast = ukr_mtdt_full$admin1_Oblast,
+  admin2_Rayon  = ukr_mtdt_full$admin2_Rayon
+)
+
+mtdt_path <- tempfile(fileext = ".xlsx")
+writexl::write_xlsx(sheets, mtdt_path)
+
+# 3. Read it back through the package's template reader to confirm the
+#    round-trip works.
+parsed <- fct_template_reader(mtdt_path)
+names(parsed)
+
+# 4. Validate the geometries (in-memory).
+validate_geometries(ukr_shp)
+
+# 5. Validate the on-disk pair (shapes + metadata) end-to-end.
+validate_metadata(shp_path = shp_path, mtdt_path = mtdt_path)
+```
+
+If both validators report `pass`, you can launch the app:
+
+``` r
+
+launch_pti(
+  shp_dta  = readRDS(shp_path),
+  inp_dta  = fct_template_reader(mtdt_path),
+  app_name = "Worked example"
+)
+```
+
+------------------------------------------------------------------------
+
+## See also
+
+- [Build a
+  PTI](https://worldbank.github.io/devPTIpack/articles/build-pti.md) —
+  the task-oriented walkthrough this page is referenced from.
+- [PTI
+  Methodology](https://worldbank.github.io/devPTIpack/articles/methodology.md)
+  — the conceptual framing (what PTI is, why it exists, the math).
+- [`?validate_geometries`](https://worldbank.github.io/devPTIpack/reference/validate_geometries.md),
+  [`?validate_metadata`](https://worldbank.github.io/devPTIpack/reference/validate_metadata.md)
+  — the authoritative validator references.
+- [`?ukr_shp`](https://worldbank.github.io/devPTIpack/reference/ukr_shp.md),
+  [`?ukr_mtdt_full`](https://worldbank.github.io/devPTIpack/reference/ukr_mtdt_full.md)
+  — the bundled sample inputs that all examples on this page use.
+
+External worked-example repositories (private — request access from the
+listed maintainer):
+
+- [`zamPTIdata`](https://github.com/wbPTI/zamPTIdata) — Zambia data-prep
+  pipeline.
+- [`kgzPTIdata`](https://github.com/wbPTI/kgzPTIdata) — Kyrgyz Republic
+  data-prep pipeline.
+
+Both private; request access from [Eduard
+Bukin](https://github.com/EBukin).

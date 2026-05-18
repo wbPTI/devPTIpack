@@ -1,0 +1,95 @@
+# Build a PTI
+
+A **Project Targeting Index (PTI)** is a composite map ranking
+sub-national administrative units against a set of weighted indicators —
+useful for guiding the spatial allocation of programmes and investments.
+`devPTIpack` is the toolkit that turns your country’s shapes + indicator
+data into a deployed Shiny dashboard.
+
+This page is the **journey map**. Each step is a focused tutorial; this
+overview tells you which one to read when, and how the pieces fit
+together. Pair it with [PTI
+Methodology](https://worldbank.github.io/devPTIpack/articles/methodology.md)
+(the conceptual *why*) and [Data preparation
+reference](https://worldbank.github.io/devPTIpack/articles/dataprep.md)
+(the canonical column-by-column *what*).
+
+## What data does a PTI app need?
+
+Two inputs are mandatory; one is optional:
+
+| Input | Format | Step that produces it |
+|----|----|----|
+| Boundary shapes | Named list of `sf` tibbles, one per admin level. | [Step 1](https://worldbank.github.io/devPTIpack/articles/build-pti-1-shapefiles.md) |
+| Metadata workbook | Multi-sheet `.xlsx` — indicator dictionary + per-admin values. | [Step 3](https://worldbank.github.io/devPTIpack/articles/build-pti-3-metadata.md) |
+| HEX gridded data | H3 res-6 polygons + indicator values. *Optional.* | [Step 4](https://worldbank.github.io/devPTIpack/articles/build-pti-4-hex.md) (under development) |
+
+The full column contract for both lives in [Data preparation
+reference](https://worldbank.github.io/devPTIpack/articles/dataprep.md).
+
+## Reproducible quickstart — the bundled Rwanda app in \< 5 lines
+
+The fastest way to see a working PTI app is the Rwanda template that
+ships with the package:
+
+``` r
+
+#| eval: false
+install.packages("pak"); pak::pak("worldbank/devPTIpack")
+library(devPTIpack)
+create_new_pti("~/projects/rwa_pti")           # scaffold
+source("~/projects/rwa_pti/00-master.R")       # Steps 1 + 3 (+ 5 once enabled)
+shiny::runApp("~/projects/rwa_pti/app.R")      # local launch
+```
+
+Five Rwandan provinces, 30 districts, 3 synthetic indicators, two
+pillars — a complete dashboard in under five minutes. Once that runs,
+swap in your country’s data and re-run the same pipeline.
+
+## The journey
+
+The pipeline is seven steps. Steps 1–5 produce files in `app-data/`; the
+deployed app consumes them.
+
+| \# | Step | What it does | Required? |
+|----|----|----|----|
+| 0 | [Setup](https://worldbank.github.io/devPTIpack/articles/build-pti-0-setup.md) | Install `devPTIpack`, scaffold the project folder via [`create_new_pti()`](https://worldbank.github.io/devPTIpack/reference/create_new_pti.md). | Always |
+| 1 | [Shapefiles](https://worldbank.github.io/devPTIpack/articles/build-pti-1-shapefiles.md) | Load + validate administrative boundaries; save `app-data/shapes.rds`. | Always |
+| 2 | [Zonal stats](https://worldbank.github.io/devPTIpack/articles/build-pti-2-zonal-stats.md) | Extract polygon-level indicators from raster surfaces. | Optional |
+| 3 | [Metadata Excel](https://worldbank.github.io/devPTIpack/articles/build-pti-3-metadata.md) | Build the indicator workbook; validate against shapes; save `app-data/metadata-user.xlsx`. | Always |
+| 4 | [HEX data](https://worldbank.github.io/devPTIpack/articles/build-pti-4-hex.md) | Pull H3 res-6 indicator values from the HEX API. *Order-flexible* — before or after Step 3. | Optional |
+| 5 | [Compile & finalise](https://worldbank.github.io/devPTIpack/articles/build-pti-5-compile.md) | Merge metadata + re-validate + render PDF + zip GeoJSONs. | Always |
+| 6 | [Deploy](https://worldbank.github.io/devPTIpack/articles/build-pti-6-deploy.md) | Publish `app.R` + `landing-page.md` + `app-data/` to Posit Connect or shinyapps.io. | When sharing |
+
+**Step 4 is order-flexible** — it produces an independent
+`app-data/metadata-hex.xlsx` that Step 5 merges with the user metadata.
+You can do it before or after Step 3. The other steps run sequentially.
+
+## The `00-master.R` shortcut
+
+Each scaffolded project ships
+[`00-master.R`](https://github.com/worldbank/devPTIpack/blob/main/inst/template_pti/00-master.R)
+— a pipeline orchestrator that calls
+[`quarto::quarto_render()`](https://quarto-dev.github.io/quarto-r/reference/quarto_render.html)
+on the step `.qmd` files top-to-bottom, populates `app-data/`, and
+(optionally) writes the rendered Quarto trail under `docs/`. After your
+first walkthrough, **`source("00-master.R")` is the everyday command** —
+it re-runs Steps 1, (3), 5 every time your raw inputs change. Comment /
+uncomment lines to skip optional steps (Step 2, 4) or pause work.
+
+The website tutorials (this page and Steps 0–6) are how you *learn* the
+pipeline. `00-master.R` is how you *operate* it once you know it.
+
+## Where to start
+
+- **First time?** Begin with [Step 0 —
+  Setup](https://worldbank.github.io/devPTIpack/articles/build-pti-0-setup.md)
+  and follow the steps top to bottom.
+- **Already familiar with `devPTIpack`?** Jump straight to the step
+  you’re working on. Each tutorial has a “Next” pointer back into the
+  chain.
+- **Reference question** (“what columns does the metadata sheet need?”)
+  — go to [Data preparation
+  reference](https://worldbank.github.io/devPTIpack/articles/dataprep.md).
+- **Method question** (“how is the PTI score computed?”) — go to [PTI
+  Methodology](https://worldbank.github.io/devPTIpack/articles/methodology.md).

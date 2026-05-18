@@ -1,0 +1,62 @@
+# Reduce per-scheme weights to the admin levels that must be hidden
+
+For each weighting scheme in \`wght_list\`, returns the unique admin
+levels that carry a non-zero-weighted indicator missing data (per
+\`un_available_vars\`). Schemes where no weighted indicator is missing
+return \`NULL\`.
+
+## Usage
+
+``` r
+get_min_admin_wght(un_available_vars, wght_list)
+```
+
+## Arguments
+
+- un_available_vars:
+
+  A tibble of unavailable \`(var_code, admin_level)\` pairs as returned
+  by \[get_vars_un_avbil()\].
+
+- wght_list:
+
+  Named list of per-scheme weight tibbles. Each element must contain
+  \`var_code\` and \`weight\` columns.
+
+## Value
+
+A named list mirroring \`wght_list\`'s names. Each element is either a
+character vector of admin levels to hide, or \`NULL\` if the scheme is
+unaffected.
+
+## See also
+
+Other weights:
+[`get_all_weights_combs()`](https://worldbank.github.io/devPTIpack/reference/get_all_weights_combs.md),
+[`get_rand_weights()`](https://worldbank.github.io/devPTIpack/reference/get_rand_weights.md)
+
+## Examples
+
+``` r
+unavail <- tibble::tibble(
+  var_code   = "ind_b",
+  admin_level = "admin1"
+)
+wghts <- list(
+  scheme_x = tibble::tibble(
+    var_code = c("ind_a", "ind_b"),
+    weight   = c(0.5, 0.5)
+  ),
+  scheme_y = tibble::tibble(
+    var_code = c("ind_a", "ind_b"),
+    weight   = c(1, 0)
+  )
+)
+get_min_admin_wght(unavail, wghts)
+#> $scheme_x
+#> [1] "admin1"
+#> 
+#> $scheme_y
+#> NULL
+#> 
+```

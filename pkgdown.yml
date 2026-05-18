@@ -1,10 +1,20 @@
-pandoc: 2.7.3
-pkgdown: 2.0.6
+pandoc: 3.8.3
+pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
-  dataprep: dataprep.html
-last_built: 2022-09-20T11:32Z
+  articles/build-pti-0-setup: build-pti-0-setup.html
+  articles/build-pti-1-shapefiles: build-pti-1-shapefiles.html
+  articles/build-pti-2-zonal-stats: build-pti-2-zonal-stats.html
+  articles/build-pti-3-metadata: build-pti-3-metadata.html
+  articles/build-pti-4-hex: build-pti-4-hex.html
+  articles/build-pti-5-compile: build-pti-5-compile.html
+  articles/build-pti-6-deploy: build-pti-6-deploy.html
+  articles/build-pti: build-pti.html
+  articles/dataprep: dataprep.html
+  articles/methodology: methodology.html
+  articles/overview-paper: overview-paper.html
+  articles/past-projects: past-projects.html
+last_built: 2026-05-18T22:08Z
 urls:
-  reference: https://ebukin.github.io/devPTIpack/reference
-  article: https://ebukin.github.io/devPTIpack/articles
-
+  reference: https://worldbank.github.io/devPTIpack/reference
+  article: https://worldbank.github.io/devPTIpack/articles

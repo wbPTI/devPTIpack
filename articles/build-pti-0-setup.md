@@ -1,0 +1,160 @@
+# Step 0 — Setup new project
+
+Stand up a new PTI project on disk: install the package, scaffold the
+project folder, and understand the layout you’ll be filling in over
+Steps 1–6.
+
+This step uses Rwanda as the worked example country. The scaffolded
+project is a complete, working Rwanda PTI app — render the pipeline
+as-is to see it work end-to-end, then replace the Rwanda inputs with
+your own country.
+
+## Install devPTIpack
+
+`devPTIpack` is a GitHub-hosted R package. Install it with `pak`:
+
+``` r
+
+#| eval: false
+install.packages("pak")
+pak::pak("worldbank/devPTIpack")
+library(devPTIpack)
+```
+
+You also need a working LaTeX installation if you want Step 5 to render
+the printable indicator atlas (`pti-metadata.pdf`). On a fresh R
+install:
+
+``` r
+
+#| eval: false
+install.packages("tinytex")
+tinytex::install_tinytex()
+```
+
+LaTeX is optional —
+[`compile_pti_data()`](https://worldbank.github.io/devPTIpack/reference/compile_pti_data.md)
+skips the PDF with a warning when no `pdflatex` is on `PATH`.
+
+## Scaffold the project folder — `create_new_pti()`
+
+[`create_new_pti(path)`](https://worldbank.github.io/devPTIpack/reference/create_new_pti.md)
+copies the bundled `template_pti` skeleton to `path`, creating that
+directory if it does not exist and prompting before overwriting if it
+does. Inside RStudio it also opens the new folder as a project.
+
+``` r
+
+#| eval: false
+create_new_pti("~/projects/my_pti")
+```
+
+What lands on disk:
+
+- The numbered pipeline files (`00-master.R` through `06-deploy.R`)
+  wired to render Rwanda end-to-end.
+- A working `app.R` that loads from `app-data/` paths.
+- A `sample-data/` folder with the raw Rwanda inputs the pipeline
+  ingests.
+- An empty `app-data/` folder that the pipeline fills as you render
+  Steps 1–5.
+- A `landing-page.md` you’ll edit in Step 6.
+
+## Annotated folder structure
+
+    my_pti/
+    │
+    ├── README.md                       # File order + tutorial links
+    ├── 00-master.R                     # Pipeline orchestrator (renders Steps 1, 3, 5)
+    │
+    ├── 01-shapes.qmd                   # Step 1 — load + validate boundary GeoJSONs
+    ├── 02a-user-zonal-stats.qmd        # Step 2 — OPTIONAL stub; user-driven raster extracts
+    ├── 03-metadata.qmd                 # Step 3 — read + validate the indicator workbook
+    ├── 04-hex-data.qmd                 # Step 4 — STUB; blocked by HEX API
+    ├── 05-compile.qmd                  # Step 5 — compile_pti_data() merges + validates + renders
+    ├── 06-deploy.R                     # Step 6 — manual rsconnect::deployApp() boilerplate
+    │
+    ├── app.R                           # Shiny entry point — DEPLOYED
+    ├── landing-page.md                 # App About-tab content — DEPLOYED
+    │
+    ├── sample-data/                    # Rwanda raw inputs (replace with your own)
+    │   ├── rwa_adm0.geojson            # country boundary
+    │   ├── rwa_adm1.geojson            # 5 provinces
+    │   ├── rwa_adm2.geojson            # 30 districts
+    │   ├── sample-metadata-adm1.xlsx   # synthetic Adm1-only indicators (simple)
+    │   └── sample-metadata-adm1-adm2.xlsx  # synthetic Adm1+Adm2 (multi-level)
+    │
+    ├── app-data/                       # Pipeline outputs — DEPLOYED
+    │   ├── shapes.rds                  # output of Step 1
+    │   ├── metadata-user.xlsx          # output of Step 3 (intermediate)
+    │   ├── metadata-hex.xlsx           # output of Step 4 (intermediate, when available)
+    │   ├── metadata.xlsx               # output of Step 5 (canonical)
+    │   ├── pti-metadata.pdf            # output of Step 5
+    │   └── shapefiles.zip              # output of Step 5
+    │
+    ├── data-raw/                       # Re-runnable scripts that produced sample-data/
+    └── R/                              # golem boilerplate
+
+The deployment bundle is **`app.R` + `landing-page.md` + `app-data/`
+only** — everything else is build-time scaffolding.
+
+## How `00-master.R` fits in
+
+`00-master.R` is the pipeline orchestrator. It renders the step `.qmd`
+files top-to-bottom via
+[`quarto::quarto_render()`](https://quarto-dev.github.io/quarto-r/reference/quarto_render.html);
+each step writes into `app-data/`, and downstream steps read from there.
+
+``` r
+
+#| eval: false
+source("00-master.R")
+```
+
+The script ships with Steps 2, 4 and 6 commented out (Step 2 is
+optional, Step 4 is blocked by the HEX API, Step 6 is manual). Comment
+or uncomment lines to skip optional steps, or to drop in your own
+additions (e.g. an `02b-` zonal-stats extract). Treat `00-master.R` as a
+recipe you edit, not a black box.
+
+## ⚠ `app-data/` and git — decide consciously
+
+`app-data/` holds the deployment-ready compiled artefacts. Whether you
+check it into git is a deliberate decision:
+
+- **Track it** if your data is non-sensitive and small enough to live in
+  a repo. Useful for reviewer reproducibility.
+- **Ignore it** (`echo "app-data/" >> .gitignore`) if the data is
+  sensitive, large, or both. This is the conservative default for World
+  Bank deployments.
+
+Don’t let it slip through unreviewed. `app-data/` is what you deploy —
+if it’s in git, your repository is publishing the same files Posit
+Connect serves.
+
+## Sample data — run as-is first
+
+Before swapping in your own country, render the template against the
+bundled Rwanda data:
+
+``` r
+
+#| eval: false
+source("00-master.R")
+shiny::runApp("app.R")
+```
+
+You should see a working PTI dashboard with 5 Rwandan provinces, 30
+districts, and 3 synthetic indicators across two pillars. This
+sanity-checks your install — every dependency, every binding, every
+read/write path — before you change anything.
+
+Once that works, replace `sample-data/rwa_*.geojson` with your country’s
+boundaries (Step 1) and `sample-data/sample-metadata-*.xlsx` with your
+indicator workbook (Step 3).
+
+## Next
+
+Continue with [Step 1 —
+Shapefiles](https://worldbank.github.io/devPTIpack/articles/build-pti-1-shapefiles.md)
+to prepare your administrative boundaries.

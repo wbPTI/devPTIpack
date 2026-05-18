@@ -1,21 +1,73 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://ebukin.github.io/devPTIpack/404.html</loc>
-  </url>
-  <url>
-    <loc>https://ebukin.github.io/devPTIpack/articles/dataprep.html</loc>
-  </url>
-  <url>
-    <loc>https://ebukin.github.io/devPTIpack/articles/index.html</loc>
-  </url>
-  <url>
-    <loc>https://ebukin.github.io/devPTIpack/authors.html</loc>
-  </url>
-  <url>
-    <loc>https://ebukin.github.io/devPTIpack/index.html</loc>
-  </url>
-  <url>
-    <loc>https://ebukin.github.io/devPTIpack/reference/index.html</loc>
-  </url>
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>https://worldbank.github.io/devPTIpack/404.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/LICENSE-text.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/LICENSE.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/PLAN.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/WB-IGO-RIDER.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/articles/build-pti-0-setup.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/articles/build-pti-1-shapefiles.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/articles/build-pti-2-zonal-stats.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/articles/build-pti-3-metadata.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/articles/build-pti-4-hex.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/articles/build-pti-5-compile.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/articles/build-pti-6-deploy.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/articles/build-pti.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/articles/dataprep.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/articles/index.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/articles/methodology.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/articles/overview-paper.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/articles/past-projects.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/authors.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/index.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/aggregate_hex_to_shapes.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/app_sys.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/app_validate_metadata.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/app_validate_shp.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/build_hex_metadata.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/compile_pti_data.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/create_new_pti.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/devPTIpack-package.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/drop_inval_adm.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/fct_template_reader.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/fetch_hex_data.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/generic_pti_glue.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/get_all_weights_combs.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/get_available_years.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/get_min_admin_wght.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/get_pti_scores_export.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/get_pti_weights_export.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/get_rand_weights.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/get_shape.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/get_vars_un_avbil.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/gg_admin_list.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/golem_add_external_resources.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/index.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/label_generic_pti.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/launch_pti.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/launch_pti_onepage.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/list_hex_vars.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/make_admin_lookup.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/make_hex_grid.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/mod_drop_inval_adm.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/mod_dta_explorer2_server.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/mod_dta_explorer2_ui.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/mod_leaf_side_panel_ui.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/mod_map_pti_leaf_ui.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/mod_plot_pti2_srv.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/mod_pti_comparepage_newsrv.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/mod_pti_comparepage_ui.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/mod_ptipage_newsrv.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/mod_ptipage_twocol_ui.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/mod_tab_open_first_newserv.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/run_pti_pipeline.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/rwa_mtdt_full.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/rwa_shp.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/ukr_mtdt_full.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/ukr_shp.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/use_hex_vars.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/validate_geometries.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/validate_metadata.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/validate_read_metadata.html</loc></url>
+<url><loc>https://worldbank.github.io/devPTIpack/reference/validate_read_shp.html</loc></url>
 </urlset>
+

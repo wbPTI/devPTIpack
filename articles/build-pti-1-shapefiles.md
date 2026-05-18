@@ -1,0 +1,354 @@
+# Step 1 — Shapefiles
+
+Prepare the administrative-boundary shapefiles that anchor every other
+input to the PTI app — load, validate, fix, and save them to
+`app-data/`.
+
+The end product of this step is a single file: `app-data/shapes.rds`, a
+named list of `sf` tibbles, one per administrative level. Step 3’s
+metadata workbook keys against the polygon codes in this file, and the
+deployed app reads it on launch.
+
+This page walks through the Rwanda template: 5 provinces (Adm1) with 30
+districts (Adm2). The advanced section at the bottom covers the
+multi-level case (Adm1 + Adm2 together).
+
+## A. Requirements
+
+Each layer is a single `sf` tibble. The list slot name follows the
+package convention `admin<N>_<HumanName>`, e.g. `admin1_Province`. The
+`<HumanName>` slot must be a single word with no spaces or colons —
+`admin1_East Region` and `admin2_Sub:District` will silently fail to
+parse. The `<N>` digit ranges 0–9 and need not be contiguous
+(e.g. `admin0`, `admin1`, `admin2`, `admin9` is a valid set, used when
+an `admin9_Hexagon` layer is included).
+
+Required columns at minimum:
+
+| Column | Type | Purpose |
+|----|----|----|
+| `admin<N>Pcod` | `character` | Unique polygon identifier (P-code) at this level. One per row, no `NA`. |
+| `admin<N>Name` | `character` | Human-readable polygon name. Unique within the layer, no `NA`. |
+| `area` | `numeric` | Polygon area in km². Compute in EPSG:4326 using `units::set_units(sf::st_area(geometry), "km^2")`. |
+| `geometry` | `sfc_(MULTI)POLYGON` | Spatial geometry. `POLYGON` or `MULTIPOLYGON` only. |
+
+Sub-admin layers must also carry every parent layer’s `admin<k>Pcod`
+column (the cascade rule). For Rwanda, the `admin2_District` layer
+carries both `admin0Pcod` and `admin1Pcod` so districts join up to
+provinces and the country.
+
+`admin0_Country` is **mandatory**. It must always be present in
+`my_shp`, even when the deployed app does not display country-level data
+— both the structural validator and the cascade rule depend on it.
+
+| Topic | Quick rule |
+|----|----|
+| Projection for the saved file | **EPSG:4326** — all layers must use this CRS. Re-project with `sf::st_transform(layer, 4326)` if needed. |
+| `area` units | km² — compute directly in EPSG:4326: `as.numeric(units::set_units(sf::st_area(geometry), "km^2"))`. No UTM step needed. |
+| Geometry simplification | Trade off file size against rendering performance. [`sf::st_simplify()`](https://r-spatial.github.io/sf/reference/geos_unary.html) is your friend; tolerances of 50–500 m work well for most country-level apps. |
+| Single layer vs. multi-level | Single layer = simplest case; multi-level requires nesting + parent P-codes (see §E). |
+
+For the full column reference, P-code uniqueness rules, cascade-rule
+enforcement, and what
+[`validate_geometries()`](https://worldbank.github.io/devPTIpack/reference/validate_geometries.md)
+checks vs. doesn’t, see the [Data preparation reference
+§1](https://worldbank.github.io/devPTIpack/articles/dataprep.md).
+
+## B. Load pre-existing official shapefiles
+
+> ⚠ **Feature under development.** A future `load_official_shp(country)`
+> helper will pull World Bank internal official boundaries (with
+> consistent P-codes and naming) so deployers don’t need to download or
+> rename anything. Until that lands, follow §C–§D below using the
+> publicly available geoBoundaries data shipped with the template.
+
+If you already have official shapefiles for your country, skip to §C —
+[`validate_geometries()`](https://worldbank.github.io/devPTIpack/reference/validate_geometries.md)
+accepts any input that conforms to the column contract above.
+
+## C. Load and validate your shapefile
+
+Load the Rwanda GeoJSONs from the template’s `sample-data/`:
+
+``` r
+
+#| eval: false
+library(sf)
+library(dplyr)
+library(devPTIpack)
+
+adm0_raw <- read_sf("sample-data/rwa_adm0.geojson")
+adm1_raw <- read_sf("sample-data/rwa_adm1.geojson")
+adm2_raw <- read_sf("sample-data/rwa_adm2.geojson")
+```
+
+geoBoundaries gives every polygon a `shapeID` and `shapeName`.
+Re-project to EPSG:4326, rename into the package convention, and compute
+`area` in km²:
+
+``` r
+
+#| eval: false
+adm1 <- adm1_raw |>
+  st_transform(4326) |>
+  mutate(
+    admin0Pcod = "RWA",
+    admin1Pcod = shapeID,
+    admin1Name = shapeName,
+    area       = as.numeric(units::set_units(st_area(geometry), "km^2"))
+  ) |>
+  select(admin0Pcod, admin1Pcod, admin1Name, area, geometry)
+```
+
+Do the same for the country layer — `admin0_Country` is required even in
+a single sub-admin-level app:
+
+``` r
+
+#| eval: false
+adm0 <- adm0_raw |>
+  st_transform(4326) |>
+  mutate(
+    admin0Pcod = "RWA",
+    admin0Name = shapeName,
+    area       = as.numeric(units::set_units(st_area(geometry), "km^2"))
+  ) |>
+  select(admin0Pcod, admin0Name, area, geometry)
+```
+
+Assemble the list. Slot names are case-sensitive and must match exactly
+what the metadata workbook will reference:
+
+``` r
+
+#| eval: false
+my_shp <- list(
+  admin0_Country  = adm0,
+  admin1_Province = adm1
+)
+```
+
+Run the structural validator:
+
+``` r
+
+#| eval: false
+validate_geometries(my_shp)
+```
+
+It reports `pass` / `warn` / `fail` and prints the underlying issues
+(P-code duplicates, geometry types, parent–child orphans, missing
+required columns, cascade-rule failures). The full check list lives in
+[§1.7 of the data preparation
+reference](https://worldbank.github.io/devPTIpack/articles/dataprep.md).
+
+A `pass` from
+[`validate_geometries()`](https://worldbank.github.io/devPTIpack/reference/validate_geometries.md)
+does **not** guarantee the layers are deployment-ready. It does not
+check for: CRS inconsistency between layers, whether `area` is in km² or
+m² (only that the column is numeric), topological validity beyond
+geometry type, or coverage gaps between sub-admin polygons. Run
+[`sf::st_is_valid()`](https://r-spatial.github.io/sf/reference/valid.html)
+and a quick CRS audit (`purrr::map(my_shp, sf::st_crs)`) separately to
+catch these.
+
+For visual inspection — does the country actually look right on a map? —
+call the standalone Shiny app:
+
+``` r
+
+#| eval: false
+app_validate_shp(my_shp)
+```
+
+It opens a leaflet map with one tab per admin level, hover popups for
+`admin<N>Pcod` / `admin<N>Name`, and a side-panel summary of the
+structural validator’s output. Use it to spot holes between polygons,
+wrong boundaries, or duplicate names that the structural checks can’t
+catch from columns alone. The app is read-only — it does not edit your
+data.
+
+## D. Fix problems and save
+
+Common fixes you’ll do here, on the way to a clean save:
+
+``` r
+
+#| eval: false
+# All layers must be in EPSG:4326. st_transform() is a no-op if already correct.
+adm1 <- st_transform(adm1, 4326)
+
+# Snap to valid geometries — fixes self-intersections, slivers.
+adm1 <- st_make_valid(adm1)
+
+# Simplify to control file size (tolerance in metres for projected CRSs;
+# in degrees for EPSG:4326 — values 0.001–0.01 are typical).
+adm1 <- st_simplify(adm1, dTolerance = 0.001, preserveTopology = TRUE)
+
+# Drop any column that is not in the required set.
+adm1 <- adm1 |> select(admin0Pcod, admin1Pcod, admin1Name, area, geometry)
+```
+
+Re-run
+[`validate_geometries()`](https://worldbank.github.io/devPTIpack/reference/validate_geometries.md)
+after each change until it passes. Then save:
+
+``` r
+
+#| eval: false
+dir.create("app-data", showWarnings = FALSE)
+saveRDS(my_shp, "app-data/shapes.rds", compress = "gz")
+```
+
+Keep the original `.geojson` files under `sample-data/` (or wherever
+your raw inputs live) as the source-of-truth for re-runs. The `.rds`
+under `app-data/` is the *deployment* artefact — disposable, regenerable
+from the raw inputs.
+
+## E. Advanced: multiple admin levels
+
+Most real PTI apps need at least two admin levels — provinces and
+districts, regions and communes. Rename each level into the package
+convention as in §C (each layer gets its own `admin<N>Pcod`,
+`admin<N>Name`, and `area`), then assemble the list:
+
+``` r
+
+#| eval: false
+adm2 <- adm2_raw |>
+  st_transform(4326) |>
+  mutate(
+    admin0Pcod = "RWA",
+    admin2Pcod = shapeID,
+    admin2Name = shapeName,
+    area       = as.numeric(units::set_units(st_area(geometry), "km^2"))
+  ) |>
+  select(admin0Pcod, admin2Pcod, admin2Name, area, geometry)
+
+my_shp <- list(
+  admin0_Country  = adm0,
+  admin1_Province = adm1,
+  admin2_District = adm2
+)
+```
+
+Notice that the `admin2_District` layer carries only its own
+`admin2Pcod` + `admin2Name` (plus `admin0Pcod` because Rwanda is a
+single country). It does **not** yet carry `admin1Pcod` — the cascade
+rule requires every sub-admin layer to carry every parent’s P-code, but
+Rwanda’s geoBoundaries data does not include `admin1Pcod` on the admin2
+file, and the package’s pipeline expects it.
+
+[`make_admin_lookup()`](https://worldbank.github.io/devPTIpack/reference/make_admin_lookup.md)
+fills in the cascade by spatial-joining each child’s centroid against
+its parent’s polygons:
+
+``` r
+
+#| eval: false
+my_shp <- make_admin_lookup(my_shp)
+validate_geometries(my_shp)
+saveRDS(my_shp, "app-data/shapes.rds", compress = "gz")
+```
+
+After
+[`make_admin_lookup()`](https://worldbank.github.io/devPTIpack/reference/make_admin_lookup.md)
+runs, every sub-admin layer carries all ancestor `admin<k>Pcod` columns.
+[`validate_geometries()`](https://worldbank.github.io/devPTIpack/reference/validate_geometries.md)
+then catches structural problems — orphan children (a district centroid
+outside every province), duplicate Pcods, missing required columns.
+Boundary-ambiguous children get assigned to one parent at random and a
+warning lists the count of affected polygons.
+
+The bundled `ukr_shp` demonstrates the
+post-[`make_admin_lookup()`](https://worldbank.github.io/devPTIpack/reference/make_admin_lookup.md)
+shape at four levels (country → oblast → rayon → hexagon). Inspect it
+with `data(ukr_shp); str(ukr_shp, max.level = 2)` for a worked example.
+
+**When to use multi-level:** include extra admin levels only if you have
+indicator data measured at that level. The PTI calculation pipeline runs
+at the most disaggregated level for which an indicator is available, so
+adding an unused level just inflates the deployed app’s data size.
+
+**Adding a hex grid.** If your project needs hex-level indicators
+(population rasters, night-time lights, accessibility), add an
+`admin9_Hexagon` slot to `my_shp` before calling
+[`make_admin_lookup()`](https://worldbank.github.io/devPTIpack/reference/make_admin_lookup.md).
+The H3 resolution is controlled by **`HEX_RESOLUTION` in `00-master.R`**
+— the single deployer control point that threads through Step 1, Step 4,
+and Step 5. See §F below for motivation, the resolution guide, and the
+canonical 4-layer workflow.
+
+## F. Optional: build an H3 hexagon grid
+
+For indicators available only as raster surfaces (population, night-time
+lights, accessibility), hexagons provide a uniform spatial unit that
+avoids the modifiable areal unit problem introduced by irregular admin
+polygons. The `admin9_Hexagon` layer in `shapes.rds` is the spatial join
+key that Step 4 (HEX data) uses to match indicator values fetched from
+online sources to your app.
+
+Hex resolution is a single deployer choice, set by `HEX_RESOLUTION` in
+`00-master.R` of the project template — that is the **one** place that
+controls what grid ships with the app. The choices:
+
+| `HEX_RESOLUTION` | Approx. cell area | Typical use                         |
+|------------------|-------------------|-------------------------------------|
+| `5L`             | ~252 km²          | Very large countries; coarse view   |
+| `6L` (default)   | ~36 km²           | Most country-level PTI apps         |
+| `7L`             | ~5.2 km²          | Small countries or high-detail apps |
+
+All hex cells at a given resolution have **near-identical area** — this
+is expected and correct. The `area` column on `admin9_Hexagon` will
+appear nearly constant; that is not a bug.
+
+[`make_hex_grid()`](https://worldbank.github.io/devPTIpack/reference/make_hex_grid.md)
+takes any layer (typically the country boundary) and returns the
+`admin9_Hexagon` layer ready for inclusion in `my_shp`. Slot it
+alongside the regular admin layers and run
+[`make_admin_lookup()`](https://worldbank.github.io/devPTIpack/reference/make_admin_lookup.md)
+over the combined list — hexagons are treated identically to any other
+admin layer, with parent `admin<k>Pcod` columns populated by the same
+centroid-in-polygon cascade:
+
+``` r
+
+#| eval: false
+# Set once in 00-master.R; threaded through Step 1, Step 4, Step 5.
+HEX_RESOLUTION <- 6L
+
+my_shp <- list(
+  admin0_Country  = adm0,
+  admin1_Province = adm1,
+  admin2_District = adm2,
+  admin9_Hexagon  = make_hex_grid(adm0, resolution = HEX_RESOLUTION)
+)
+
+my_shp <- make_admin_lookup(my_shp)
+validate_geometries(my_shp)
+saveRDS(my_shp, "app-data/shapes.rds", compress = "gz")
+```
+
+Two notes on resolution choice:
+
+- A large country at H6 can exceed 5,000 cells. The deployed Leaflet map
+  renders ~5,000 polygons comfortably; beyond that, consider H5 or
+  exclude hex polygons from the deployed app entirely via
+  `INCLUDE_HEX_IN_APP <- FALSE` in `00-master.R` (Step 4 still
+  aggregates hex-sourced indicators to admin levels in that mode).
+- `HEX_RESOLUTION` is encoded in every H3 index string written to
+  `shapes.rds`. Step 4
+  ([`fetch_hex_data()`](https://worldbank.github.io/devPTIpack/reference/fetch_hex_data.md))
+  detects the resolution automatically from the indices — no second
+  control point is needed.
+
+## Next
+
+Once `app-data/shapes.rds` is in place:
+
+- If you have **raster data** to extract zonal stats from, continue with
+  [Step 2 — Zonal
+  stats](https://worldbank.github.io/devPTIpack/articles/build-pti-2-zonal-stats.md).
+- Otherwise, jump to [Step 3 — Metadata
+  Excel](https://worldbank.github.io/devPTIpack/articles/build-pti-3-metadata.md)
+  to prepare your indicator workbook.

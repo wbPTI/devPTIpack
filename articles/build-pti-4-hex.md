@@ -1,0 +1,273 @@
+# Step 4 — HEX data
+
+Build the hex-derived indicator dataset and the companion metadata Excel
+(`app-data/metadata-hex.xlsx`) that Step 5’s
+[`compile_pti_data()`](https://worldbank.github.io/devPTIpack/reference/compile_pti_data.md)
+merges with your user metadata from Step 3.
+
+The pipeline runs **four stages** driven by two `00-master.R` switches:
+
+``` r
+
+HEX_RESOLUTION    <- 6L     # 5 ≈ 252 km², 6 ≈ 36 km², 7 ≈ 5 km²
+INCLUDE_HEX_IN_APP <- FALSE
+```
+
+`HEX_RESOLUTION` controls the H3 resolution used when building
+`admin9_Hexagon` in Step 1.
+[`fetch_hex_data()`](https://worldbank.github.io/devPTIpack/reference/fetch_hex_data.md)
+reads the resolution from your hex IDs automatically — you do not need
+to pass it explicitly.
+
+`INCLUDE_HEX_IN_APP` controls whether the raw hex-level sheet is written
+into `metadata-hex.xlsx` and shipped with the app. Aggregated indicator
+values at admin1, admin2, etc. are **always** included regardless of
+this switch (see [§E](#e-build-metadata-excel) below).
+
+This step is **order-flexible**: it can run before or after Step 3. The
+outputs are independent intermediate files merged in Step 5.
+
+## Prerequisites
+
+Step 1 must be complete. Your `shapes.rds` must contain an
+`admin9_Hexagon` layer built by
+[`make_hex_grid()`](https://worldbank.github.io/devPTIpack/reference/make_hex_grid.md)
+and enriched by
+[`make_admin_lookup()`](https://worldbank.github.io/devPTIpack/reference/make_admin_lookup.md).
+
+``` r
+
+library(devPTIpack)
+
+my_shp    <- readRDS("app-data/shapes.rds")
+hex_layer <- my_shp$admin9_Hexagon
+hex_ids   <- hex_layer$admin9Pcod
+```
+
+## A. Discover available variables
+
+Browse the full registry catalogue:
+
+``` r
+
+list_hex_vars()
+```
+
+Returns a tibble — one row per registered variable — with columns:
+`source_id`, `source_label`, `canonical_name`, `var_name`, `var_units`,
+`time_col`, `available_years`, `weight`, `fun`, `is_population`.
+
+To query the **live** parquet for the actual years present (not just the
+registry hint):
+
+``` r
+
+get_available_years("flood_exposure_15cm_1in100")
+#> flood_exposure_15cm_1in100 (wb_flood_exposure): 2020
+```
+
+Pass a single canonical name (character) or a `pti_hex_var` object
+returned by
+[`use_hex_vars()`](https://worldbank.github.io/devPTIpack/reference/use_hex_vars.md).
+
+## B. Configure variable selection
+
+``` r
+
+vars <- use_hex_vars(
+  "flood_exposure_15cm_1in100",
+  years = c(2020)
+)
+```
+
+Population is **always fetched automatically** from the registry — do
+not list it here.
+
+**Year resolution rules (applied per variable):**
+
+| Situation | Outcome |
+|----|----|
+| Exact year available | Used as-is, no message. |
+| Exact year absent; one nearer alternative within 7 years | Nearest year substituted; later year on equidistant tie. A warning names the substitution. |
+| No data within 7 years of the requested year | Error; available years listed. |
+
+With `years = NULL` in an **interactive session**, the system prints
+available years and prompts you to choose. In a **non-interactive
+session** (`quarto render`, CI), `years = NULL` errors with an
+actionable message — always supply explicit years when scripting.
+
+## C. Fetch hex data
+
+``` r
+
+hex_data <- fetch_hex_data(hex_ids = hex_ids, vars = vars)
+```
+
+Only hexagons matching `hex_ids` are read (parquet predicate pushdown).
+Temporal variables are pivoted wide: `flood_exposure_15cm_1in100_2020`,
+etc. Population is always the first indicator column after `hex_id`.
+
+**Resolution bridge:**
+
+| Your grid resolution | Source data | Behaviour |
+|----|----|----|
+| H6 (same as source) | H6 | Direct fetch — no conversion. |
+| H5 (coarser) | H6 | Each H5 cell expanded to its ~7 H6 children; fetched at H6; aggregated back to H5 before returning. |
+| H7 (finer than source) | H6 | Error — finer than source is not supported. |
+
+## C′. Optional: merge your own local parquet
+
+Merge project-specific indicators between fetch and aggregate:
+
+``` r
+
+my_data <- arrow::open_dataset("data-raw/conflict.parquet") |>
+  dplyr::filter(h3id %in% hex_ids) |>
+  dplyr::collect() |>
+  dplyr::rename(hex_id = h3id) |>
+  tidyr::pivot_wider(
+    names_from  = year,
+    values_from = conflict_events,
+    names_prefix = "conflict_"
+  )
+
+hex_data <- dplyr::full_join(hex_data, my_data, by = "hex_id")
+```
+
+**Local parquet contract:**
+
+| Requirement | Rule |
+|----|----|
+| Format | Readable by [`arrow::open_dataset()`](https://arrow.apache.org/docs/r/reference/open_dataset.html) |
+| Layout | Long format — one row per hex × time period |
+| Hex column | Any name — rename to `hex_id` before the `full_join` |
+| Population | Absent — comes from the registry; do not duplicate it |
+| Values | Numeric columns, one per indicator |
+| Uniqueness | No duplicate hex ID per time period |
+
+Custom variables are not in the registry, so you **must** supply an
+`indicator_config` tibble in step E for each one.
+
+## D. Aggregate to admin polygons
+
+``` r
+
+aggregated <- aggregate_hex_to_shapes(
+  hex_data  = hex_data,
+  hex_layer = hex_layer,
+  shp_dta   = my_shp,
+  strategy  = list(
+    .default               = c(weight = "pop",  fun = "mean"),
+    flood_exposure_15cm_1in100 = c(weight = "pop", fun = "mean"),
+    conflict               = c(weight = "none", fun = "sum")
+  )
+)
+```
+
+**Strategy has two orthogonal dimensions:**
+
+- **`weight`**: `"pop"` (population-weighted), `"area"` (area-weighted),
+  or `"none"` (unweighted).
+- **`fun`**: `"mean"`, `"median"`, `"sum"`, `"min"`, `"max"`.
+
+A `.default` entry covers all variables not explicitly named. For
+temporal variables, use the **stem** name without the year suffix
+(e.g. `flood_exposure_15cm_1in100` covers
+`flood_exposure_15cm_1in100_2020` and any other resolved years).
+
+Aggregation is always **hex → each admin level directly** (hex→admin1,
+hex→admin2, etc.) — never chained through intermediate levels. `NA`
+values in individual hexes are treated as missing and excluded from the
+weighted calculation; if all hexes in a polygon are `NA` for a variable,
+the polygon result is `NA` with a warning.
+
+## E. Build metadata Excel
+
+``` r
+
+build_hex_metadata(
+  aggregated       = aggregated,
+  shp_dta          = my_shp,
+  # indicator_config needed only for non-registry variables (e.g. conflict):
+  indicator_config = tibble::tibble(
+    canonical_name        = "conflict",
+    var_name              = "Conflict Events ({year})",
+    var_description       = "ACLED conflict event count per admin polygon.",
+    var_units             = "count",
+    pillar_group          = 4,
+    pillar_name           = "Security",
+    legend_revert_colours = TRUE,
+    fltr_exclude_pti      = FALSE
+  ),
+  country_name       = "Rwanda",
+  output_path        = "app-data/metadata-hex.xlsx",
+  include_hex        = INCLUDE_HEX_IN_APP,
+  # include_population = FALSE  # default: population excluded from metadata
+  #                             # (avoids collision with Step 3 population).
+  #                             # Set to TRUE if you want population as a
+  #                             # visible map indicator in the deployed app.
+)
+```
+
+**Registry auto-population:** variables declared in the bundled
+`inst/hex_vars_registry.yaml` (e.g. `flood_exposure_15cm_1in100`) have
+their `var_name`, `var_units`, `pillar_name`, `legend_revert_colours`,
+and `fltr_exclude_pti` pre-filled from the registry. Pass
+`indicator_config` only for non-registry indicators, or to **override**
+a registry default — a warning is emitted when a registry value is
+overridden.
+
+**Population exclusion:** by default (`include_population = FALSE`),
+population is used internally for aggregation weighting but is **not**
+written to the metadata sheet. This avoids a duplicate `population` row
+when Step 3 already provides population statistics. Set
+`include_population = TRUE` if you want population as a separate visible
+indicator in the app (e.g. raw hex-derived population counts).
+
+**Temporal variables** expand to one metadata row per resolved year,
+with `var_name` generated from the glue template — `{year}` is replaced
+with the actual year (e.g. `"Conflict Events (2020)"`).
+
+### The `INCLUDE_HEX_IN_APP` switch
+
+Set in `00-master.R`:
+
+``` r
+
+INCLUDE_HEX_IN_APP <- FALSE
+```
+
+| Value | Effect on `metadata-hex.xlsx` | Effect on the deployed app |
+|----|----|----|
+| `FALSE` (default) | Hex sheet omitted. Only aggregated admin-level sheets written. | Smaller app — hex polygons not shipped. Indicator values still appear at every admin level. |
+| `TRUE` | `admin9_Hexagon` sheet included. | Hex polygons shipped. Users can explore the raw hex grid in the app. |
+
+When `include_hex` is not supplied and the hex grid exceeds 5,000 cells,
+the function prompts interactively (and defaults to `FALSE` in
+non-interactive sessions with a warning).
+
+### Review `fltr_exclude_pti` before Step 5
+
+> **Warning**
+>
+> **Before running Step 5:** open `app-data/metadata-hex.xlsx` and
+> review the `fltr_exclude_pti` column for each variable. Registry
+> variables marked `fltr_exclude_pti = TRUE` (e.g. `population`) are
+> excluded from the PTI weight sliders but still visible as overlays.
+> Non-registry variables default to `FALSE` (included in PTI). Adjust
+> any values that do not match your project’s analytical design before
+> compiling.
+
+## Supported admin levels
+
+Hex-derived indicators appear on **every** admin-level sheet in the
+output Excel (admin1, admin2, etc.). The `spatial_level` column in the
+metadata sheet points to the **hex level** (e.g. `admin9_Hexagon`) — the
+finest available resolution, regardless of which admin-level sheet the
+user is viewing.
+
+## Next
+
+Once `app-data/metadata-hex.xlsx` is produced, continue with [Step 5 —
+Compile &
+finalise](https://worldbank.github.io/devPTIpack/articles/build-pti-5-compile.md).
