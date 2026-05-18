@@ -4,7 +4,7 @@ test_that("get unavailable adming levels works", {
   rn_wt_1 <- 
     list(#
       wt_admi4_1 = 
-        tribble(
+        tibble::tribble(
           ~var_code, ~weight,
           "var_nval15_small_skewd_adm12",   0,
           "var_nval3_skewd_adm1",          0,
@@ -18,7 +18,7 @@ test_that("get unavailable adming levels works", {
         ),
       
       wt_admi4_2 = 
-        tribble(
+        tibble::tribble(
           ~var_code, ~weight,
           "var_nval15_small_skewd_adm12",   0,
           "var_nval3_skewd_adm1",          0,
@@ -32,7 +32,7 @@ test_that("get unavailable adming levels works", {
         ),
       
       wt_admi2_1 = 
-        tribble(
+        tibble::tribble(
           ~var_code, ~weight,
           "var_nval15_small_skewd_adm12",   0,
           "var_nval3_skewd_adm1",          1,
@@ -46,7 +46,7 @@ test_that("get unavailable adming levels works", {
         ),
       
       wt_admi2_2 = 
-        tribble(
+        tibble::tribble(
           ~var_code, ~weight,
           "var_nval15_small_skewd_adm12",   1,
           "var_nval3_skewd_adm1",          1,
@@ -60,7 +60,7 @@ test_that("get unavailable adming levels works", {
         ),
       
       wt_admi1_1 = 
-        tribble(
+        tibble::tribble(
           ~var_code, ~weight,
           "var_nval15_small_skewd_adm12",   0,
           "var_nval3_skewd_adm1",          1,
@@ -78,9 +78,13 @@ test_that("get unavailable adming levels works", {
   #   ukr_mtdt_full %>% get_indicators_list() %>% get_vars_nabil() ,
   #   "tbl_df")
   
+  # Pre PR #61 this asserted 7 (the lag-fill bug under-counted the
+  # admin1-only direction). Under the strict no-extrapolation contract
+  # adopted in PR #61, every (var x admin) pair without native data
+  # surfaces; 9 indicators x 3 admin levels - 15 cells with data = 12.
   testthat::expect_equal(
     ukr_mtdt_full %>% get_indicators_list() %>% get_vars_un_avbil() %>% nrow(),
-    7)
+    12)
   
   
   testthat::expect_equal(

@@ -3,19 +3,52 @@
 
 
 
-#' legnd data generator for maps
+#' Build the legend payload for a single PTI map layer
 #'
-#' @description Prepare specific popu-up ggplot
+#' Produces palette, label, and recoder closures for one vector of PTI
+#' scores. Selects between two colouring branches: a "factor" branch
+#' for binary 0/1 inputs and small integer-valued inputs (under 12
+#' distinct integers), and a continuous "binned" branch otherwise. For
+#' the continuous branch, breaks are quantiles of `leg_vals` at
+#' `n_groups` cuts; the label-formatter precision is chosen
+#' adaptively so consecutive break labels stay distinct. Missing
+#' values surface as a separate `no_data_label` slot. Used by
+#' [add_legend_paras()] to build the per-layer legend metadata before
+#' polygons are drawn.
 #'
-#' @param dta
+#' @param leg_vals Numeric (or factor) vector of values to bin.
+#' @param n_groups Integer. Number of legend bins to request.
+#'   Defaults to `5`.
+#' @param no_data_label Character. Label for the NA bucket. Defaults
+#'   to `"No data"`.
+#' @param legend_paras Named list of legend tuning parameters; the
+#'   only key consulted is `legend_revert_colours`.
+#' @param val_pal Character vector of RColorBrewer palette names to
+#'   choose from.
+#' @param val_pal_id Integer index into `val_pal`.
+#' @param is_percent Logical. Currently unused (formatter is chosen
+#'   adaptively from the data range).
+#' @param is_categorical Logical. When `TRUE`, treats `leg_vals` as a
+#'   factor and uses [leaflet::colorFactor()] directly.
+#' @param min_buble Numeric. Minimum bubble radius (used when the
+#'   layer is rendered as bubbles instead of polygons).
+#' @param max_buble Numeric. Maximum bubble radius.
 #'
-#' @noRd
+#' @return Named list with slots `pal` (palette function),
+#'   `recode_function` (numeric -> category label, via
+#'   [recode_val_base()]), `recode_function_intervals` (numeric ->
+#'   interval label), `radius_function` (numeric -> bubble size),
+#'   `our_labels`, `our_labels_bubble`, `our_labels_category`,
+#'   `our_values`, and `selected_groups`. All label vectors are
+#'   reversed so highest-priority appears first.
+#'
 #' @importFrom scales breaks_extended label_percent label_number
-#' @importFrom leaflet colorBin 
+#' @importFrom leaflet colorBin colorFactor
 #' @importFrom stringr str_c
-#' 
-#' @export
-legend_map_satelite <- 
+#' @importFrom purrr map2_chr
+#' @importFrom magrittr extract extract2
+#' @noRd
+legend_map_satelite <-
   function(leg_vals, 
            n_groups = 5, 
            no_data_label = "No data",
@@ -47,7 +80,6 @@ legend_map_satelite <-
     
     # If not categorical ====================================================
     if (!is_categorical) {
-      # browser()
       ## Step 1. Numeric. Define breaks number and values ===================
       if(n_groups < 1) n_groups <- 1
       n_breaks <- min(length(x_uni), n_groups)
@@ -131,7 +163,6 @@ legend_map_satelite <-
             lab_function <- scales::label_number(0.000001, big.mark = " ")
           }
           
-          # browser()
           # Generic case
           our_labels <-
             map2_chr(#
@@ -273,8 +304,25 @@ legend_map_satelite <-
   }
 
 
-#' Functional that returns a funciton for recoing labels in the data 
-#' 
+#' Build a value-to-category-label closure
+#'
+#' Returns a closure that maps a numeric vector to category labels by
+#' binning against `our_breaks` with [base::cut()]. NAs in the input
+#' are mapped to `no_data_label`. When `our_breaks` collapses to a
+#' single value (e.g. one unique score), the closure widens it
+#' internally to a length-2 break so `cut()` does not error. Captured
+#' inside [legend_map_satelite()] and stored on the legend payload as
+#' `recode_function`.
+#'
+#' @param our_breaks Numeric vector of bin breakpoints.
+#' @param our_labels_category Character vector of category labels
+#'   (ordered low -> high).
+#' @param no_data_label Character. Label to use for NA inputs.
+#'
+#' @return A function of one argument (a numeric vector) returning a
+#'   character vector of category labels of the same length.
+#'
+#' @importFrom magrittr %>%
 #' @noRd
 recode_val_base <-
   function(our_breaks,
@@ -305,26 +353,6 @@ recode_val_base <-
   }
 
 
-#' New
-#' 
-#' @noRd
-#'
-get_pal_lab_fn <- function(x_uni) {
-  
-  lab_function <- scales::label_number(0.01, big.mark = " ")
-  
-  if (abs(max(x_uni, na.rm = T) / 10) > 1 & abs(max(x_uni, na.rm = T) / 100) < 1) {
-    lab_function <- scales::label_number(0.1, big.mark = " ")
-  } 
-  
-  if (abs(max(x_uni, na.rm = T) / 100) > 1 ) {
-    lab_function <- scales::label_number(1, big.mark = " ")
-  } 
-  
-  lab_function
-}
-
-
 #' #' Circle shifter
 #' #'
 #' #' @description Circle shifter
@@ -350,60 +378,6 @@ get_pal_lab_fn <- function(x_uni) {
 #'     st_sfc(., crs = 3857) %>% 
 #'     st_transform(crs = 4326)
 #' }
-
-#' Legend helpers
-#'
-#' @noRd
-#'
-make_shapes <- function(colors, sizes, borders, shapes = "circle") {
-  shapes <- gsub("circle", "50%", shapes)
-  shapes <- gsub("square", "0%", shapes)
-  paste0(
-    colors,
-    "; width:",
-    sizes,
-    "px; height:",
-    sizes,
-    "px; border:0.5px solid ",
-    borders,
-    "; border-radius:",
-    ifelse(!is.na(sizes), shapes, "0%" )
-  )
-}
-
-#' Legend helpers
-#'
-#' @noRd
-#'
-make_labels <- function(sizes, labels) {
-  paste0(
-    "<div style='display: inline-block;height: ",
-    sizes,
-    "px;margin-top: 4px;line-height: ",
-    sizes,
-    "px;'>",
-    labels,
-    "</div>"
-  )
-}
-
-
-
-#' Breaks helpers 7
-#'
-#' @noRd
-#' 
-zeros_after_period <- function(x) {
-  if (isTRUE(all.equal(round(x), x)))
-    return (rep(0, length(x)))
-  out_number <-
-    log10(abs(x) - floor(abs(x))) %>%
-    abs() %>%
-    ceiling(.)
-  ifelse(is.infinite(out_number), 0, out_number)
-} 
-
-
 
 
 

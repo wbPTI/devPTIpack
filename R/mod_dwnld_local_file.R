@@ -1,29 +1,29 @@
-#' dwnld_local_file UI Function
+#' Serve a packaged file via a Shiny download handler
 #'
-#' @description A shiny Module.
+#' Wraps `shiny::downloadHandler()` to ship a single file from disk under a
+#' generated filename. Filename is built from a `glue::glue()` template that
+#' has access to `.pti_name` (from `golem::get_golem_options("pti.name")`),
+#' `.filepath`, and `.ext` (from [tools::file_ext()]).
 #'
-#' @param id,input,output,session Internal parameters for {shiny}.
+#' @param id Character. Shiny module namespace ID.
+#' @param filepath Character. Absolute or relative path to the file to
+#'   serve.
+#' @param name_glue Glue template for the download filename. Defaults to
+#'   `"metadata-{.pti_name}-{Sys.Date()}.{.ext}"`.
 #'
-#' @noRd 
+#' @return No explicit return value. Called for side effects (registers
+#'   `output$dwnld_local_file` within the Shiny session).
 #'
-#' @importFrom shiny NS tagList 
-mod_dwnld_local_file_ui <- function(id, label){
-  ns <- NS(id)
-  tagList(
-    downloadLink(ns("dwnld_local_file"), label)
-  )
-}
-    
-#' dwnld_local_file Server Function
-#'
-#' @noRd 
+#' @importFrom shiny moduleServer downloadHandler
 #' @importFrom tools file_ext
-mod_dwnld_local_file_server <- function(id, filepath, 
+#' @importFrom glue glue
+#' @noRd
+mod_dwnld_local_file_server <- function(id, filepath,
                                         name_glue = "metadata-{.pti_name}-{Sys.Date()}.{.ext}") {
   moduleServer(
     id,
     function(input, output, session) {
-      output$dwnld_local_file <- 
+      output$dwnld_local_file <-
         downloadHandler(
           filename = function() {
             .pti_name <- as.character(golem::get_golem_options("pti.name"))
@@ -36,8 +36,7 @@ mod_dwnld_local_file_server <- function(id, filepath,
             file.copy(filepath, file)
           }
         )
-      
+
     }
   )
 }
-    
